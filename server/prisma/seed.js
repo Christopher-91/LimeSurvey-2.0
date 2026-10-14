@@ -78,71 +78,92 @@ async function main() {
         active: true,
         format: 'all_in_one',
         ownerId: adminUser.id,
-        groups: {
+      },
+    });
+
+    const demoGroup = await prisma.questionGroup.create({
+      data: {
+        surveyId: demoSurvey.id,
+        name: 'General Information & Experience',
+        description: 'Questions regarding your initial experience and satisfaction.',
+        sortOrder: 1,
+      },
+    });
+
+    await prisma.question.create({
+      data: {
+        surveyId: demoSurvey.id,
+        groupId: demoGroup.id,
+        code: 'SATISFACTION',
+        text: 'How satisfied are you overall with the platform performance and usability?',
+        type: 'single_choice',
+        mandatory: true,
+        sortOrder: 1,
+        options: {
           create: [
-            {
-              name: 'General Information & Experience',
-              description: 'Questions regarding your initial experience and satisfaction.',
-              sortOrder: 1,
-              questions: {
-                create: [
-                  {
-                    code: 'SATISFACTION',
-                    text: 'How satisfied are you overall with the platform performance and usability?',
-                    type: 'single_choice',
-                    mandatory: true,
-                    sortOrder: 1,
-                    options: {
-                      create: [
-                        { code: 'A1', text: 'Very Satisfied', sortOrder: 1, assessmentValue: 5 },
-                        { code: 'A2', text: 'Somewhat Satisfied', sortOrder: 2, assessmentValue: 4 },
-                        { code: 'A3', text: 'Neutral', sortOrder: 3, assessmentValue: 3 },
-                        { code: 'A4', text: 'Somewhat Dissatisfied', sortOrder: 4, assessmentValue: 2 },
-                        { code: 'A5', text: 'Very Dissatisfied', sortOrder: 5, assessmentValue: 1 },
-                      ],
-                    },
-                  },
-                  {
-                    code: 'FEATURES_USED',
-                    text: 'Which primary features do you use on a daily basis?',
-                    type: 'multiple_choice',
-                    mandatory: false,
-                    sortOrder: 2,
-                    options: {
-                      create: [
-                        { code: 'OPT1', text: 'Survey Builder & Question Types', sortOrder: 1 },
-                        { code: 'OPT2', text: 'Participant & Voter Management', sortOrder: 2 },
-                        { code: 'OPT3', text: 'Real-time Response Analytics', sortOrder: 3 },
-                        { code: 'OPT4', text: 'Excel and CSV Data Exports', sortOrder: 4 },
-                      ],
-                    },
-                  },
-                  {
-                    code: 'RATING_NPS',
-                    text: 'How likely are you to recommend LimeSurvey to a friend or colleague? (1 to 5 Stars)',
-                    type: 'rating',
-                    mandatory: true,
-                    sortOrder: 3,
-                  },
-                  {
-                    code: 'WOULD_RECOMMEND',
-                    text: 'Would you like to participate in future product interviews?',
-                    type: 'yes_no',
-                    mandatory: false,
-                    sortOrder: 4,
-                  },
-                  {
-                    code: 'FEEDBACK_TEXT',
-                    text: 'What is one thing we could do to make this platform even better for you?',
-                    type: 'long_text',
-                    mandatory: false,
-                    sortOrder: 5,
-                  },
-                ],
-              },
-            },
+            { code: 'A1', text: 'Very Satisfied', sortOrder: 1, assessmentValue: 5 },
+            { code: 'A2', text: 'Somewhat Satisfied', sortOrder: 2, assessmentValue: 4 },
+            { code: 'A3', text: 'Neutral', sortOrder: 3, assessmentValue: 3 },
+            { code: 'A4', text: 'Somewhat Dissatisfied', sortOrder: 4, assessmentValue: 2 },
+            { code: 'A5', text: 'Very Dissatisfied', sortOrder: 5, assessmentValue: 1 },
           ],
         },
+      },
+    });
+
+    await prisma.question.create({
+      data: {
+        surveyId: demoSurvey.id,
+        groupId: demoGroup.id,
+        code: 'FEATURES_USED',
+        text: 'Which primary features do you use on a daily basis?',
+        type: 'multiple_choice',
+        mandatory: false,
+        sortOrder: 2,
+        options: {
+          create: [
+            { code: 'OPT1', text: 'Survey Builder & Question Types', sortOrder: 1 },
+            { code: 'OPT2', text: 'Participant & Voter Management', sortOrder: 2 },
+            { code: 'OPT3', text: 'Real-time Response Analytics', sortOrder: 3 },
+            { code: 'OPT4', text: 'Excel and CSV Data Exports', sortOrder: 4 },
+          ],
+        },
+      },
+    });
+
+    await prisma.question.create({
+      data: {
+        surveyId: demoSurvey.id,
+        groupId: demoGroup.id,
+        code: 'RATING_NPS',
+        text: 'How likely are you to recommend LimeSurvey to a friend or colleague? (1 to 5 Stars)',
+        type: 'rating',
+        mandatory: true,
+        sortOrder: 3,
+      },
+    });
+
+    await prisma.question.create({
+      data: {
+        surveyId: demoSurvey.id,
+        groupId: demoGroup.id,
+        code: 'WOULD_RECOMMEND',
+        text: 'Would you like to participate in future product interviews?',
+        type: 'yes_no',
+        mandatory: false,
+        sortOrder: 4,
+      },
+    });
+
+    await prisma.question.create({
+      data: {
+        surveyId: demoSurvey.id,
+        groupId: demoGroup.id,
+        code: 'FEEDBACK_TEXT',
+        text: 'What is one thing we could do to make this platform even better for you?',
+        type: 'long_text',
+        mandatory: false,
+        sortOrder: 5,
       },
     });
 
