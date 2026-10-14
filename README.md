@@ -40,7 +40,7 @@ Review and adjust variables in `.env` as needed:
 
 | Variable | Description | Default |
 | :--- | :--- | :--- |
-| `PORT` | Backend Express API Port | `5000` |
+| `PORT` | Backend Express API Port | `5001` |
 | `CLIENT_URL` | Frontend client origin (CORS) | `http://localhost:5173` |
 | `DATABASE_URL` | PostgreSQL connection URL | `postgresql://user:pass@localhost:5432/limesurvey_modern?schema=public` |
 | `LEGACY_DATABASE_URL`| Connection to legacy database for import | `postgresql://user:pass@localhost:5432/limesurvey` |
@@ -81,8 +81,8 @@ npm run dev
 ```
 
 - **Frontend Client**: [http://localhost:5173](http://localhost:5173)
-- **Backend REST API**: [http://localhost:5000/api/v1](http://localhost:5000/api/v1)
-- **Interactive OpenAPI (Swagger)**: [http://localhost:5000/api/docs](http://localhost:5000/api/docs)
+- **Backend REST API**: [http://localhost:5001/api/v1](http://localhost:5001/api/v1)
+- **Interactive OpenAPI (Swagger)**: [http://localhost:5001/api/docs](http://localhost:5001/api/docs)
 
 ---
 

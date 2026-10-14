@@ -10,7 +10,7 @@ export default defineConfig({
   webServer: [
     {
       command: 'npm run dev --workspace=server',
-      port: 5000,
+      port: 5001,
       reuseExistingServer: !process.env.CI,
     },
     {
