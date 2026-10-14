@@ -1,0 +1,497 @@
+@import './design-tokens.css';
+
+/* ==========================================================================
+   CSS Reset & Base Styles
+   ========================================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  font-family: var(--ls-font-sans);
+  font-size: 16px;
+  line-height: var(--ls-line-height-normal);
+  color: var(--ls-color-text-primary);
+  background-color: var(--ls-color-g-100);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--ls-color-link);
+  text-decoration: none;
+  transition: color var(--ls-transition-fast);
+}
+
+a:hover {
+  color: var(--ls-color-link-hover);
+  text-decoration: underline;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--ls-color-g-900);
+  font-weight: var(--ls-font-weight-semibold);
+  line-height: var(--ls-line-height-tight);
+}
+
+/* ==========================================================================
+   Navigation Bar (LimeSurvey Sea_Green Header)
+   ========================================================================== */
+.ls-navbar {
+  background-color: var(--ls-color-g-800);
+  color: var(--ls-color-white);
+  height: var(--ls-navbar-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--ls-space-6);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.ls-navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--ls-space-3);
+  color: var(--ls-color-white);
+  font-size: var(--ls-font-size-lg);
+  font-weight: var(--ls-font-weight-bold);
+  text-decoration: none;
+}
+
+.ls-navbar-brand:hover {
+  text-decoration: none;
+}
+
+.ls-navbar-brand img {
+  height: 32px;
+  width: auto;
+}
+
+.ls-navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ls-space-4);
+}
+
+.ls-navbar-link {
+  color: var(--ls-color-g-300);
+  font-size: var(--ls-font-size-sm);
+  font-weight: var(--ls-font-weight-medium);
+  display: flex;
+  align-items: center;
+  gap: var(--ls-space-2);
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: var(--ls-radius-sm);
+  transition: all var(--ls-transition-fast);
+}
+
+.ls-navbar-link:hover,
+.ls-navbar-link.active {
+  color: var(--ls-color-white);
+  background-color: rgba(255, 255, 255, 0.1);
+  text-decoration: none;
+}
+
+/* ==========================================================================
+   Layout Containers
+   ========================================================================== */
+.ls-container {
+  max-width: var(--ls-container-max);
+  margin: 0 auto;
+  padding: var(--ls-space-8) var(--ls-container-padding);
+}
+
+.ls-page-header {
+  margin-bottom: var(--ls-space-8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--ls-space-4);
+}
+
+.ls-page-title {
+  font-size: var(--ls-font-size-2xl);
+  font-weight: var(--ls-font-weight-bold);
+}
+
+.ls-page-subtitle {
+  color: var(--ls-color-g-600);
+  font-size: var(--ls-font-size-base);
+  margin-top: 4px;
+}
+
+/* ==========================================================================
+   Cards & Panels (LimeSurvey Sea_Green Card Style)
+   ========================================================================== */
+.ls-card {
+  background-color: var(--ls-color-white);
+  border: var(--ls-border-width) solid var(--ls-color-g-400);
+  border-radius: var(--ls-radius-lg);
+  padding: var(--ls-space-6);
+  box-shadow: var(--ls-shadow-overview);
+  transition: all var(--ls-transition-fast);
+}
+
+.ls-card:hover {
+  box-shadow: var(--ls-shadow-offset);
+}
+
+.ls-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--ls-space-4);
+  padding-bottom: var(--ls-space-3);
+  border-bottom: 1px solid var(--ls-color-g-200);
+}
+
+.ls-card-title {
+  font-size: var(--ls-font-size-lg);
+  font-weight: var(--ls-font-weight-semibold);
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+.ls-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ls-space-2);
+  height: var(--ls-btn-height);
+  padding: 0 var(--ls-space-5);
+  font-family: var(--ls-font-sans);
+  font-size: var(--ls-font-size-sm);
+  font-weight: var(--ls-font-weight-medium);
+  border-radius: var(--ls-radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--ls-transition-fast);
+  white-space: nowrap;
+}
+
+.ls-btn:hover {
+  text-decoration: none;
+}
+
+.ls-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--ls-shadow-btn-focus);
+}
+
+.ls-btn-primary {
+  background-color: var(--ls-color-primary);
+  color: var(--ls-color-white);
+}
+
+.ls-btn-primary:hover {
+  background-color: var(--ls-color-primary-hover);
+  color: var(--ls-color-white);
+}
+
+.ls-btn-secondary {
+  background-color: var(--ls-color-g-800);
+  color: var(--ls-color-white);
+}
+
+.ls-btn-secondary:hover {
+  background-color: var(--ls-color-g-900);
+  color: var(--ls-color-white);
+}
+
+.ls-btn-outline {
+  background-color: transparent;
+  border-color: var(--ls-color-g-400);
+  color: var(--ls-color-g-900);
+}
+
+.ls-btn-outline:hover {
+  background-color: var(--ls-color-g-200);
+}
+
+.ls-btn-danger {
+  background-color: var(--ls-color-danger);
+  color: var(--ls-color-white);
+}
+
+.ls-btn-danger:hover {
+  background-color: #e03b49;
+}
+
+.ls-btn-lg {
+  height: 48px;
+  padding: 0 var(--ls-space-6);
+  font-size: var(--ls-font-size-base);
+}
+
+.ls-btn-sm {
+  height: 32px;
+  padding: 0 var(--ls-space-3);
+  font-size: var(--ls-font-size-xs);
+}
+
+.ls-btn:disabled,
+.ls-btn.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Form Controls
+   ========================================================================== */
+.ls-form-group {
+  margin-bottom: var(--ls-space-4);
+}
+
+.ls-label {
+  display: block;
+  font-size: var(--ls-font-size-sm);
+  font-weight: var(--ls-font-weight-medium);
+  color: var(--ls-color-g-700);
+  margin-bottom: 6px;
+}
+
+.ls-input,
+.ls-select,
+.ls-textarea {
+  width: 100%;
+  font-family: var(--ls-font-sans);
+  font-size: var(--ls-font-size-base);
+  color: var(--ls-color-g-900);
+  background-color: var(--ls-color-white);
+  border: 1px solid var(--ls-color-g-900);
+  border-radius: var(--ls-radius-sm);
+  padding: 10px 12px;
+  transition: all var(--ls-transition-fast);
+}
+
+.ls-input:focus,
+.ls-select:focus,
+.ls-textarea:focus {
+  outline: none;
+  border-color: var(--ls-color-action);
+  box-shadow: var(--ls-shadow-btn-focus);
+}
+
+.ls-input.error,
+.ls-select.error,
+.ls-textarea.error {
+  border-color: var(--ls-color-danger);
+}
+
+.ls-error-text {
+  color: var(--ls-color-danger);
+  font-size: var(--ls-font-size-xs);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ls-helper-text {
+  color: var(--ls-color-g-600);
+  font-size: var(--ls-font-size-xs);
+  margin-top: 4px;
+}
+
+/* ==========================================================================
+   Segmented Voter / Admin Toggle (Login Header)
+   ========================================================================== */
+.ls-segmented-toggle {
+  display: inline-flex;
+  position: relative;
+  background-color: var(--ls-color-g-200);
+  padding: 4px;
+  border-radius: var(--ls-radius-full);
+  user-select: none;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto var(--ls-space-6) auto;
+}
+
+.ls-toggle-slider {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  background-color: var(--ls-color-white);
+  border-radius: var(--ls-radius-full);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform var(--ls-transition-base);
+  z-index: 1;
+}
+
+.ls-toggle-slider.admin-active {
+  transform: translateX(100%);
+}
+
+.ls-toggle-btn {
+  flex: 1;
+  position: relative;
+  z-index: 2;
+  background: transparent;
+  border: none;
+  font-family: var(--ls-font-sans);
+  font-size: var(--ls-font-size-sm);
+  font-weight: var(--ls-font-weight-medium);
+  color: var(--ls-color-g-700);
+  padding: 10px 16px;
+  border-radius: var(--ls-radius-full);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: color var(--ls-transition-fast);
+}
+
+.ls-toggle-btn.active {
+  color: var(--ls-color-primary);
+  font-weight: var(--ls-font-weight-bold);
+}
+
+.ls-toggle-btn:focus-visible {
+  outline: 2px solid var(--ls-color-action);
+}
+
+/* ==========================================================================
+   Badges
+   ========================================================================== */
+.ls-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--ls-font-size-xs);
+  font-weight: var(--ls-font-weight-semibold);
+  padding: 3px 8px;
+  border-radius: var(--ls-radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ls-badge-success {
+  background-color: var(--ls-color-primary-subtle);
+  color: var(--ls-color-primary-active);
+}
+
+.ls-badge-secondary {
+  background-color: var(--ls-color-g-200);
+  color: var(--ls-color-g-700);
+}
+
+.ls-badge-info {
+  background-color: #f1edfe;
+  color: var(--ls-color-grape);
+}
+
+/* ==========================================================================
+   Data Tables
+   ========================================================================== */
+.ls-table-container {
+  overflow-x: auto;
+  border-radius: var(--ls-radius-md);
+  border: 1px solid var(--ls-color-g-400);
+  background: var(--ls-color-white);
+}
+
+.ls-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.ls-table th {
+  background-color: var(--ls-color-g-200);
+  color: var(--ls-color-g-900);
+  font-size: var(--ls-font-size-sm);
+  font-weight: var(--ls-font-weight-semibold);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--ls-color-g-400);
+}
+
+.ls-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--ls-color-g-300);
+  font-size: var(--ls-font-size-sm);
+}
+
+.ls-table tr:hover td {
+  background-color: var(--ls-color-g-100);
+}
+
+/* ==========================================================================
+   Empty States & Skeletons
+   ========================================================================== */
+.ls-empty-state {
+  text-align: center;
+  padding: var(--ls-space-12) var(--ls-space-4);
+  color: var(--ls-color-g-600);
+}
+
+.ls-empty-icon {
+  font-size: 48px;
+  color: var(--ls-color-g-400);
+  margin-bottom: var(--ls-space-3);
+}
+
+.ls-skeleton {
+  background: linear-gradient(90deg, #f0f0f4 25%, #e2e4ec 50%, #f0f0f4 75%);
+  background-size: 200% 100%;
+  animation: ls-shimmer 1.5s infinite;
+  border-radius: var(--ls-radius-sm);
+  height: 20px;
+}
+
+@keyframes ls-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ==========================================================================
+   Toast Notifications
+   ========================================================================== */
+.ls-toast-container {
+  position: fixed;
+  bottom: var(--ls-space-6);
+  right: var(--ls-space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ls-space-2);
+  z-index: 1000;
+}
+
+.ls-toast {
+  background-color: var(--ls-color-g-900);
+  color: var(--ls-color-white);
+  padding: 12px 20px;
+  border-radius: var(--ls-radius-md);
+  font-size: var(--ls-font-size-sm);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: var(--ls-space-3);
+  animation: ls-slide-in 0.25s ease-out;
+}
+
+.ls-toast.success {
+  border-left: 4px solid var(--ls-color-success);
+}
+
+.ls-toast.error {
+  border-left: 4px solid var(--ls-color-danger);
+}
+
+@keyframes ls-slide-in {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}

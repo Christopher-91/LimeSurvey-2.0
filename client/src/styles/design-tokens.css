@@ -1,0 +1,127 @@
+:root {
+  /* ==========================================================================
+     Color Palette (LimeSurvey Sea_Green & Fruity Theme Tokens)
+     ========================================================================== */
+  --ls-color-primary: #14ae5c;
+  --ls-color-primary-hover: #11964f;
+  --ls-color-primary-active: #0e8042;
+  --ls-color-primary-subtle: #e8f7ef;
+  
+  --ls-color-action: #4200ff;
+  --ls-color-action-hover: #3500cc;
+  --ls-color-focus: #3bffb7;
+  --ls-color-aubergine: #25003e;
+  --ls-color-zucchini: #003e24;
+
+  --ls-color-grape: #8146f6;
+  --ls-color-grape-light: #d3c5fa;
+  --ls-color-grape-75: rgba(123, 97, 255, 0.4);
+  --ls-color-orange: #ffba68;
+  --ls-color-orange-light: #fff1e0;
+  --ls-color-banana: #ffe872;
+  --ls-color-blueberry: #a3c8ff;
+  --ls-color-litschi: #ff9aa2;
+
+  --ls-color-success: #4dd753;
+  --ls-color-warning: #ffe046;
+  --ls-color-danger: #ff515f;
+  --ls-color-info: #8146f6;
+
+  --ls-color-white: #ffffff;
+  --ls-color-black: #000000;
+  --ls-color-g-100: #f9f9fb;
+  --ls-color-g-200: #eeeff7;
+  --ls-color-g-300: #dddee8;
+  --ls-color-g-400: #d3d5da;
+  --ls-color-g-600: #9094a7;
+  --ls-color-g-700: #6e748c;
+  --ls-color-g-750: #515567;
+  --ls-color-g-800: #333641;
+  --ls-color-g-900: #1e1e1e;
+
+  --ls-color-text-primary: var(--ls-color-g-900);
+  --ls-color-text-secondary: var(--ls-color-g-600);
+  --ls-color-text-muted: var(--ls-color-g-700);
+  --ls-color-text-inverse: var(--ls-color-white);
+  --ls-color-link: #2d7a53;
+  --ls-color-link-hover: #1b4b33;
+
+  /* ==========================================================================
+     Typography
+     ========================================================================== */
+  --ls-font-sans: "IBM Plex Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --ls-font-mono: "IBM Plex Mono", monospace;
+
+  --ls-font-size-xs: 0.75rem;
+  --ls-font-size-sm: 0.875rem;
+  --ls-font-size-base: 1rem;
+  --ls-font-size-md: 1.125rem;
+  --ls-font-size-lg: 1.25rem;
+  --ls-font-size-xl: 1.5rem;
+  --ls-font-size-2xl: 2rem;
+  --ls-font-size-3xl: 3.3rem;
+
+  --ls-font-weight-light: 300;
+  --ls-font-weight-normal: 400;
+  --ls-font-weight-medium: 500;
+  --ls-font-weight-semibold: 600;
+  --ls-font-weight-bold: 700;
+
+  --ls-line-height-tight: 1.25;
+  --ls-line-height-normal: 1.5;
+  --ls-line-height-relaxed: 1.75;
+
+  /* ==========================================================================
+     Spacing & Layout
+     ========================================================================== */
+  --ls-space-1: 0.25rem;
+  --ls-space-2: 0.5rem;
+  --ls-space-3: 0.75rem;
+  --ls-space-4: 1rem;
+  --ls-space-5: 1.25rem;
+  --ls-space-6: 1.5rem;
+  --ls-space-8: 2rem;
+  --ls-space-10: 2.5rem;
+  --ls-space-12: 3rem;
+  --ls-space-16: 4rem;
+
+  --ls-container-max: 1200px;
+  --ls-container-padding: 1.25rem;
+
+  /* ==========================================================================
+     Borders & Radii
+     ========================================================================== */
+  --ls-radius-xs: 2px;
+  --ls-radius-sm: 4px;
+  --ls-radius-md: 6px;
+  --ls-radius-lg: 8px;
+  --ls-radius-xl: 12px;
+  --ls-radius-full: 9999px;
+
+  --ls-border-width: 1px;
+  --ls-border-color: var(--ls-color-g-400);
+  --ls-border-color-focus: var(--ls-color-g-900);
+  --ls-border-color-input: var(--ls-color-g-900);
+
+  /* ==========================================================================
+     Shadows
+     ========================================================================== */
+  --ls-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --ls-shadow-overview: 0px 2px 6px rgba(0, 0, 0, 0.15);
+  --ls-shadow-offset: 8px 8px var(--ls-color-g-200);
+  --ls-shadow-offset-hover: 8px 8px var(--ls-color-grape-light);
+  --ls-shadow-offset-sm: 4px 4px var(--ls-color-g-200);
+  --ls-shadow-btn-focus: 4px 4px 0px rgba(123, 97, 255, 0.4);
+  --ls-shadow-btn-hover: 0px 0px 0px 3px rgba(123, 97, 255, 0.4);
+
+  /* ==========================================================================
+     Dimensions
+     ========================================================================== */
+  --ls-navbar-height: 64px;
+  --ls-sidebar-width: 250px;
+  --ls-btn-height: 40px;
+  --ls-input-height: 42px;
+
+  --ls-transition-fast: 150ms ease-in-out;
+  --ls-transition-base: 250ms ease-in-out;
+}
