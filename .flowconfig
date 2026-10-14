@@ -1,5 +1,0 @@
-[ignore]
-.*/third_party/.*
-.*/assets/packages/.*
-[lints]
-all=error
