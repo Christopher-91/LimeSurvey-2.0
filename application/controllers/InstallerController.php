@@ -45,13 +45,8 @@ class InstallerController extends CController
      */
     public function run($action = 'index')
     {
-        $this->checkInstallation();
-        $this->sessioncontrol();
-        App()->loadHelper('common');
-        App()->loadHelper('surveytranslator');
-        AdminTheme::getInstance();
-        App()->getClientScript()->registerCssFile(App()->baseUrl . '/installer/css/main.css');
-        App()->getClientScript()->registerCssFile(App()->baseUrl . '/installer/css/fonts.css');
+        $this->redirect(array('/'));
+        return;
 
         switch ($action) {
             case 'welcome':
