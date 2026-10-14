@@ -1,0 +1,206 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ==========================================
+// User (Admin users)
+// ==========================================
+model User {
+  id              Int       @id @default(autoincrement())
+  username        String    @unique @db.VarChar(64)
+  email           String    @unique @db.VarChar(192)
+  password        String    @db.Text
+  fullName        String    @map("full_name") @db.VarChar(128)
+  role            String    @default("admin") @db.VarChar(32) // "admin" | "superadmin"
+  isActive        Boolean   @default(true) @map("is_active")
+  lastLogin       DateTime? @map("last_login")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  // Relationships
+  surveys         Survey[]  @relation("SurveyOwner")
+
+  @@map("users")
+  @@index([role])
+}
+
+// ==========================================
+// Survey
+// ==========================================
+model Survey {
+  id              Int             @id @default(autoincrement()) // Legacy sid
+  title           String          @db.VarChar(255)
+  description     String?         @db.Text
+  welcomeMessage  String?         @map("welcome_message") @db.Text
+  endMessage      String?         @map("end_message") @db.Text
+  adminEmail      String?         @map("admin_email") @db.VarChar(192)
+  adminName       String?         @map("admin_name") @db.VarChar(128)
+  active          Boolean         @default(false)
+  anonymized      Boolean         @default(false)
+  format          String          @default("all_in_one") @db.VarChar(32) // "all_in_one" | "group_by_group" | "question_by_question"
+  startDate       DateTime?       @map("start_date")
+  expires         DateTime?
+  ownerId         Int?            @map("owner_id")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+  deletedAt       DateTime?       @map("deleted_at")
+
+  // Relationships
+  owner           User?           @relation("SurveyOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  groups          QuestionGroup[]
+  questions       Question[]
+  voters          Voter[]
+  responses       Response[]
+
+  @@map("surveys")
+  @@index([active])
+  @@index([ownerId])
+}
+
+// ==========================================
+// QuestionGroup (Logical grouping / pages)
+// ==========================================
+model QuestionGroup {
+  id              Int        @id @default(autoincrement()) // Legacy gid
+  surveyId        Int        @map("survey_id")
+  name            String     @db.VarChar(255)
+  description     String?    @db.Text
+  sortOrder       Int        @default(0) @map("sort_order")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  // Relationships
+  survey          Survey     @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  questions       Question[]
+
+  @@map("question_groups")
+  @@index([surveyId])
+  @@index([sortOrder])
+}
+
+// ==========================================
+// Question
+// ==========================================
+model Question {
+  id              Int            @id @default(autoincrement()) // Legacy qid
+  surveyId        Int            @map("survey_id")
+  groupId         Int?           @map("group_id")
+  code            String         @db.VarChar(64) // Question identifier, e.g. "Q01"
+  text            String         @db.Text // The actual question wording
+  helpText        String?        @map("help_text") @db.Text
+  type            String         @db.VarChar(32) // "single_choice" | "multiple_choice" | "short_text" | "long_text" | "number" | "yes_no" | "date" | "rating"
+  mandatory       Boolean        @default(false)
+  sortOrder       Int            @default(0) @map("sort_order")
+  settings        Json?          // Dynamic attributes: min/max, placeholder, etc.
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  deletedAt       DateTime?      @map("deleted_at")
+
+  // Relationships
+  survey          Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  group           QuestionGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  options         AnswerOption[]
+
+  @@map("questions")
+  @@unique([surveyId, code])
+  @@index([surveyId])
+  @@index([groupId])
+  @@index([sortOrder])
+}
+
+// ==========================================
+// AnswerOption (Preset choices for questions)
+// ==========================================
+model AnswerOption {
+  id              Int       @id @default(autoincrement()) // Legacy aid
+  questionId      Int       @map("question_id")
+  code            String    @db.VarChar(64) // e.g. "AO01" or numeric value
+  text            String    @db.Text // Label displayed to voter
+  sortOrder       Int       @default(0) @map("sort_order")
+  assessmentValue Int       @default(0) @map("assessment_value")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relationships
+  question        Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("answer_options")
+  @@unique([questionId, code])
+  @@index([questionId])
+  @@index([sortOrder])
+}
+
+// ==========================================
+// Voter (Participants / Token holders)
+// ==========================================
+model Voter {
+  id              Int        @id @default(autoincrement()) // Legacy tid
+  surveyId        Int        @map("survey_id")
+  voterId         String?    @map("voter_id") @db.VarChar(64) // Optional legacy participant ID
+  token           String     @db.VarChar(64) // Unique token / access code
+  password        String?    @db.Text // Optional password for protected participation
+  email           String?    @db.VarChar(192)
+  firstName       String?    @map("first_name") @db.VarChar(64)
+  lastName        String?    @map("last_name") @db.VarChar(64)
+  completed       Boolean    @default(false)
+  completedAt     DateTime?  @map("completed_at")
+  usesLeft        Int        @default(1) @map("uses_left")
+  validFrom       DateTime?  @map("valid_from")
+  validUntil      DateTime?  @map("valid_until")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+  deletedAt       DateTime?  @map("deleted_at")
+
+  // Relationships
+  survey          Survey     @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  responses       Response[]
+
+  @@map("voters")
+  @@unique([surveyId, token])
+  @@index([surveyId])
+  @@index([token])
+  @@index([email])
+}
+
+// ==========================================
+// Response (Unified responses with JSONB answers)
+// Replaces legacy dynamic per-survey tables (lime_survey_{sid})
+// ==========================================
+model Response {
+  id              Int       @id @default(autoincrement())
+  surveyId        Int       @map("survey_id")
+  voterId         Int?      @map("voter_id")
+  answers         Json      // JSONB map: { [questionCodeOrId]: value | string[] }
+  ipAddress       String?   @map("ip_address") @db.VarChar(45)
+  completed       Boolean   @default(true)
+  submitDate      DateTime  @default(now()) @map("submit_date")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relationships
+  survey          Survey    @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  voter           Voter?    @relation(fields: [voterId], references: [id], onDelete: SetNull)
+
+  @@map("responses")
+  @@index([surveyId])
+  @@index([voterId])
+  @@index([submitDate])
+}
+
+// ==========================================
+// Setting (Global platform configuration)
+// ==========================================
+model Setting {
+  key             String    @id @db.VarChar(128)
+  value           String    @db.Text
+  description     String?   @db.Text
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
