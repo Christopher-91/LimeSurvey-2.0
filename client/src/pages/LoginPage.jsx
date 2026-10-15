@@ -51,7 +51,7 @@ export const LoginPage = () => {
       errors.identifier =
         role === 'admin'
           ? 'Please enter your administrator username or email.'
-          : 'Please enter your voter ID, email, or survey access code.';
+          : 'Please enter your survey access code.';
     }
 
     if (role === 'admin' && !password) {
@@ -142,19 +142,19 @@ export const LoginPage = () => {
           {/* Identifier Input */}
           <div className="ls-form-group">
             <label className="ls-label" htmlFor="login-identifier">
-              {role === 'admin' ? 'Username or Email' : 'Voter Access Code / Voter ID'}
+              {role === 'admin' ? 'Username or Email' : 'Survey Access Code'}
             </label>
             <div style={{ position: 'relative' }}>
               <input
                 id="login-identifier"
                 name="identifier"
-                type={role === 'admin' ? 'text' : 'text'}
+                type="text"
                 autoComplete={role === 'admin' ? 'username' : 'off'}
                 className={`ls-input ${fieldErrors.identifier ? 'error' : ''}`}
                 placeholder={
                   role === 'admin'
                     ? 'e.g. admin or admin@limesurvey.local'
-                    : 'e.g. VOTE-DEMO-2026 or participant email'
+                    : 'e.g. VOTE-DEMO-2026'
                 }
                 value={identifier}
                 onChange={(e) => {
@@ -182,13 +182,13 @@ export const LoginPage = () => {
             )}
           </div>
 
-          {/* Password Input (Required for Admin, Optional for Voter) */}
-          <div className="ls-form-group">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <label className="ls-label" htmlFor="login-password">
-                Password {role === 'voter' && <span style={{ color: 'var(--ls-color-g-600)', fontWeight: 400 }}>(Optional for token access)</span>}
-              </label>
-              {role === 'admin' && (
+          {/* Password Input (Admin Only) */}
+          {role === 'admin' && (
+            <div className="ls-form-group">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label className="ls-label" htmlFor="login-password">
+                  Password
+                </label>
                 <a
                   href="#forgot-password"
                   onClick={(e) => {
@@ -199,79 +199,75 @@ export const LoginPage = () => {
                 >
                   Forgot your password?
                 </a>
+              </div>
+              <div style={{ position: 'relative' }}>
+                <input
+                  id="login-password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  className={`ls-input ${fieldErrors.password ? 'error' : ''}`}
+                  placeholder="••••••••••••"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: null }));
+                  }}
+                  disabled={isSubmitting}
+                  style={{ paddingLeft: '38px', paddingRight: '40px' }}
+                />
+                <i
+                  className="ri-lock-line"
+                  style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'var(--ls-color-g-600)',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--ls-color-g-600)',
+                    cursor: 'pointer',
+                    padding: '4px',
+                  }}
+                >
+                  <i className={showPassword ? 'ri-eye-off-line' : 'ri-eye-line'} style={{ fontSize: '18px' }} />
+                </button>
+              </div>
+              {fieldErrors.password && (
+                <p className="ls-error-text">
+                  <i className="ri-alert-line" /> {fieldErrors.password}
+                </p>
               )}
             </div>
-            <div style={{ position: 'relative' }}>
-              <input
-                id="login-password"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                autoComplete={role === 'admin' ? 'current-password' : 'off'}
-                className={`ls-input ${fieldErrors.password ? 'error' : ''}`}
-                placeholder={role === 'admin' ? '••••••••••••' : 'Optional password'}
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: null }));
-                }}
-                disabled={isSubmitting}
-                style={{ paddingLeft: '38px', paddingRight: '40px' }}
-              />
-              <i
-                className="ri-lock-line"
-                style={{
-                  position: 'absolute',
-                  left: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--ls-color-g-600)',
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                style={{
-                  position: 'absolute',
-                  right: '10px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--ls-color-g-600)',
-                  cursor: 'pointer',
-                  padding: '4px',
-                }}
-              >
-                <i className={showPassword ? 'ri-eye-off-line' : 'ri-eye-line'} style={{ fontSize: '18px' }} />
-              </button>
-            </div>
-            {fieldErrors.password && (
-              <p className="ls-error-text">
-                <i className="ri-alert-line" /> {fieldErrors.password}
-              </p>
-            )}
-          </div>
+          )}
 
-          {/* Remember Me Checkbox */}
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 'var(--ls-space-6)' }}>
-            <input
-              id="login-remember"
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              style={{
-                width: '16px',
-                height: '16px',
-                accentColor: 'var(--ls-color-primary)',
-                marginRight: '8px',
-                cursor: 'pointer',
-              }}
-            />
-            <label htmlFor="login-remember" style={{ fontSize: '14px', color: 'var(--ls-color-g-700)', cursor: 'pointer' }}>
-              Remember this device for 30 days
-            </label>
-          </div>
+          {/* Remember Me Checkbox (Admin Only) */}
+          {role === 'admin' && (
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 'var(--ls-space-6)' }}>
+              <input
+                id="login-remember"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                style={{ marginRight: '8px', cursor: 'pointer' }}
+              />
+              <label htmlFor="login-remember" style={{ fontSize: '14px', color: 'var(--ls-color-g-700)', cursor: 'pointer' }}>
+                Remember this device for 30 days
+              </label>
+            </div>
+          )}
 
           {/* Submit Button */}
           <button
