@@ -13,12 +13,11 @@ export const Navbar = () => {
 
   return (
     <header className="ls-navbar" role="banner">
-      <Link to="/" className="ls-navbar-brand">
+      <Link to="/" className="ls-navbar-brand" aria-label="LimeSurvey Home">
         <img
           src="https://www.limesurvey.org/images/limesurvey/svg/logo_limesurvey_head.svg"
-          alt="LimeSurvey Logo"
+          alt="LimeSurvey"
         />
-        <span>LimeSurvey</span>
       </Link>
 
       <nav className="ls-navbar-actions" aria-label="Main Navigation">
