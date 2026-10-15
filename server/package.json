@@ -9,7 +9,7 @@
     "dev": "nodemon src/server.js",
     "build": "echo 'Server ready'",
     "start": "node src/server.js",
-    "db:migrate": "npx prisma migrate dev --name init",
+    "db:migrate": "npx prisma db push",
     "db:push": "npx prisma db push",
     "db:generate": "npx prisma generate",
     "db:seed": "node prisma/seed.js",
