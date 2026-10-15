@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { prisma } from '../src/config/db.js';
 import { ResponseService } from '../src/modules/responses/response.service.js';
 import { StatsService } from '../src/modules/stats/stats.service.js';
@@ -9,6 +9,12 @@ describe('Survey, Response, and Statistics Service Unit Tests', () => {
 
   beforeAll(async () => {
     await prisma.$connect();
+  });
+
+  afterAll(async () => {
+    if (createdSurveyId) {
+      await prisma.survey.delete({ where: { id: createdSurveyId } }).catch(() => {});
+    }
   });
 
   it('creates a new survey via SurveyService', async () => {

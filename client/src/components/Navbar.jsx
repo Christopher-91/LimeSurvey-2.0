@@ -59,17 +59,6 @@ export const Navbar = () => {
           </NavLink>
         )}
 
-        <a
-          href="/api/docs"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="ls-navbar-link"
-          title="OpenAPI 3.0 Documentation"
-        >
-          <i className="ri-book-read-line" />
-          <span>API Docs</span>
-        </a>
-
         {isAuthenticated && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '12px' }}>
             <span
