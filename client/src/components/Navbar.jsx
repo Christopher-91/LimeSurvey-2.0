@@ -71,7 +71,7 @@ export const Navbar = () => {
           <span>API Docs</span>
         </a>
 
-        {isAuthenticated ? (
+        {isAuthenticated && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '12px' }}>
             <span
               className={`ls-badge ${isAdmin ? 'ls-badge-success' : 'ls-badge-info'}`}
@@ -91,11 +91,6 @@ export const Navbar = () => {
               Logout
             </button>
           </div>
-        ) : (
-          <Link to="/login" className="ls-btn ls-btn-primary ls-btn-sm" style={{ marginLeft: '8px' }}>
-            <i className="ri-login-box-line" />
-            Log In
-          </Link>
         )}
       </nav>
     </header>
