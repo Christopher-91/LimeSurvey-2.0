@@ -8,7 +8,7 @@ Modernized LimeSurvey architecture completely migrating the legacy PHP codebase 
 
 ---
 
-## 🚀 Quick Start Guide
+## Quick Start Guide
 
 ### Prerequisites
 - **Node.js** ≥ 18.x (`node -v`)
@@ -141,7 +141,7 @@ If you have an existing LimeSurvey database (MySQL or PostgreSQL) and wish to mi
 
 ---
 
-## 🧪 Testing
+## Testing
 
 Run backend service and API integration tests:
 ```bash
