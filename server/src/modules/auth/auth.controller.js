@@ -28,6 +28,27 @@ export class AuthController {
     }
   }
 
+  static async register(req, res, next) {
+    try {
+      const { username, email, password, fullName } = req.body;
+      const result = await AuthService.register({ username, email, password, fullName });
+
+      res.cookie(AUTH_COOKIE_NAME, result.token, COOKIE_OPTIONS);
+
+      return res.status(201).json({
+        success: true,
+        data: {
+          user: result.user,
+          token: result.token,
+          role: result.role,
+          redirectTo: result.redirectTo,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async logout(req, res) {
     res.clearCookie(AUTH_COOKIE_NAME, {
       httpOnly: true,

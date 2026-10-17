@@ -47,4 +47,32 @@ describe('Authentication & Role Security Tests', () => {
     expect(res.body.success).toBe(true);
     expect(Array.isArray(res.body.data.surveys)).toBe(true);
   });
+
+  it('registers a new administrator account and handles duplicates', async () => {
+    const uniqueSuffix = Date.now();
+    const testAdmin = {
+      username: `admin_${uniqueSuffix}`,
+      email: `admin_${uniqueSuffix}@example.com`,
+      password: 'StrongPassword123!',
+      fullName: 'Test Administrator',
+    };
+
+    // First registration should succeed
+    const res = await request(app).post('/api/v1/auth/register').send(testAdmin);
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.user.username).toBe(testAdmin.username);
+    expect(res.body.data.role).toBe('admin');
+    expect(res.body.data.token).toBeDefined();
+
+    // Duplicate registration with same username should be rejected
+    const dupRes = await request(app).post('/api/v1/auth/register').send(testAdmin);
+    expect(dupRes.status).toBe(409);
+    expect(dupRes.body.success).toBe(false);
+
+    // Clean up created test user
+    await prisma.user.deleteMany({
+      where: { username: testAdmin.username },
+    });
+  });
 });

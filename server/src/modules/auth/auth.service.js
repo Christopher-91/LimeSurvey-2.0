@@ -294,4 +294,76 @@ export class AuthService {
     error.statusCode = 400;
     throw error;
   }
+
+  /**
+   * Register a new Administrator
+   */
+  static async register({ username, email, password, fullName }) {
+    const cleanUsername = username.trim();
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Check if username or email already exists
+    const existing = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { username: { equals: cleanUsername, mode: 'insensitive' } },
+          { email: { equals: cleanEmail, mode: 'insensitive' } },
+        ],
+        deletedAt: null,
+      },
+    });
+
+    if (existing) {
+      if (existing.username.toLowerCase() === cleanUsername.toLowerCase()) {
+        const error = new Error('This username is already taken. Please choose another one.');
+        error.statusCode = 409;
+        throw error;
+      }
+      const error = new Error('An administrator account with this email address already exists.');
+      error.statusCode = 409;
+      throw error;
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    const newUser = await prisma.user.create({
+      data: {
+        username: cleanUsername,
+        email: cleanEmail,
+        password: hashedPassword,
+        fullName: fullName?.trim() || cleanUsername,
+        role: 'admin',
+        isActive: true,
+      },
+    });
+
+    logger.info({ userId: newUser.id, username: newUser.username }, 'New administrator registered successfully.');
+
+    // Issue JWT
+    const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
+    const token = jwt.sign(
+      {
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        fullName: newUser.fullName,
+        role: newUser.role,
+      },
+      process.env.JWT_SECRET || 'fallback_secret',
+      { expiresIn }
+    );
+
+    return {
+      role: 'admin',
+      token,
+      user: {
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        fullName: newUser.fullName,
+        role: newUser.role,
+      },
+      redirectTo: '/admin/dashboard',
+    };
+  }
 }

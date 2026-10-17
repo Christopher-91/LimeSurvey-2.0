@@ -51,6 +51,26 @@ export const AuthProvider = ({ children }) => {
     throw new Error('Login failed');
   };
 
+  const register = async ({ username, email, password, fullName }) => {
+    const response = await apiClient.post('/auth/register', {
+      username,
+      email,
+      password,
+      fullName,
+    });
+
+    if (response.success && response.data) {
+      setUser(response.data.user);
+      setRole(response.data.role);
+      showToast(
+        `Welcome to LimeSurvey, ${response.data.user.fullName || response.data.user.username}!`,
+        'success'
+      );
+      return response.data;
+    }
+    throw new Error('Registration failed');
+  };
+
   const logout = async () => {
     try {
       await apiClient.post('/auth/logout');
@@ -73,6 +93,7 @@ export const AuthProvider = ({ children }) => {
         isVoter: role === 'voter',
         isLoading,
         login,
+        register,
         logout,
         refreshUser: fetchCurrentUser,
       }}
