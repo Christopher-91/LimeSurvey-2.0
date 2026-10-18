@@ -49,15 +49,17 @@ export class QuestionService {
     // If options are provided, update them
     if (options && Array.isArray(options)) {
       await prisma.answerOption.deleteMany({ where: { questionId: qId } });
-      await prisma.answerOption.createMany({
-        data: options.map((opt, idx) => ({
-          questionId: qId,
-          code: opt.code || `A${idx + 1}`,
-          text: opt.text,
-          sortOrder: opt.sortOrder || idx + 1,
-          assessmentValue: opt.assessmentValue || 0,
-        })),
-      });
+      if (options.length > 0) {
+        await prisma.answerOption.createMany({
+          data: options.map((opt, idx) => ({
+            questionId: qId,
+            code: opt.code || `A${idx + 1}`,
+            text: opt.text,
+            sortOrder: opt.sortOrder || idx + 1,
+            assessmentValue: opt.assessmentValue || 0,
+          })),
+        });
+      }
     }
 
     return prisma.question.update({
@@ -67,7 +69,7 @@ export class QuestionService {
         text,
         helpText,
         type,
-        mandatory,
+        mandatory: mandatory !== undefined ? !!mandatory : undefined,
         sortOrder,
       },
       include: {

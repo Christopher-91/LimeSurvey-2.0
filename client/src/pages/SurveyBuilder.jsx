@@ -28,6 +28,14 @@ export const SurveyBuilder = () => {
   const [newQMandatory, setNewQMandatory] = useState(false);
   const [optionsText, setOptionsText] = useState('Option 1\nOption 2\nOption 3');
 
+  // Editing Question
+  const [editingQuestionId, setEditingQuestionId] = useState(null);
+  const [editQCode, setEditQCode] = useState('');
+  const [editQText, setEditQText] = useState('');
+  const [editQType, setEditQType] = useState('single_choice');
+  const [editQMandatory, setEditQMandatory] = useState(false);
+  const [editOptionsText, setEditOptionsText] = useState('');
+
   // Voters
   const [voters, setVoters] = useState([]);
   const [newVoterEmail, setNewVoterEmail] = useState('');
@@ -153,11 +161,73 @@ export const SurveyBuilder = () => {
     }
   };
 
+  const handleStartEditQuestion = (q) => {
+    setIsAddingQuestion(false);
+    setEditingQuestionId(q.id);
+    setEditQCode(q.code || '');
+    setEditQText(q.text || '');
+    setEditQType(q.type || 'single_choice');
+    setEditQMandatory(Boolean(q.mandatory));
+    const opts = (q.options || []).map((o) => o.text).join('\n');
+    setEditOptionsText(opts || 'Option 1\nOption 2\nOption 3');
+  };
+
+  const handleCancelEditQuestion = () => {
+    setEditingQuestionId(null);
+    setEditQCode('');
+    setEditQText('');
+    setEditQType('single_choice');
+    setEditQMandatory(false);
+    setEditOptionsText('');
+  };
+
+  const handleSaveEditQuestion = async (e) => {
+    e.preventDefault();
+    if (!editQText.trim()) {
+      showToast('Question text is required', 'error');
+      return;
+    }
+
+    // Parse options from textarea
+    const options = ['single_choice', 'multiple_choice'].includes(editQType)
+      ? editOptionsText
+          .split('\n')
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .map((line, idx) => ({
+            code: `AO${idx + 1}`,
+            text: line,
+            sortOrder: idx + 1,
+          }))
+      : [];
+
+    try {
+      const res = await apiClient.put(`/questions/${editingQuestionId}`, {
+        code: editQCode.trim() || undefined,
+        text: editQText.trim(),
+        type: editQType,
+        mandatory: editQMandatory,
+        options,
+      });
+
+      if (res.success) {
+        showToast('Question updated successfully!', 'success');
+        handleCancelEditQuestion();
+        fetchSurvey();
+      }
+    } catch (err) {
+      showToast(err.message || 'Failed to update question', 'error');
+    }
+  };
+
   const handleDeleteQuestion = async (qId) => {
     if (!window.confirm('Delete this question?')) return;
     try {
       await apiClient.delete(`/questions/${qId}`);
       showToast('Question removed', 'info');
+      if (editingQuestionId === qId) {
+        handleCancelEditQuestion();
+      }
       fetchSurvey();
     } catch (err) {
       showToast(err.message || 'Failed to delete question', 'error');
@@ -352,7 +422,10 @@ export const SurveyBuilder = () => {
             <button
               type="button"
               className="ls-btn ls-btn-primary"
-              onClick={() => setIsAddingQuestion(true)}
+              onClick={() => {
+                handleCancelEditQuestion();
+                setIsAddingQuestion(true);
+              }}
             >
               <i className="ri-add-line" /> Add Question
             </button>
@@ -474,50 +547,187 @@ export const SurveyBuilder = () => {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {questions.map((q, idx) => (
-                <div key={q.id} className="ls-card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                      <span style={{ fontWeight: 700, color: 'var(--ls-color-g-600)', minWidth: '40px' }}>
-                        #{idx + 1}
-                      </span>
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                          <span style={{ fontWeight: 600, fontSize: '16px' }}>{q.text}</span>
-                          {q.mandatory && (
-                            <span className="ls-badge" style={{ backgroundColor: '#feecee', color: 'var(--ls-color-danger)' }}>
-                              Required
-                            </span>
-                          )}
-                        </div>
-                        <span style={{ fontSize: '12px', color: 'var(--ls-color-g-600)' }}>
-                          Code: <code>{q.code}</code> | Type: <strong>{q.type.replace('_', ' ')}</strong>
-                        </span>
+              {questions.map((q, idx) => {
+                if (editingQuestionId === q.id) {
+                  return (
+                    <div
+                      key={q.id}
+                      className="ls-card"
+                      style={{ border: '2px solid var(--ls-color-primary)', backgroundColor: 'var(--ls-color-surface)' }}
+                    >
+                      <div className="ls-card-header" style={{ marginBottom: '16px' }}>
+                        <h3 className="ls-card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <i className="ri-pencil-line" style={{ color: 'var(--ls-color-primary)' }} />
+                          Edit Question #{idx + 1}
+                        </h3>
+                        <button
+                          type="button"
+                          className="ls-btn ls-btn-outline ls-btn-sm"
+                          onClick={handleCancelEditQuestion}
+                        >
+                          Cancel
+                        </button>
+                      </div>
 
-                        {q.options && q.options.length > 0 && (
-                          <div style={{ marginTop: '10px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                            {q.options.map((opt) => (
-                              <span key={opt.id} className="ls-badge ls-badge-secondary">
-                                {opt.text}
-                              </span>
-                            ))}
+                      <form onSubmit={handleSaveEditQuestion}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px' }}>
+                          <div className="ls-form-group">
+                            <label className="ls-label" htmlFor={`edit-code-${q.id}`}>
+                              Question Code / Title
+                            </label>
+                            <input
+                              id={`edit-code-${q.id}`}
+                              type="text"
+                              className="ls-input"
+                              placeholder={`e.g. Q${idx + 1}`}
+                              value={editQCode}
+                              onChange={(e) => setEditQCode(e.target.value)}
+                            />
+                          </div>
+
+                          <div className="ls-form-group">
+                            <label className="ls-label" htmlFor={`edit-type-${q.id}`}>
+                              Question Type
+                            </label>
+                            <select
+                              id={`edit-type-${q.id}`}
+                              className="ls-select"
+                              value={editQType}
+                              onChange={(e) => setEditQType(e.target.value)}
+                            >
+                              <option value="single_choice">Single Choice (Radio Buttons)</option>
+                              <option value="multiple_choice">Multiple Choice (Checkboxes)</option>
+                              <option value="rating">Rating (1 to 5 Stars)</option>
+                              <option value="short_text">Short Free Text (Single Line)</option>
+                              <option value="long_text">Long Free Text (Multi-line Paragraph)</option>
+                              <option value="number">Number / Numeric Input</option>
+                              <option value="yes_no">Yes / No Switch</option>
+                              <option value="date">Date Selection</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="ls-form-group">
+                          <label className="ls-label" htmlFor={`edit-text-${q.id}`}>
+                            Question Text *
+                          </label>
+                          <input
+                            id={`edit-text-${q.id}`}
+                            type="text"
+                            className="ls-input"
+                            placeholder="Enter the question shown to participants..."
+                            value={editQText}
+                            onChange={(e) => setEditQText(e.target.value)}
+                            required
+                          />
+                        </div>
+
+                        {['single_choice', 'multiple_choice'].includes(editQType) && (
+                          <div className="ls-form-group">
+                            <label className="ls-label" htmlFor={`edit-options-${q.id}`}>
+                              Answer Options (One per line)
+                            </label>
+                            <textarea
+                              id={`edit-options-${q.id}`}
+                              className="ls-textarea"
+                              rows="4"
+                              value={editOptionsText}
+                              onChange={(e) => setEditOptionsText(e.target.value)}
+                              placeholder="Option 1&#10;Option 2&#10;Option 3"
+                            />
+                            <p className="ls-helper-text">Enter each selectable answer choice on a new line.</p>
                           </div>
                         )}
+
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 'var(--ls-space-4)' }}>
+                          <input
+                            id={`edit-mandatory-${q.id}`}
+                            type="checkbox"
+                            checked={editQMandatory}
+                            onChange={(e) => setEditQMandatory(e.target.checked)}
+                            style={{ width: '16px', height: '16px', accentColor: 'var(--ls-color-primary)', marginRight: '8px', cursor: 'pointer' }}
+                          />
+                          <label htmlFor={`edit-mandatory-${q.id}`} style={{ fontSize: '14px', cursor: 'pointer' }}>
+                            Mandatory Question (Participants must answer to submit)
+                          </label>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button type="submit" className="ls-btn ls-btn-primary">
+                            <i className="ri-check-line" /> Save Changes
+                          </button>
+                          <button
+                            type="button"
+                            className="ls-btn ls-btn-outline"
+                            onClick={handleCancelEditQuestion}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={q.id} className="ls-card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div style={{ display: 'flex', gap: '12px' }}>
+                        <span style={{ fontWeight: 700, color: 'var(--ls-color-g-600)', minWidth: '40px' }}>
+                          #{idx + 1}
+                        </span>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                            <span style={{ fontWeight: 600, fontSize: '16px' }}>{q.text}</span>
+                            {q.mandatory ? (
+                              <span className="ls-badge" style={{ backgroundColor: '#feecee', color: 'var(--ls-color-danger)' }}>
+                                Required
+                              </span>
+                            ) : (
+                              <span className="ls-badge" style={{ backgroundColor: 'var(--ls-color-g-200)', color: 'var(--ls-color-g-700)' }}>
+                                Not Required
+                              </span>
+                            )}
+                          </div>
+                          <span style={{ fontSize: '12px', color: 'var(--ls-color-g-600)' }}>
+                            Code: <code>{q.code}</code> | Type: <strong>{q.type.replace('_', ' ')}</strong>
+                          </span>
+
+                          {q.options && q.options.length > 0 && (
+                            <div style={{ marginTop: '10px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                              {q.options.map((opt) => (
+                                <span key={opt.id || opt.code} className="ls-badge ls-badge-secondary">
+                                  {opt.text}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleStartEditQuestion(q)}
+                          className="ls-btn ls-btn-outline ls-btn-sm"
+                          title="Edit Question"
+                        >
+                          <i className="ri-pencil-line" /> Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteQuestion(q.id)}
+                          className="ls-btn ls-btn-outline ls-btn-sm"
+                          style={{ color: 'var(--ls-color-danger)' }}
+                          title="Delete Question"
+                        >
+                          <i className="ri-delete-bin-line" />
+                        </button>
                       </div>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteQuestion(q.id)}
-                      className="ls-btn ls-btn-outline ls-btn-sm"
-                      style={{ color: 'var(--ls-color-danger)' }}
-                      title="Delete Question"
-                    >
-                      <i className="ri-delete-bin-line" />
-                    </button>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
