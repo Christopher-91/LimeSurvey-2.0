@@ -22,6 +22,18 @@ export class VoterController {
     }
   }
 
+  static async generateUniversal(req, res, next) {
+    try {
+      const voter = await VoterService.generateUniversal(req.params.surveyId, req.body.token);
+      return res.status(201).json({
+        success: true,
+        data: { voter, message: 'Universal access code created for all participants.' },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async batchGenerate(req, res, next) {
     try {
       const count = req.body.count ? parseInt(req.body.count, 10) : 5;

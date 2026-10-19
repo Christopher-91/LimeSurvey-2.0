@@ -6,27 +6,66 @@ export class VoterService {
     const sId = parseInt(surveyId, 10);
     return prisma.voter.findMany({
       where: { surveyId: sId, deletedAt: null },
+      include: {
+        _count: {
+          select: { responses: true },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
 
   static async create(surveyId, data) {
     const sId = parseInt(surveyId, 10);
-    const { email, firstName, lastName, token, voterId } = data;
+    const { email, firstName, lastName, token, voterId, isUniversal, usesLeft } = data;
 
-    // Generate random 12-char token if not provided
-    const voterToken = token || crypto.randomBytes(6).toString('hex').toUpperCase();
+    const isUni = Boolean(isUniversal || usesLeft === -1 || data.type === 'universal');
+
+    // Generate token if not provided
+    const voterToken = (token && token.trim())
+      ? token.trim()
+      : isUni
+      ? `ALL-${crypto.randomBytes(3).toString('hex').toUpperCase()}`
+      : crypto.randomBytes(6).toString('hex').toUpperCase();
 
     return prisma.voter.create({
       data: {
         surveyId: sId,
-        voterId: voterId || `VOTER-${Date.now().toString().slice(-4)}`,
+        voterId: voterId || (isUni ? `UNIVERSAL-${Date.now().toString().slice(-4)}` : `VOTER-${Date.now().toString().slice(-4)}`),
         token: voterToken,
-        email: email || null,
+        email: email || (isUni ? 'All Participants (Shared Code)' : null),
         firstName: firstName || null,
         lastName: lastName || null,
-        usesLeft: 1,
+        usesLeft: isUni ? -1 : (usesLeft ? parseInt(usesLeft, 10) : 1),
         completed: false,
+      },
+      include: {
+        _count: {
+          select: { responses: true },
+        },
+      },
+    });
+  }
+
+  static async generateUniversal(surveyId, customToken) {
+    const sId = parseInt(surveyId, 10);
+    const token = (customToken && customToken.trim())
+      ? customToken.trim()
+      : `ALL-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+
+    return prisma.voter.create({
+      data: {
+        surveyId: sId,
+        voterId: `UNIVERSAL-${Date.now().toString().slice(-4)}`,
+        token,
+        email: 'All Participants (Shared Code)',
+        usesLeft: -1,
+        completed: false,
+      },
+      include: {
+        _count: {
+          select: { responses: true },
+        },
       },
     });
   }
@@ -60,3 +99,4 @@ export class VoterService {
     });
   }
 }
+
