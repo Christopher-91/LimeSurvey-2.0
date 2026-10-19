@@ -62,7 +62,10 @@ export class ResponseService {
       const voter = await prisma.voter.findFirst({
         where: {
           surveyId: sId,
-          token: token,
+          OR: [
+            { token: token.trim() },
+            { token: token.trim().toUpperCase() },
+          ],
           deletedAt: null,
         },
       });
@@ -73,7 +76,9 @@ export class ResponseService {
         throw error;
       }
 
-      if (voter.completed && voter.usesLeft <= 0) {
+      const isUnlimited = voter.usesLeft === -1 || voter.usesLeft >= 999999;
+
+      if (!isUnlimited && voter.completed && voter.usesLeft <= 0) {
         const error = new Error('This voter access code has already completed the survey.');
         error.statusCode = 400;
         throw error;
@@ -82,14 +87,23 @@ export class ResponseService {
       voterId = voter.id;
 
       // Update voter status
-      await prisma.voter.update({
-        where: { id: voter.id },
-        data: {
-          completed: true,
-          completedAt: new Date(),
-          usesLeft: Math.max(0, voter.usesLeft - 1),
-        },
-      });
+      if (!isUnlimited) {
+        await prisma.voter.update({
+          where: { id: voter.id },
+          data: {
+            completed: true,
+            completedAt: new Date(),
+            usesLeft: Math.max(0, voter.usesLeft - 1),
+          },
+        });
+      } else {
+        await prisma.voter.update({
+          where: { id: voter.id },
+          data: {
+            completedAt: new Date(),
+          },
+        });
+      }
     }
 
     // Save unified response with JSONB answers
