@@ -113,12 +113,14 @@ export class AuthService {
     // ==========================================
     if (role === 'voter') {
       // Find voter by token (access code) or voterId or email
+      const cleanId = identifier.trim();
       const voter = await prisma.voter.findFirst({
         where: {
           OR: [
-            { token: identifier },
-            { voterId: identifier },
-            { email: { equals: identifier, mode: 'insensitive' } },
+            { token: cleanId },
+            { token: cleanId.toUpperCase() },
+            { voterId: cleanId },
+            { email: { equals: cleanId, mode: 'insensitive' } },
           ],
           deletedAt: null,
         },
@@ -187,8 +189,9 @@ export class AuthService {
         }
       }
 
-      // Check if already completed
-      if (voter.completed && voter.usesLeft <= 0) {
+      // Check if already completed (unlimited / universal codes can be reused)
+      const isUnlimited = voter.usesLeft === -1 || voter.usesLeft >= 999999;
+      if (!isUnlimited && voter.completed && voter.usesLeft <= 0) {
         const error = new Error('This survey access code has already been used and submitted.');
         error.statusCode = 400;
         throw error;

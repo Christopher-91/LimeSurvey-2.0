@@ -40,6 +40,7 @@ export const SurveyBuilder = () => {
   const [voters, setVoters] = useState([]);
   const [newVoterEmail, setNewVoterEmail] = useState('');
   const [newVoterToken, setNewVoterToken] = useState('');
+  const [isUniversalCode, setIsUniversalCode] = useState(false);
 
   const fetchSurvey = async () => {
     try {
