@@ -239,25 +239,64 @@ export const SurveyBuilder = () => {
     e.preventDefault();
     try {
       await apiClient.post(`/surveys/${id}/voters`, {
-        email: newVoterEmail.trim(),
+        email: newVoterEmail.trim() || undefined,
         token: newVoterToken.trim() || undefined,
+        isUniversal: isUniversalCode,
       });
-      showToast('Voter access code created!', 'success');
+      showToast(
+        isUniversalCode
+          ? 'Universal access code created for all participants!'
+          : 'Voter access code created!',
+        'success'
+      );
       setNewVoterEmail('');
       setNewVoterToken('');
+      setIsUniversalCode(false);
       fetchVoters();
     } catch (err) {
-      showToast(err.message || 'Failed to add voter', 'error');
+      showToast(err.message || 'Failed to add access code', 'error');
+    }
+  };
+
+  const handleGenerateUniversalCode = async () => {
+    try {
+      await apiClient.post(`/surveys/${id}/voters/universal`, {
+        token: newVoterToken.trim() || undefined,
+      });
+      showToast('Universal access code generated for all participants!', 'success');
+      setNewVoterToken('');
+      setIsUniversalCode(false);
+      fetchVoters();
+    } catch (err) {
+      showToast(err.message || 'Failed to generate universal access code', 'error');
     }
   };
 
   const handleGenerateBatchVoters = async () => {
     try {
       await apiClient.post(`/surveys/${id}/voters/batch`, { count: 5 });
-      showToast('Generated 5 voter access tokens!', 'success');
+      showToast('Generated 5 single-use voter tokens!', 'success');
       fetchVoters();
     } catch (err) {
       showToast(err.message || 'Failed to generate batch tokens', 'error');
+    }
+  };
+
+  const handleDeleteVoter = async (voterId) => {
+    if (!window.confirm('Delete this access code?')) return;
+    try {
+      await apiClient.delete(`/voters/${voterId}`);
+      showToast('Access code removed', 'info');
+      fetchVoters();
+    } catch (err) {
+      showToast(err.message || 'Failed to delete access code', 'error');
+    }
+  };
+
+  const handleCopyText = (text, label) => {
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(text);
+      showToast(`Copied ${label} to clipboard!`, 'success');
     }
   };
 
@@ -737,93 +776,305 @@ export const SurveyBuilder = () => {
       {/* TAB 3: VOTERS & PARTICIPANTS */}
       {!isNew && activeTab === 'voters' && (
         <div>
-          <div className="ls-card" style={{ marginBottom: 'var(--ls-space-6)' }}>
-            <div className="ls-card-header">
-              <h2 className="ls-card-title">Generate Access Codes</h2>
-              <button
-                type="button"
-                className="ls-btn ls-btn-outline ls-btn-sm"
-                onClick={handleGenerateBatchVoters}
+          {/* Universal Access Code Banner Card */}
+          {(() => {
+            const universalCodes = voters.filter(
+              (v) => v.usesLeft === -1 || v.voterId?.startsWith('UNIVERSAL')
+            );
+            if (universalCodes.length === 0) return null;
+            const primaryUni = universalCodes[0];
+            const responseCount = primaryUni._count?.responses || 0;
+
+            return (
+              <div
+                className="ls-card"
+                style={{
+                  marginBottom: 'var(--ls-space-6)',
+                  border: '2px solid var(--ls-color-primary)',
+                  backgroundColor: 'var(--ls-color-surface)',
+                  boxShadow: '0 4px 14px rgba(46, 125, 50, 0.08)',
+                }}
               >
-                <i className="ri-magic-line" /> Quick Generate 5 Random Tokens
-              </button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+                  <div style={{ flex: '1', minWidth: '280px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                      <span className="ls-badge" style={{ backgroundColor: 'var(--ls-color-primary)', color: '#fff', padding: '4px 10px', fontSize: '13px', fontWeight: 600 }}>
+                        <i className="ri-global-line" /> Universal Access Code (All Users)
+                      </span>
+                      <span className="ls-badge ls-badge-success" style={{ fontWeight: 600 }}>
+                        {responseCount} response{responseCount === 1 ? '' : 's'} collected
+                      </span>
+                      <span className="ls-badge" style={{ backgroundColor: 'var(--ls-color-primary-subtle)', color: 'var(--ls-color-primary)', fontWeight: 600 }}>
+                        Unlimited Uses
+                      </span>
+                    </div>
+
+                    <h3 style={{ fontSize: '16px', fontWeight: 600, margin: '4px 0 6px 0' }}>
+                      One shared code for everyone taking the survey
+                    </h3>
+                    <p style={{ margin: '0 0 14px 0', fontSize: '14px', color: 'var(--ls-color-g-600)' }}>
+                      Anyone with this access code or direct survey link can take and submit the survey. It is not limited to a single respondent and will not lock out subsequent users.
+                    </p>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                      <span
+                        style={{
+                          fontSize: '18px',
+                          fontWeight: 700,
+                          letterSpacing: '1px',
+                          fontFamily: 'monospace',
+                          backgroundColor: 'var(--ls-color-g-100)',
+                          padding: '6px 14px',
+                          borderRadius: 'var(--ls-radius-sm)',
+                          border: '1px solid var(--ls-color-g-400)',
+                          color: 'var(--ls-color-g-900)',
+                        }}
+                      >
+                        {primaryUni.token}
+                      </span>
+                      <button
+                        type="button"
+                        className="ls-btn ls-btn-outline ls-btn-sm"
+                        onClick={() => handleCopyText(primaryUni.token, 'Access Code')}
+                      >
+                        <i className="ri-file-copy-line" /> Copy Code
+                      </button>
+                      <button
+                        type="button"
+                        className="ls-btn ls-btn-outline ls-btn-sm"
+                        onClick={() =>
+                          handleCopyText(
+                            `${window.location.origin}/surveys/${id}/take?token=${primaryUni.token}`,
+                            'Direct Survey Link'
+                          )
+                        }
+                      >
+                        <i className="ri-links-line" /> Copy Direct Link
+                      </button>
+                      <a
+                        href={`/surveys/${id}/take?token=${primaryUni.token}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="ls-btn ls-btn-primary ls-btn-sm"
+                      >
+                        <i className="ri-external-link-line" /> Test Survey Link
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Generator Card */}
+          <div className="ls-card" style={{ marginBottom: 'var(--ls-space-6)' }}>
+            <div className="ls-card-header" style={{ alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h2 className="ls-card-title">Generate Access Codes</h2>
+                <p style={{ fontSize: '13px', color: 'var(--ls-color-g-600)', marginTop: '2px' }}>
+                  Generate one shared access code for all respondents, or create individual single-use tokens.
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="ls-btn ls-btn-primary ls-btn-sm"
+                  onClick={handleGenerateUniversalCode}
+                  title="Generate one code that anyone can use to take this survey"
+                >
+                  <i className="ri-global-line" /> One Code for All Users (Universal)
+                </button>
+                <button
+                  type="button"
+                  className="ls-btn ls-btn-outline ls-btn-sm"
+                  onClick={handleGenerateBatchVoters}
+                  title="Generate 5 individual single-use tokens"
+                >
+                  <i className="ri-magic-line" /> Quick Generate 5 Random Tokens
+                </button>
+              </div>
             </div>
 
-            <form onSubmit={handleAddVoter} style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-              <div style={{ flex: '1', minWidth: '200px' }}>
-                <label className="ls-label">Participant Email</label>
-                <input
-                  type="email"
-                  className="ls-input"
-                  placeholder="voter@company.com"
-                  value={newVoterEmail}
-                  onChange={(e) => setNewVoterEmail(e.target.value)}
-                />
+            <form onSubmit={handleAddVoter}>
+              {/* Access Code Mode Choice */}
+              <div style={{ display: 'flex', gap: '20px', alignItems: 'center', margin: '8px 0 16px 0', flexWrap: 'wrap' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer', fontWeight: !isUniversalCode ? 600 : 400 }}>
+                  <input
+                    type="radio"
+                    name="tokenType"
+                    checked={!isUniversalCode}
+                    onChange={() => setIsUniversalCode(false)}
+                    style={{ accentColor: 'var(--ls-color-primary)', width: '16px', height: '16px' }}
+                  />
+                  <span>Single-Use Token (1 voter per token)</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer', fontWeight: isUniversalCode ? 600 : 400 }}>
+                  <input
+                    type="radio"
+                    name="tokenType"
+                    checked={isUniversalCode}
+                    onChange={() => setIsUniversalCode(true)}
+                    style={{ accentColor: 'var(--ls-color-primary)', width: '16px', height: '16px' }}
+                  />
+                  <span>Universal Code (One access code for all users / unlimited responses)</span>
+                </label>
               </div>
-              <div style={{ flex: '1', minWidth: '180px' }}>
-                <label className="ls-label">Custom Access Token (Optional)</label>
-                <input
-                  type="text"
-                  className="ls-input"
-                  placeholder="e.g. VIP-ACCESS-2026"
-                  value={newVoterToken}
-                  onChange={(e) => setNewVoterToken(e.target.value)}
-                />
+
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                <div style={{ flex: '1', minWidth: '200px' }}>
+                  <label className="ls-label">
+                    {isUniversalCode ? 'Audience / Group Label (Optional)' : 'Participant Email (Optional)'}
+                  </label>
+                  <input
+                    type={isUniversalCode ? 'text' : 'email'}
+                    className="ls-input"
+                    placeholder={isUniversalCode ? 'e.g. All Company Employees / Open Public' : 'voter@company.com'}
+                    value={newVoterEmail}
+                    onChange={(e) => setNewVoterEmail(e.target.value)}
+                  />
+                </div>
+                <div style={{ flex: '1', minWidth: '180px' }}>
+                  <label className="ls-label">
+                    {isUniversalCode ? 'Custom Universal Access Code (Optional)' : 'Custom Access Token (Optional)'}
+                  </label>
+                  <input
+                    type="text"
+                    className="ls-input"
+                    placeholder={isUniversalCode ? 'e.g. ALL-STAFF-2026' : 'e.g. VIP-ACCESS-2026'}
+                    value={newVoterToken}
+                    onChange={(e) => setNewVoterToken(e.target.value)}
+                  />
+                </div>
+                <button type="submit" className="ls-btn ls-btn-primary">
+                  <i className={isUniversalCode ? 'ri-global-line' : 'ri-add-line'} />
+                  {isUniversalCode ? 'Add Universal Code' : 'Add Participant'}
+                </button>
               </div>
-              <button type="submit" className="ls-btn ls-btn-primary">
-                <i className="ri-add-line" /> Add Participant
-              </button>
             </form>
           </div>
 
+          {/* Registered Participants & Access Codes Table */}
           <div className="ls-card">
             <h2 className="ls-card-title" style={{ marginBottom: 'var(--ls-space-4)' }}>
-              Registered Participants ({voters.length})
+              Registered Participants & Access Codes ({voters.length})
             </h2>
 
             {voters.length === 0 ? (
               <div className="ls-empty-state">
                 <i className="ri-user-unfollow-line ls-empty-icon" />
-                <h3>No private access codes generated</h3>
-                <p>Anyone can answer if the survey is set to public, or you can generate closed tokens above.</p>
+                <h3>No access codes generated yet</h3>
+                <p>Generate a universal access code for all users above, or create individual single-use voter tokens.</p>
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '14px' }}>
+                  <button type="button" className="ls-btn ls-btn-primary" onClick={handleGenerateUniversalCode}>
+                    <i className="ri-global-line" /> Generate One Code for All Users
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="ls-table-container">
                 <table className="ls-table">
                   <thead>
                     <tr>
-                      <th>Voter ID</th>
+                      <th>Voter / Code ID</th>
                       <th>Access Code (Token)</th>
-                      <th>Email</th>
+                      <th>Type / Scope</th>
+                      <th>Email / Label</th>
+                      <th>Responses</th>
                       <th>Status</th>
                       <th>Direct Invitation Link</th>
+                      <th style={{ textAlign: 'right' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {voters.map((v) => (
-                      <tr key={v.id}>
-                        <td style={{ fontWeight: 600 }}>{v.voterId}</td>
-                        <td>
-                          <code>{v.token}</code>
-                        </td>
-                        <td>{v.email || '—'}</td>
-                        <td>
-                          <span className={`ls-badge ${v.completed ? 'ls-badge-success' : 'ls-badge-secondary'}`}>
-                            {v.completed ? 'Completed' : 'Pending'}
-                          </span>
-                        </td>
-                        <td>
-                          <a
-                            href={`/surveys/${id}/take?token=${v.token}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            style={{ fontSize: '13px' }}
-                          >
-                            Open Survey Link →
-                          </a>
-                        </td>
-                      </tr>
-                    ))}
+                    {voters.map((v) => {
+                      const isUni = v.usesLeft === -1 || v.voterId?.startsWith('UNIVERSAL');
+                      const responseCount = v._count?.responses || 0;
+
+                      return (
+                        <tr key={v.id}>
+                          <td style={{ fontWeight: 600 }}>{v.voterId}</td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <code>{v.token}</code>
+                              <button
+                                type="button"
+                                onClick={() => handleCopyText(v.token, 'Access Code')}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ls-color-g-600)', padding: '2px' }}
+                                title="Copy Access Code"
+                              >
+                                <i className="ri-file-copy-line" />
+                              </button>
+                            </div>
+                          </td>
+                          <td>
+                            {isUni ? (
+                              <span className="ls-badge" style={{ backgroundColor: 'var(--ls-color-primary-subtle)', color: 'var(--ls-color-primary)', fontWeight: 600 }}>
+                                <i className="ri-global-line" /> All Users (Universal)
+                              </span>
+                            ) : (
+                              <span className="ls-badge ls-badge-secondary">
+                                <i className="ri-user-line" /> Single-Use (1 Voter)
+                              </span>
+                            )}
+                          </td>
+                          <td>{v.email || '—'}</td>
+                          <td>
+                            {isUni ? (
+                              <span style={{ fontWeight: 600, color: 'var(--ls-color-primary)' }}>
+                                {responseCount} response{responseCount === 1 ? '' : 's'}
+                              </span>
+                            ) : (
+                              <span>{v.completed ? '1 response' : '0 responses'}</span>
+                            )}
+                          </td>
+                          <td>
+                            {isUni ? (
+                              <span className="ls-badge ls-badge-success">Active (Unlimited)</span>
+                            ) : (
+                              <span className={`ls-badge ${v.completed ? 'ls-badge-success' : 'ls-badge-secondary'}`}>
+                                {v.completed ? 'Completed' : 'Pending'}
+                              </span>
+                            )}
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <a
+                                href={`/surveys/${id}/take?token=${v.token}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{ fontSize: '13px' }}
+                              >
+                                Open Survey Link →
+                              </a>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleCopyText(
+                                    `${window.location.origin}/surveys/${id}/take?token=${v.token}`,
+                                    'Direct Survey Link'
+                                  )
+                                }
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ls-color-g-600)', padding: '2px' }}
+                                title="Copy direct link"
+                              >
+                                <i className="ri-links-line" />
+                              </button>
+                            </div>
+                          </td>
+                          <td style={{ textAlign: 'right' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteVoter(v.id)}
+                              className="ls-btn ls-btn-outline ls-btn-sm"
+                              style={{ color: 'var(--ls-color-danger)', padding: '4px 8px' }}
+                              title="Delete this access code"
+                            >
+                              <i className="ri-delete-bin-line" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

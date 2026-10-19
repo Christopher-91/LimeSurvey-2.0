@@ -4,6 +4,7 @@ import { QuestionService } from '../src/modules/questions/question.service.js';
 import { ResponseService } from '../src/modules/responses/response.service.js';
 import { StatsService } from '../src/modules/stats/stats.service.js';
 import { SurveyService } from '../src/modules/surveys/survey.service.js';
+import { VoterService } from '../src/modules/voters/voter.service.js';
 
 describe('Survey, Response, and Statistics Service Unit Tests', () => {
   let createdSurveyId;
@@ -96,6 +97,54 @@ describe('Survey, Response, and Statistics Service Unit Tests', () => {
     expect(updated.mandatory).toBe(false);
     expect(updated.options).toHaveLength(3);
     expect(updated.options.map((o) => o.text)).toEqual(['Excellent', 'Good', 'Needs Improvement']);
+  });
+
+  it('creates a universal access code and allows multiple users to submit responses with the same code', async () => {
+    // Generate universal code for all participants
+    const universalVoter = await VoterService.generateUniversal(createdSurveyId, 'ALL-STAFF-2026');
+    expect(universalVoter).toBeDefined();
+    expect(universalVoter.token).toBe('ALL-STAFF-2026');
+    expect(universalVoter.usesLeft).toBe(-1);
+
+    // Make question not mandatory so responses can be submitted easily
+    await prisma.question.update({
+      where: { id: testQuestionId },
+      data: { mandatory: false },
+    });
+
+    // User 1 submits using universal code
+    const res1 = await ResponseService.submitResponse(
+      createdSurveyId,
+      { Q_UPDATED: ['AO1'] },
+      'ALL-STAFF-2026',
+      '127.0.0.1'
+    );
+    expect(res1).toBeDefined();
+
+    // User 2 submits using THE SAME universal code (must NOT be blocked)
+    const res2 = await ResponseService.submitResponse(
+      createdSurveyId,
+      { Q_UPDATED: ['AO2'] },
+      'ALL-STAFF-2026',
+      '127.0.0.2'
+    );
+    expect(res2).toBeDefined();
+
+    // User 3 submits using THE SAME universal code (must NOT be blocked)
+    const res3 = await ResponseService.submitResponse(
+      createdSurveyId,
+      { Q_UPDATED: ['AO3'] },
+      'ALL-STAFF-2026',
+      '127.0.0.3'
+    );
+    expect(res3).toBeDefined();
+
+    // Check listBySurvey reports 3 responses collected with this universal code
+    const voters = await VoterService.listBySurvey(createdSurveyId);
+    const uniInList = voters.find((v) => v.token === 'ALL-STAFF-2026');
+    expect(uniInList).toBeDefined();
+    expect(uniInList.usesLeft).toBe(-1);
+    expect(uniInList._count.responses).toBe(3);
   });
 
   it('rejects submission when mandatory question is missing', async () => {
