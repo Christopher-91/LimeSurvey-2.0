@@ -93,10 +93,34 @@ export class VoterService {
   }
 
   static async delete(id) {
-    return prisma.voter.update({
-      where: { id: parseInt(id, 10) },
+    const numId = parseInt(id, 10);
+    const isNum = !isNaN(numId) && String(numId) === String(id).trim();
+
+    if (isNum) {
+      return prisma.voter.update({
+        where: { id: numId },
+        data: { deletedAt: new Date() },
+      });
+    }
+
+    return prisma.voter.updateMany({
+      where: {
+        OR: [
+          { token: String(id).trim() },
+          { voterId: String(id).trim() },
+        ],
+      },
+      data: { deletedAt: new Date() },
+    });
+  }
+
+  static async deleteAll(surveyId) {
+    const sId = parseInt(surveyId, 10);
+    return prisma.voter.updateMany({
+      where: { surveyId: sId, deletedAt: null },
       data: { deletedAt: new Date() },
     });
   }
 }
+
 

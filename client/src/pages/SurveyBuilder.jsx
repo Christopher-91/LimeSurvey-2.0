@@ -41,6 +41,7 @@ export const SurveyBuilder = () => {
   const [newVoterEmail, setNewVoterEmail] = useState('');
   const [newVoterToken, setNewVoterToken] = useState('');
   const [isUniversalCode, setIsUniversalCode] = useState(false);
+  const [deletingVoterId, setDeletingVoterId] = useState(null);
 
   const fetchSurvey = async () => {
     try {
@@ -283,13 +284,29 @@ export const SurveyBuilder = () => {
   };
 
   const handleDeleteVoter = async (voterId) => {
-    if (!window.confirm('Delete this access code?')) return;
     try {
+      // Optimistically remove from state immediately
+      setVoters((prev) => prev.filter((v) => v.id !== voterId && v.voterId !== voterId));
+      setDeletingVoterId(null);
       await apiClient.delete(`/voters/${voterId}`);
-      showToast('Access code removed', 'info');
+      showToast('Access code removed successfully', 'info');
       fetchVoters();
     } catch (err) {
       showToast(err.message || 'Failed to delete access code', 'error');
+      fetchVoters();
+    }
+  };
+
+  const handleDeleteAllVoters = async () => {
+    try {
+      setVoters([]);
+      setDeletingVoterId(null);
+      await apiClient.delete(`/surveys/${id}/voters`);
+      showToast('All access codes cleared successfully', 'info');
+      fetchVoters();
+    } catch (err) {
+      showToast(err.message || 'Failed to clear access codes', 'error');
+      fetchVoters();
     }
   };
 
@@ -851,6 +868,15 @@ export const SurveyBuilder = () => {
                       >
                         <i className="ri-links-line" /> Copy Direct Link
                       </button>
+                      <button
+                        type="button"
+                        className="ls-btn ls-btn-outline ls-btn-sm"
+                        style={{ color: 'var(--ls-color-danger)' }}
+                        onClick={() => handleDeleteVoter(primaryUni.id)}
+                        title="Delete this universal access code"
+                      >
+                        <i className="ri-delete-bin-line" /> Delete Universal Code
+                      </button>
                       <a
                         href={`/surveys/${id}/take?token=${primaryUni.token}`}
                         target="_blank"
@@ -892,6 +918,24 @@ export const SurveyBuilder = () => {
                 >
                   <i className="ri-magic-line" /> Quick Generate 5 Random Tokens
                 </button>
+                {voters.length > 0 && (
+                  <button
+                    type="button"
+                    className="ls-btn ls-btn-outline ls-btn-sm"
+                    style={{ color: 'var(--ls-color-danger)' }}
+                    onClick={() => {
+                      if (deletingVoterId === 'ALL') {
+                        handleDeleteAllVoters();
+                      } else {
+                        setDeletingVoterId('ALL');
+                      }
+                    }}
+                    title="Remove all access codes for this survey"
+                  >
+                    <i className="ri-delete-bin-line" />{' '}
+                    {deletingVoterId === 'ALL' ? 'Confirm Clear All?' : 'Clear All Tokens'}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1061,16 +1105,37 @@ export const SurveyBuilder = () => {
                               </button>
                             </div>
                           </td>
-                          <td style={{ textAlign: 'right' }}>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteVoter(v.id)}
-                              className="ls-btn ls-btn-outline ls-btn-sm"
-                              style={{ color: 'var(--ls-color-danger)', padding: '4px 8px' }}
-                              title="Delete this access code"
-                            >
-                              <i className="ri-delete-bin-line" />
-                            </button>
+                          <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                            {deletingVoterId === v.id ? (
+                              <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
+                                <button
+                                  type="button"
+                                  className="ls-btn ls-btn-danger ls-btn-sm"
+                                  style={{ padding: '2px 8px', fontSize: '12px', fontWeight: 600 }}
+                                  onClick={() => handleDeleteVoter(v.id)}
+                                >
+                                  Confirm Delete
+                                </button>
+                                <button
+                                  type="button"
+                                  className="ls-btn ls-btn-outline ls-btn-sm"
+                                  style={{ padding: '2px 8px', fontSize: '12px' }}
+                                  onClick={() => setDeletingVoterId(null)}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setDeletingVoterId(v.id)}
+                                className="ls-btn ls-btn-outline ls-btn-sm"
+                                style={{ color: 'var(--ls-color-danger)', padding: '4px 8px' }}
+                                title="Delete this access code"
+                              >
+                                <i className="ri-delete-bin-line" />
+                              </button>
+                            )}
                           </td>
                         </tr>
                       );

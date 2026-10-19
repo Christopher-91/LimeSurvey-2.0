@@ -58,4 +58,16 @@ export class VoterController {
       next(error);
     }
   }
+
+  static async deleteAll(req, res, next) {
+    try {
+      await VoterService.deleteAll(req.params.surveyId);
+      return res.status(200).json({
+        success: true,
+        data: { message: 'All access codes cleared successfully.' },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
