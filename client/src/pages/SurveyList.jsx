@@ -7,6 +7,9 @@ export const SurveyList = () => {
   const [surveys, setSurveys] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [surveyToDelete, setSurveyToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [permanentDelete, setPermanentDelete] = useState(false);
   const { showToast } = useToast();
 
   const fetchSurveys = async () => {
@@ -38,18 +41,39 @@ export const SurveyList = () => {
     }
   };
 
-  const handleDelete = async (id, title) => {
-    if (!window.confirm(`Are you sure you want to delete "${title}"?`)) return;
+  const handleConfirmDelete = async () => {
+    if (!surveyToDelete) return;
+    setIsDeleting(true);
     try {
-      const res = await apiClient.delete(`/surveys/${id}`);
+      const url = permanentDelete
+        ? `/surveys/${surveyToDelete.id}?permanent=true`
+        : `/surveys/${surveyToDelete.id}`;
+      const res = await apiClient.delete(url);
       if (res.success) {
-        showToast('Survey successfully deleted', 'info');
+        showToast(res.data?.message || 'Survey successfully deleted.', 'success');
+        // Optimistically update the list immediately
+        setSurveys((prev) => prev.filter((s) => s.id !== surveyToDelete.id));
+        setSurveyToDelete(null);
+        setPermanentDelete(false);
         fetchSurveys();
       }
     } catch (err) {
       showToast(err.message || 'Failed to delete survey', 'error');
+    } finally {
+      setIsDeleting(false);
     }
   };
+
+  // Close modal on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && surveyToDelete && !isDeleting) {
+        setSurveyToDelete(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [surveyToDelete, isDeleting]);
 
   const filtered = surveys.filter((s) =>
     s.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -116,19 +140,21 @@ export const SurveyList = () => {
             <table className="ls-table">
               <thead>
                 <tr>
-                  <th style={{ width: '60px' }}>ID</th>
-                  <th>Survey Title</th>
-                  <th style={{ width: '110px' }}>Status</th>
+                  <th style={{ width: '90px', minWidth: '85px' }}>ID</th>
+                  <th style={{ minWidth: '220px' }}>Survey Title</th>
+                  <th style={{ width: '120px', minWidth: '110px' }}>Status</th>
                   <th style={{ width: '90px' }}>Questions</th>
                   <th style={{ width: '100px' }}>Submissions</th>
                   <th style={{ width: '90px' }}>Voters</th>
-                  <th style={{ width: '280px', textAlign: 'right' }}>Actions</th>
+                  <th style={{ width: '220px', minWidth: '200px', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((s) => (
                   <tr key={s.id}>
-                    <td style={{ fontWeight: 600, color: 'var(--ls-color-g-600)' }}>#{s.id}</td>
+                    <td style={{ fontWeight: 600, color: 'var(--ls-color-g-600)', whiteSpace: 'nowrap' }}>
+                      #{s.id}
+                    </td>
                     <td>
                       <Link to={`/admin/surveys/${s.id}/edit`} style={{ fontWeight: 600, color: 'var(--ls-color-g-900)' }}>
                         {s.title}
@@ -180,9 +206,9 @@ export const SurveyList = () => {
                         </a>
                         <button
                           type="button"
-                          onClick={() => handleDelete(s.id, s.title)}
+                          onClick={() => setSurveyToDelete(s)}
                           className="ls-btn ls-btn-outline ls-btn-sm"
-                          style={{ color: 'var(--ls-color-danger)' }}
+                          style={{ color: 'var(--ls-color-danger)', borderColor: 'rgba(255, 81, 95, 0.4)' }}
                           title="Delete Survey"
                         >
                           <i className="ri-delete-bin-line" />
@@ -196,6 +222,178 @@ export const SurveyList = () => {
           </div>
         )}
       </div>
+
+      {/* Modern Confirmation Modal for Deleting Survey */}
+      {surveyToDelete && (
+        <div
+          className="ls-modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isDeleting) {
+              setSurveyToDelete(null);
+            }
+          }}
+        >
+          <div className="ls-modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+            <div className="ls-modal-header">
+              <div className="ls-modal-title" id="delete-modal-title">
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(255, 81, 95, 0.12)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--ls-color-danger)',
+                    fontSize: '20px',
+                    flexShrink: 0,
+                  }}
+                >
+                  <i className="ri-delete-bin-line" />
+                </div>
+                <span>Delete Survey</span>
+              </div>
+              <button
+                type="button"
+                className="ls-modal-close-btn"
+                onClick={() => !isDeleting && setSurveyToDelete(null)}
+                disabled={isDeleting}
+                aria-label="Close modal"
+              >
+                <i className="ri-close-line" />
+              </button>
+            </div>
+
+            <div className="ls-modal-body">
+              <p style={{ marginBottom: '14px', fontSize: '15px' }}>
+                Are you sure you want to delete this survey questionnaire?
+              </p>
+
+              <div
+                style={{
+                  backgroundColor: 'var(--ls-color-g-100)',
+                  border: '1px solid var(--ls-color-g-300)',
+                  borderRadius: 'var(--ls-radius-md)',
+                  padding: '14px 16px',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                  <span style={{ fontWeight: 700, color: 'var(--ls-color-g-900)', fontSize: '15px' }}>
+                    {surveyToDelete.title}
+                  </span>
+                  <span className="ls-badge ls-badge-secondary" style={{ flexShrink: 0 }}>
+                    #{surveyToDelete.id}
+                  </span>
+                </div>
+                {surveyToDelete.description && (
+                  <p style={{ fontSize: '13px', color: 'var(--ls-color-g-600)', marginTop: '4px' }}>
+                    {surveyToDelete.description}
+                  </p>
+                )}
+
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '12px',
+                    marginTop: '12px',
+                    paddingTop: '10px',
+                    borderTop: '1px solid var(--ls-color-g-300)',
+                    fontSize: '12px',
+                    color: 'var(--ls-color-g-700)',
+                  }}
+                >
+                  <span>
+                    <strong style={{ color: 'var(--ls-color-g-900)' }}>{surveyToDelete._count?.questions || 0}</strong> Questions
+                  </span>
+                  <span>•</span>
+                  <span>
+                    <strong style={{ color: 'var(--ls-color-g-900)' }}>{surveyToDelete._count?.responses || 0}</strong> Submissions
+                  </span>
+                  <span>•</span>
+                  <span>
+                    <strong style={{ color: 'var(--ls-color-g-900)' }}>{surveyToDelete._count?.voters || 0}</strong> Voters
+                  </span>
+                  <span>•</span>
+                  <span style={{ color: surveyToDelete.active ? 'var(--ls-color-primary)' : 'var(--ls-color-g-600)', fontWeight: 600 }}>
+                    {surveyToDelete.active ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  backgroundColor: 'rgba(255, 81, 95, 0.08)',
+                  border: '1px solid rgba(255, 81, 95, 0.25)',
+                  borderRadius: 'var(--ls-radius-sm)',
+                  padding: '10px 14px',
+                  fontSize: '13px',
+                  color: '#b91c1c',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '8px',
+                }}
+              >
+                <i className="ri-error-warning-line" style={{ fontSize: '16px', marginTop: '1px', flexShrink: 0 }} />
+                <span>
+                  This will unpublish the survey and remove it from active listings and participant view.
+                </span>
+              </div>
+
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginTop: '14px',
+                  fontSize: '13px',
+                  color: 'var(--ls-color-g-700)',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={permanentDelete}
+                  onChange={(e) => setPermanentDelete(e.target.checked)}
+                  disabled={isDeleting}
+                />
+                <span>Permanently purge survey and all associated records from database</span>
+              </label>
+            </div>
+
+            <div className="ls-modal-footer">
+              <button
+                type="button"
+                className="ls-btn ls-btn-outline ls-btn-sm"
+                onClick={() => setSurveyToDelete(null)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="ls-btn ls-btn-danger ls-btn-sm"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                {isDeleting ? (
+                  <>
+                    <i className="ri-loader-4-line ri-spin" /> Deleting...
+                  </>
+                ) : (
+                  <>
+                    <i className="ri-delete-bin-line" /> Delete Survey
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+

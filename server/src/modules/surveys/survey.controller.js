@@ -70,10 +70,13 @@ export class SurveyController {
 
   static async delete(req, res, next) {
     try {
-      await SurveyService.delete(req.params.id);
+      const permanent = req.query.permanent === 'true';
+      await SurveyService.delete(req.params.id, permanent);
       return res.status(200).json({
         success: true,
-        data: { message: 'Survey successfully deleted.' },
+        data: {
+          message: permanent ? 'Survey permanently deleted.' : 'Survey successfully deleted.',
+        },
       });
     } catch (error) {
       next(error);

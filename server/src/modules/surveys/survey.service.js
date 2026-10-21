@@ -143,11 +143,33 @@ export class SurveyService {
     });
   }
 
-  static async delete(id) {
+  static async delete(id, permanent = false) {
     const surveyId = parseInt(id, 10);
+    if (isNaN(surveyId)) {
+      const error = new Error('Invalid survey ID provided');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const existing = await prisma.survey.findUnique({ where: { id: surveyId } });
+    if (!existing) {
+      const error = new Error('Survey not found or already deleted');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    if (permanent) {
+      return prisma.survey.delete({
+        where: { id: surveyId },
+      });
+    }
+
     return prisma.survey.update({
       where: { id: surveyId },
-      data: { deletedAt: new Date() },
+      data: {
+        deletedAt: new Date(),
+        active: false,
+      },
     });
   }
 }

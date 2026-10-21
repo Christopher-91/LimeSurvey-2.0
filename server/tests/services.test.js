@@ -158,4 +158,30 @@ describe('Survey, Response, and Statistics Service Unit Tests', () => {
       ResponseService.submitResponse(createdSurveyId, {}, null, '127.0.0.1')
     ).rejects.toThrow('Please answer all mandatory questions before submitting.');
   });
+
+  it('soft-deletes and permanently deletes a survey via SurveyService.delete', async () => {
+    // Create a temporary survey for testing deletion
+    const tempSurvey = await SurveyService.create(
+      { title: 'Deletion Target Survey', active: true },
+      null
+    );
+    expect(tempSurvey.id).toBeDefined();
+
+    // 1. Test Soft Delete
+    const softDeleted = await SurveyService.delete(tempSurvey.id, false);
+    expect(softDeleted.deletedAt).not.toBeNull();
+    expect(softDeleted.active).toBe(false);
+
+    // Verify it is excluded from listAdmin
+    const adminList = await SurveyService.listAdmin();
+    expect(adminList.find((s) => s.id === tempSurvey.id)).toBeUndefined();
+
+    // 2. Test Permanent Delete
+    await SurveyService.delete(tempSurvey.id, true);
+    const dbCheck = await prisma.survey.findUnique({ where: { id: tempSurvey.id } });
+    expect(dbCheck).toBeNull();
+
+    // 3. Test non-existent deletion throws 404
+    await expect(SurveyService.delete(999999)).rejects.toThrow('Survey not found');
+  });
 });
