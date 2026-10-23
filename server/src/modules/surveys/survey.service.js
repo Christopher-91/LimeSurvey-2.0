@@ -14,6 +14,7 @@ export class SurveyService {
         welcomeMessage: true,
         expires: true,
         startDate: true,
+        zeroKnowledgeEnabled: true,
         createdAt: true,
         _count: {
           select: { questions: true, responses: true },
@@ -96,6 +97,7 @@ export class SurveyService {
 
   static async create(data, ownerId) {
     const { title, description, welcomeMessage, endMessage, active, format } = data;
+    const zkEnabled = Boolean(data.zero_knowledge_enabled ?? data.zeroKnowledgeEnabled ?? false);
     return prisma.survey.create({
       data: {
         title,
@@ -104,6 +106,7 @@ export class SurveyService {
         endMessage: endMessage || '',
         active: active ?? false,
         format: format || 'all_in_one',
+        zeroKnowledgeEnabled: zkEnabled,
         ownerId,
         groups: {
           create: [
@@ -123,9 +126,14 @@ export class SurveyService {
 
   static async update(id, data) {
     const surveyId = parseInt(id, 10);
+    const updateData = { ...data };
+    if ('zero_knowledge_enabled' in updateData) {
+      updateData.zeroKnowledgeEnabled = Boolean(updateData.zero_knowledge_enabled);
+      delete updateData.zero_knowledge_enabled;
+    }
     return prisma.survey.update({
       where: { id: surveyId },
-      data,
+      data: updateData,
     });
   }
 

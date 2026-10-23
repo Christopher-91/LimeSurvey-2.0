@@ -18,6 +18,7 @@ export const SurveyBuilder = () => {
   const [welcomeMessage, setWelcomeMessage] = useState('');
   const [endMessage, setEndMessage] = useState('');
   const [active, setActive] = useState(false);
+  const [zeroKnowledgeEnabled, setZeroKnowledgeEnabled] = useState(false);
 
   // Questions & Groups
   const [questions, setQuestions] = useState([]);
@@ -53,6 +54,7 @@ export const SurveyBuilder = () => {
         setWelcomeMessage(s.welcomeMessage || '');
         setEndMessage(s.endMessage || '');
         setActive(s.active || false);
+        setZeroKnowledgeEnabled(Boolean(s.zeroKnowledgeEnabled ?? s.zero_knowledge_enabled ?? false));
 
         // Gather all questions
         const allQ = [
@@ -95,24 +97,22 @@ export const SurveyBuilder = () => {
     }
 
     try {
+      const payload = {
+        title,
+        description,
+        welcomeMessage,
+        endMessage,
+        active,
+        zero_knowledge_enabled: zeroKnowledgeEnabled,
+        zeroKnowledgeEnabled,
+      };
+
       if (isNew) {
-        const res = await apiClient.post('/surveys', {
-          title,
-          description,
-          welcomeMessage,
-          endMessage,
-          active,
-        });
+        const res = await apiClient.post('/surveys', payload);
         showToast('Survey created successfully!', 'success');
         navigate(`/admin/surveys/${res.data.survey.id}/edit`);
       } else {
-        await apiClient.put(`/surveys/${id}`, {
-          title,
-          description,
-          welcomeMessage,
-          endMessage,
-          active,
-        });
+        await apiClient.put(`/surveys/${id}`, payload);
         showToast('Survey settings updated!', 'success');
       }
     } catch (err) {
@@ -451,17 +451,137 @@ export const SurveyBuilder = () => {
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', margin: 'var(--ls-space-4) 0 var(--ls-space-6) 0' }}>
+            {/* Activation Toggle Card */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '14px 18px',
+                backgroundColor: 'var(--ls-color-white)',
+                border: '1px solid var(--ls-color-g-300)',
+                borderRadius: 'var(--ls-radius-md)',
+                margin: 'var(--ls-space-4) 0 var(--ls-space-3) 0',
+              }}
+            >
               <input
                 id="survey-active"
                 type="checkbox"
                 checked={active}
                 onChange={(e) => setActive(e.target.checked)}
-                style={{ width: '18px', height: '18px', accentColor: 'var(--ls-color-primary)', marginRight: '10px' }}
+                style={{ width: '18px', height: '18px', accentColor: 'var(--ls-color-primary)', marginRight: '12px', cursor: 'pointer' }}
               />
-              <label htmlFor="survey-active" style={{ fontSize: '15px', fontWeight: 500, cursor: 'pointer' }}>
-                Activate & Publish Survey (Allows responses to be submitted)
-              </label>
+              <div>
+                <label htmlFor="survey-active" style={{ fontSize: '15px', fontWeight: 600, color: 'var(--ls-color-g-900)', cursor: 'pointer' }}>
+                  Activate & Publish Survey
+                </label>
+                <div style={{ fontSize: '13px', color: 'var(--ls-color-g-600)', marginTop: '2px' }}>
+                  Allows participants to access and submit survey responses when checked.
+                </div>
+              </div>
+            </div>
+
+            {/* Zero Knowledge Protocol Toggle Card */}
+            <div
+              style={{
+                backgroundColor: zeroKnowledgeEnabled ? 'var(--ls-color-primary-subtle)' : 'var(--ls-color-white)',
+                border: zeroKnowledgeEnabled ? '1.5px solid var(--ls-color-primary)' : '1px solid var(--ls-color-g-300)',
+                borderRadius: 'var(--ls-radius-md)',
+                padding: '18px 20px',
+                margin: '0 0 var(--ls-space-6) 0',
+                transition: 'all 0.2s ease-in-out',
+                boxShadow: zeroKnowledgeEnabled ? '0 2px 8px rgba(20, 174, 92, 0.12)' : '0 1px 3px rgba(0,0,0,0.02)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
+                  <div
+                    style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: 'var(--ls-radius-md)',
+                      backgroundColor: zeroKnowledgeEnabled ? 'var(--ls-color-primary)' : 'var(--ls-color-g-200)',
+                      color: zeroKnowledgeEnabled ? 'var(--ls-color-white)' : 'var(--ls-color-g-700)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '22px',
+                      flexShrink: 0,
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <i className="ri-shield-keyhole-line" />
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                      <label
+                        htmlFor="zero-knowledge-toggle"
+                        style={{
+                          fontSize: '15px',
+                          fontWeight: 600,
+                          color: 'var(--ls-color-g-900)',
+                          cursor: 'pointer',
+                          margin: 0,
+                        }}
+                      >
+                        Enable Zero Knowledge Protocol
+                      </label>
+                      <span
+                        className="ls-badge"
+                        style={{
+                          backgroundColor: zeroKnowledgeEnabled ? 'var(--ls-color-primary)' : 'var(--ls-color-g-200)',
+                          color: zeroKnowledgeEnabled ? 'var(--ls-color-white)' : 'var(--ls-color-g-700)',
+                          fontSize: '11px',
+                          letterSpacing: '0.5px',
+                          padding: '2px 8px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        ZK PROTOCOL
+                      </span>
+                    </div>
+                    <p
+                      style={{
+                        fontSize: '13px',
+                        color: 'var(--ls-color-g-700)',
+                        margin: '0 0 6px 0',
+                        lineHeight: 1.45,
+                      }}
+                    >
+                      Enforces strict secret-ballot privacy. Voter profiles and feedback comments will be decoupled and cannot be viewed together.
+                    </p>
+                    {zeroKnowledgeEnabled && (
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontSize: '12px',
+                          color: 'var(--ls-color-primary-active)',
+                          fontWeight: 500,
+                        }}
+                      >
+                        <i className="ri-lock-2-line" />
+                        <span>Strict Privacy Active: Attendance and submission responses will be queried independently.</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, paddingTop: '4px' }}>
+                  <input
+                    id="zero-knowledge-toggle"
+                    type="checkbox"
+                    checked={zeroKnowledgeEnabled}
+                    onChange={(e) => setZeroKnowledgeEnabled(e.target.checked)}
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      accentColor: 'var(--ls-color-primary)',
+                      cursor: 'pointer',
+                    }}
+                  />
+                </div>
+              </div>
             </div>
 
             <button type="submit" className="ls-btn ls-btn-primary ls-btn-lg">

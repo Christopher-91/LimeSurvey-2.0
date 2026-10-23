@@ -156,9 +156,32 @@ export const SurveyList = () => {
                       #{s.id}
                     </td>
                     <td>
-                      <Link to={`/admin/surveys/${s.id}/edit`} style={{ fontWeight: 600, color: 'var(--ls-color-g-900)' }}>
-                        {s.title}
-                      </Link>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <Link to={`/admin/surveys/${s.id}/edit`} style={{ fontWeight: 600, color: 'var(--ls-color-g-900)' }}>
+                          {s.title}
+                        </Link>
+                        {(s.zeroKnowledgeEnabled || s.zero_knowledge_enabled) && (
+                          <span
+                            className="ls-badge"
+                            style={{
+                              backgroundColor: 'var(--ls-color-primary-subtle)',
+                              color: 'var(--ls-color-primary-active)',
+                              border: '1px solid rgba(20, 174, 92, 0.3)',
+                              fontSize: '10px',
+                              letterSpacing: '0.5px',
+                              padding: '2px 7px',
+                              fontWeight: 600,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                            }}
+                            title="Zero Knowledge Protocol Active: Voter identities and comments are decoupled"
+                          >
+                            <i className="ri-shield-keyhole-line" style={{ fontSize: '11px' }} />
+                            ZK PROTOCOL
+                          </span>
+                        )}
+                      </div>
                       {s.description && (
                         <div style={{ fontSize: '13px', color: 'var(--ls-color-g-600)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '350px' }}>
                           {s.description}

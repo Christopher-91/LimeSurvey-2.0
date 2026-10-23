@@ -43,6 +43,7 @@ model Survey {
   adminName       String?         @map("admin_name") @db.VarChar(128)
   active          Boolean         @default(false)
   anonymized      Boolean         @default(false)
+  zeroKnowledgeEnabled Boolean    @default(false) @map("zero_knowledge_enabled")
   format          String          @default("all_in_one") @db.VarChar(32) // "all_in_one" | "group_by_group" | "question_by_question"
   startDate       DateTime?       @map("start_date")
   expires         DateTime?

@@ -84,8 +84,6 @@ export class ResponseService {
         throw error;
       }
 
-      voterId = voter.id;
-
       // Update voter status
       if (!isUnlimited) {
         await prisma.voter.update({
@@ -104,15 +102,24 @@ export class ResponseService {
           },
         });
       }
+
+      // If Zero Knowledge Protocol is ENABLED:
+      // Strictly decouple voter identity from the response payload.
+      // Voter attendance is recorded above, but the response remains anonymous.
+      if (!survey.zeroKnowledgeEnabled) {
+        voterId = voter.id;
+      } else {
+        voterId = null;
+      }
     }
 
-    // Save unified response with JSONB answers
+    // Save response with JSONB answers
     const response = await prisma.response.create({
       data: {
         surveyId: sId,
-        voterId,
+        voterId, // null when zeroKnowledgeEnabled is true
         answers: answers || {},
-        ipAddress: ipAddress || null,
+        ipAddress: survey.zeroKnowledgeEnabled ? null : (ipAddress || null),
         completed: true,
         submitDate: new Date(),
       },
@@ -121,23 +128,128 @@ export class ResponseService {
     return response;
   }
 
-  static async listBySurvey(surveyId) {
+  static async listBySurvey(surveyId, query = {}) {
     const sId = parseInt(surveyId, 10);
-    return prisma.response.findMany({
-      where: { surveyId: sId },
-      include: {
-        voter: {
-          select: {
-            id: true,
-            voterId: true,
-            token: true,
-            email: true,
-            firstName: true,
-            lastName: true,
+
+    const survey = await prisma.survey.findUnique({
+      where: { id: sId },
+      select: { id: true, zeroKnowledgeEnabled: true, title: true },
+    });
+
+    if (!survey) {
+      const error = new Error('Survey not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    // Standard behavior when Zero Knowledge Protocol is disabled
+    if (!survey.zeroKnowledgeEnabled) {
+      const responses = await prisma.response.findMany({
+        where: { surveyId: sId },
+        include: {
+          voter: {
+            select: {
+              id: true,
+              voterId: true,
+              token: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
           },
         },
+        orderBy: { submitDate: 'desc' },
+      });
+
+      return {
+        zeroKnowledgeEnabled: false,
+        responses,
+      };
+    }
+
+    // Zero Knowledge Protocol is ACTIVE:
+    // Strictly decouple into two mutually exclusive views.
+    const view = query.view === 'attendance' ? 'attendance' : 'ghost_comments';
+
+    if (view === 'attendance') {
+      // View 2: User Profiles (Attendance) Data
+      // Returns ONLY voter profiles sorted alphabetically by name + participation counts.
+      // Strip out all comment / answer JSONB data.
+      const voters = await prisma.voter.findMany({
+        where: { surveyId: sId, deletedAt: null },
+        select: {
+          id: true,
+          voterId: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          completed: true,
+          completedAt: true,
+        },
+      });
+
+      const totalSubmissions = await prisma.response.count({
+        where: { surveyId: sId },
+      });
+
+      const formattedVoters = voters.map((v) => {
+        const nameParts = [v.firstName, v.lastName].filter(Boolean);
+        const name = nameParts.length > 0 ? nameParts.join(' ') : (v.email ? v.email.split('@')[0] : (v.voterId || 'Participant'));
+        return {
+          id: v.id,
+          voterId: v.voterId,
+          name,
+          email: v.email || '—',
+          has_completed: v.completed,
+          completedAt: v.completedAt,
+        };
+      });
+
+      // Sort alphabetically by name
+      formattedVoters.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+
+      return {
+        zeroKnowledgeEnabled: true,
+        view: 'attendance',
+        participation: {
+          totalSubmissions,
+          assignedVoters: voters.length,
+          completionRate: voters.length > 0 ? Math.round((totalSubmissions / voters.length) * 100) : 100,
+        },
+        voters: formattedVoters,
+      };
+    }
+
+    // View 1 (Default): Ghost Comments Data
+    // Returns ONLY feedback/comments in a randomized (shuffled) order.
+    // Strip out all user_id, voter, name, email, ipAddress, and correlating timestamps.
+    const rawResponses = await prisma.response.findMany({
+      where: { surveyId: sId },
+      select: {
+        answers: true,
       },
-      orderBy: { submitDate: 'desc' },
     });
+
+    // Fisher-Yates shuffle
+    const shuffled = [...rawResponses];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    const ghostComments = shuffled.map((r, index) => ({
+      id: `ghost-${index + 1}`,
+      answers: r.answers || {},
+      author: 'Anonymous Voter',
+      isAnonymous: true,
+    }));
+
+    return {
+      zeroKnowledgeEnabled: true,
+      view: 'ghost_comments',
+      totalComments: ghostComments.length,
+      comments: ghostComments,
+      responses: ghostComments, // Backwards compatible alias
+    };
   }
 }

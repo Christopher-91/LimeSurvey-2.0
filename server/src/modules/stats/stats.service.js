@@ -117,19 +117,30 @@ export class StatsService {
       }
 
       // For Text or Other questions
+      // If Zero Knowledge Protocol is active, shuffle answers to prevent correlation with timestamps
+      let textAnswers = answersForQ;
+      if (survey.zeroKnowledgeEnabled) {
+        textAnswers = [...answersForQ];
+        for (let i = textAnswers.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [textAnswers[i], textAnswers[j]] = [textAnswers[j], textAnswers[i]];
+        }
+      }
+
       return {
         questionId: q.id,
         code: q.code,
         text: q.text,
         type: q.type,
         totalAnswered,
-        recentResponses: answersForQ.slice(0, 10),
+        recentResponses: textAnswers.slice(0, 10),
       };
     });
 
     return {
       surveyId: survey.id,
       title: survey.title,
+      zeroKnowledgeEnabled: Boolean(survey.zeroKnowledgeEnabled),
       totalResponses: responses.length,
       totalVoters: survey._count.voters,
       completionRate:

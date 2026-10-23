@@ -43,13 +43,14 @@ export class ExportService {
     ];
 
     // Build data rows
-    const dataRows = responses.map((resp) => {
+    const dataRows = responses.map((resp, idx) => {
+      const isZk = survey.zeroKnowledgeEnabled;
       const row = {
-        'Response ID': resp.id,
-        'Submit Date': resp.submitDate ? new Date(resp.submitDate).toISOString() : '',
-        'Voter Token': resp.voter?.token || 'Anonymous',
-        'Voter Email': resp.voter?.email || '',
-        'IP Address': resp.ipAddress || '',
+        'Response ID': isZk ? `ZK-${idx + 1}` : resp.id,
+        'Submit Date': isZk ? '[Shielded by ZK Protocol]' : (resp.submitDate ? new Date(resp.submitDate).toISOString() : ''),
+        'Voter Token': isZk ? 'Anonymous (ZK Protocol)' : (resp.voter?.token || 'Anonymous'),
+        'Voter Email': isZk ? '[Decoupled]' : (resp.voter?.email || ''),
+        'IP Address': isZk ? '[Not Stored]' : (resp.ipAddress || ''),
       };
 
       // Add each question's answer
@@ -80,8 +81,18 @@ export class ExportService {
       return row;
     });
 
+    // If Zero Knowledge Protocol is active, shuffle the export rows so ordering cannot leak identity
+    let finalRows = dataRows;
+    if (survey.zeroKnowledgeEnabled) {
+      finalRows = [...dataRows];
+      for (let i = finalRows.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [finalRows[i], finalRows[j]] = [finalRows[j], finalRows[i]];
+      }
+    }
+
     // Create workbook using XLSX
-    const worksheet = XLSX.utils.json_to_sheet(dataRows);
+    const worksheet = XLSX.utils.json_to_sheet(finalRows);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Responses');
 

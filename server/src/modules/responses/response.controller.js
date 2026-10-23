@@ -23,10 +23,34 @@ export class ResponseController {
 
   static async listBySurvey(req, res, next) {
     try {
-      const responses = await ResponseService.listBySurvey(req.params.surveyId);
+      const result = await ResponseService.listBySurvey(req.params.surveyId, req.query);
       return res.status(200).json({
         success: true,
-        data: { responses },
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getGhostComments(req, res, next) {
+    try {
+      const result = await ResponseService.listBySurvey(req.params.surveyId, { view: 'ghost_comments' });
+      return res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getAttendance(req, res, next) {
+    try {
+      const result = await ResponseService.listBySurvey(req.params.surveyId, { view: 'attendance' });
+      return res.status(200).json({
+        success: true,
+        data: result,
       });
     } catch (error) {
       next(error);

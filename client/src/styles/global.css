@@ -329,10 +329,16 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: transform var(--ls-transition-base);
   z-index: 1;
+  pointer-events: none;
 }
 
-.ls-toggle-slider.admin-active {
+.ls-toggle-slider.admin-active,
+.ls-toggle-slider.toggled {
   transform: translateX(100%);
+}
+
+.ls-segmented-toggle.wide {
+  max-width: 460px;
 }
 
 .ls-toggle-btn {
