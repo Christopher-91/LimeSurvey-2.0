@@ -428,7 +428,7 @@ export const ResultsStats = () => {
                 onClick={() => handleSwitchZkView('attendance')}
               >
                 <i className="ri-team-line" style={{ fontSize: '16px' }} />
-                <span>User Profiles (Attendance)</span>
+                <span>User Profiles</span>
               </button>
             </div>
           </div>
