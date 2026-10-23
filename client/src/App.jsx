@@ -13,7 +13,11 @@ import { SurveyList } from './pages/SurveyList.jsx';
 import { SurveyTaking } from './pages/SurveyTaking.jsx';
 import { VoterDashboard } from './pages/VoterDashboard.jsx';
 
+import { useSmoothScroll } from './hooks/useSmoothScroll.js';
+
 export const App = () => {
+  useSmoothScroll();
+
   return (
     <BrowserRouter>
       <ToastProvider>
