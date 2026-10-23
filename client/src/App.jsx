@@ -13,16 +13,12 @@ import { SurveyList } from './pages/SurveyList.jsx';
 import { SurveyTaking } from './pages/SurveyTaking.jsx';
 import { VoterDashboard } from './pages/VoterDashboard.jsx';
 
-import { useSmoothScroll } from './hooks/useSmoothScroll.js';
-
 export const App = () => {
-  useSmoothScroll();
-
   return (
     <BrowserRouter>
       <ToastProvider>
         <AuthProvider>
-          <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
             <Navbar />
             <main style={{ flex: 1, paddingBottom: '40px' }}>
               <Routes>

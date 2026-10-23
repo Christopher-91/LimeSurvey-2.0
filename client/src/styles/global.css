@@ -9,10 +9,14 @@
   padding: 0;
 }
 
+html, body {
+  overflow-x: hidden;
+  height: auto;
+  min-height: 100%;
+}
+
 html {
-  scroll-behavior: smooth;
-  overflow-y: scroll;
-  scrollbar-gutter: stable;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -21,17 +25,10 @@ body {
   line-height: var(--ls-line-height-normal);
   color: var(--ls-color-text-primary);
   background-color: var(--ls-color-g-100);
-  min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   -webkit-overflow-scrolling: touch;
-}
-
-/* Optimize scroll performance: suppress hover repaints while scrolling */
-body.is-scrolling,
-body.is-scrolling * {
-  pointer-events: none !important;
 }
 
 /* ==========================================================================
@@ -460,6 +457,9 @@ h1, h2, h3, h4, h5, h6 {
    ========================================================================== */
 .ls-table-container {
   overflow-x: auto;
+  overflow-y: visible;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: auto;
   border-radius: var(--ls-radius-md);
   border: 1px solid var(--ls-color-g-400);
   background: var(--ls-color-white);
@@ -565,9 +565,7 @@ h1, h2, h3, h4, h5, h6 {
 .ls-modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background-color: rgba(15, 23, 42, 0.72);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -579,7 +577,7 @@ h1, h2, h3, h4, h5, h6 {
 .ls-modal {
   background: var(--ls-color-white);
   border-radius: var(--ls-radius-lg);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   width: 100%;
   max-width: 520px;
   overflow: hidden;
