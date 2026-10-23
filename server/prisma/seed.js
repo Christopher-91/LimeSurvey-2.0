@@ -181,7 +181,7 @@ async function main() {
       },
     });
 
-    console.log(`✅ Demo survey created (ID: ${demoSurvey.id}) with voter token: "${sampleVoter.token}"`);
+    console.log(`Demo survey created (ID: ${demoSurvey.id}) with voter token: "${sampleVoter.token}"`);
   }
 
   // 4. Seed an official Zero Knowledge Protocol survey if none exists yet
