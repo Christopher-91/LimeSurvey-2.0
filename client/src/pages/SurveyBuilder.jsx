@@ -1410,46 +1410,9 @@ export const SurveyBuilder = () => {
                   boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
                   gap: '16px',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                  <div
-                    style={{
-                      width: '42px',
-                      height: '42px',
-                      borderRadius: '8px',
-                      backgroundColor: active ? '#ecfdf5' : '#f1f5f9',
-                      color: active ? '#10b981' : '#64748b',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '22px',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <i className="ri-broadcast-line" />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="survey-active-toggle"
-                      style={{
-                        fontSize: '15px',
-                        fontWeight: 600,
-                        color: '#0f172a',
-                        cursor: 'pointer',
-                        display: 'block',
-                      }}
-                    >
-                      Activate & Publish Survey
-                    </label>
-                    <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-                      Allows participants to access and submit survey responses when checked.
-                    </div>
-                  </div>
-                </div>
-
                 <input
                   id="survey-active-toggle"
                   type="checkbox"
@@ -1460,8 +1423,42 @@ export const SurveyBuilder = () => {
                     height: '20px',
                     accentColor: '#10b981',
                     cursor: 'pointer',
+                    flexShrink: 0,
                   }}
                 />
+                <div
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '8px',
+                    backgroundColor: active ? '#ecfdf5' : '#f1f5f9',
+                    color: active ? '#10b981' : '#64748b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '22px',
+                    flexShrink: 0,
+                  }}
+                >
+                  <i className="ri-broadcast-line" />
+                </div>
+                <div>
+                  <label
+                    htmlFor="survey-active-toggle"
+                    style={{
+                      fontSize: '15px',
+                      fontWeight: 600,
+                      color: '#0f172a',
+                      cursor: 'pointer',
+                      display: 'block',
+                    }}
+                  >
+                    Activate & Publish Survey
+                  </label>
+                  <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
+                    Allows participants to access and submit survey responses when checked.
+                  </div>
+                </div>
               </div>
 
               {/* Card 2: Enable Zero Knowledge Protocol */}
@@ -1477,62 +1474,10 @@ export const SurveyBuilder = () => {
                     : '0 1px 3px rgba(0, 0, 0, 0.04)',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
                   gap: '16px',
                   transition: 'all 0.2s ease',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                  <div
-                    style={{
-                      width: '42px',
-                      height: '42px',
-                      borderRadius: '8px',
-                      backgroundColor: zeroKnowledgeEnabled ? '#10b981' : '#f1f5f9',
-                      color: zeroKnowledgeEnabled ? '#ffffff' : '#64748b',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '22px',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <i className="ri-shield-keyhole-line" />
-                  </div>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      <label
-                        htmlFor="zero-knowledge-toggle"
-                        style={{
-                          fontSize: '15px',
-                          fontWeight: 600,
-                          color: '#0f172a',
-                          cursor: 'pointer',
-                          margin: 0,
-                        }}
-                      >
-                        Enable Zero Knowledge Protocol
-                      </label>
-                      <span
-                        className="ls-badge"
-                        style={{
-                          backgroundColor: zeroKnowledgeEnabled ? '#10b981' : '#e2e8f0',
-                          color: zeroKnowledgeEnabled ? '#ffffff' : '#475569',
-                          fontSize: '10px',
-                          letterSpacing: '0.5px',
-                          padding: '2px 7px',
-                          fontWeight: 700,
-                        }}
-                      >
-                        ZK PROTOCOL
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-                      Enforces strict secret-ballot privacy. Voter profiles and feedback comments will be decoupled and cannot be viewed together.
-                    </div>
-                  </div>
-                </div>
-
                 <input
                   id="zero-knowledge-toggle"
                   type="checkbox"
@@ -1543,8 +1488,57 @@ export const SurveyBuilder = () => {
                     height: '20px',
                     accentColor: '#10b981',
                     cursor: 'pointer',
+                    flexShrink: 0,
                   }}
                 />
+                <div
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '8px',
+                    backgroundColor: zeroKnowledgeEnabled ? '#10b981' : '#f1f5f9',
+                    color: zeroKnowledgeEnabled ? '#ffffff' : '#64748b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '22px',
+                    flexShrink: 0,
+                  }}
+                >
+                  <i className="ri-shield-keyhole-line" />
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <label
+                      htmlFor="zero-knowledge-toggle"
+                      style={{
+                        fontSize: '15px',
+                        fontWeight: 600,
+                        color: '#0f172a',
+                        cursor: 'pointer',
+                        margin: 0,
+                      }}
+                    >
+                      Enable Zero Knowledge Protocol
+                    </label>
+                    <span
+                      className="ls-badge"
+                      style={{
+                        backgroundColor: zeroKnowledgeEnabled ? '#10b981' : '#e2e8f0',
+                        color: zeroKnowledgeEnabled ? '#ffffff' : '#475569',
+                        fontSize: '10px',
+                        letterSpacing: '0.5px',
+                        padding: '2px 7px',
+                        fontWeight: 700,
+                      }}
+                    >
+                      ZK PROTOCOL
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
+                    Enforces strict secret-ballot privacy. Voter profiles and feedback comments will be decoupled and cannot be viewed together.
+                  </div>
+                </div>
               </div>
             </div>
           </>
