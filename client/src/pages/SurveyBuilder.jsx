@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { apiClient } from '../api/apiClient.js';
 import { useToast } from '../context/ToastContext.jsx';
@@ -42,6 +42,40 @@ export const SurveyBuilder = () => {
     },
   ]);
   const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
+
+  // Floating Toolbar Position Tracking
+  const questionCardRefs = useRef([]);
+  const questionsContainerRef = useRef(null);
+  const [toolbarOffsetTop, setToolbarOffsetTop] = useState(0);
+
+  const updateToolbarPosition = () => {
+    const cardEl = questionCardRefs.current[activeQuestionIndex];
+    const containerEl = questionsContainerRef.current;
+    if (cardEl && containerEl) {
+      const cardRect = cardEl.getBoundingClientRect();
+      const containerRect = containerEl.getBoundingClientRect();
+      const relativeTop = cardRect.top - containerRect.top;
+      setToolbarOffsetTop(Math.max(0, relativeTop));
+    } else if (cardEl) {
+      setToolbarOffsetTop(cardEl.offsetTop || 0);
+    }
+  };
+
+  useEffect(() => {
+    updateToolbarPosition();
+    const frameId = requestAnimationFrame(updateToolbarPosition);
+    const timer = setTimeout(updateToolbarPosition, 60);
+    return () => {
+      cancelAnimationFrame(frameId);
+      clearTimeout(timer);
+    };
+  }, [activeQuestionIndex, questions]);
+
+  useEffect(() => {
+    const handleResize = () => updateToolbarPosition();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [activeQuestionIndex]);
 
   // Voters / Token Management (for existing surveys)
   const [voters, setVoters] = useState([]);
@@ -730,14 +764,15 @@ export const SurveyBuilder = () => {
             </div>
 
             {/* Questions Canvas & Floating Toolbar */}
-            <div style={{ position: 'relative' }}>
-              {/* Floating Quick Action Toolbar (Right Side) */}
+            <div ref={questionsContainerRef} style={{ position: 'relative' }}>
+              {/* Floating Quick Action Toolbar (Tracks Active Card) */}
               <div
                 style={{
                   position: 'absolute',
-                  left: '100%',
+                  left: 'calc(100% + 14px)',
                   top: '0px',
-                  marginLeft: '14px',
+                  transform: `translateY(${toolbarOffsetTop}px)`,
+                  transition: 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '8px',
@@ -745,8 +780,8 @@ export const SurveyBuilder = () => {
                   border: '1px solid #e2e8f0',
                   borderRadius: '9999px',
                   padding: '6px',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06)',
-                  zIndex: 20,
+                  boxShadow: '0 4px 14px rgba(0, 0, 0, 0.08)',
+                  zIndex: 25,
                 }}
               >
                 <button
@@ -766,7 +801,7 @@ export const SurveyBuilder = () => {
                     fontSize: '18px',
                     transition: 'all 0.15s ease',
                   }}
-                  title="Add Question"
+                  title="Add Question Below Selected"
                 >
                   <i className="ri-add-line" />
                 </button>
@@ -775,9 +810,9 @@ export const SurveyBuilder = () => {
                   onClick={() => {
                     const q = questions[activeQuestionIndex];
                     if (q) {
-                      updateQuestion(activeQuestionIndex, {
-                        helpText: q.helpText ? '' : 'Add detailed instructions or notes for this question...',
-                      });
+                      const newHelp = q.helpText ? '' : 'Add guidance or note for this question...';
+                      updateQuestion(activeQuestionIndex, { helpText: newHelp });
+                      showToast(q.helpText ? 'Section note removed' : 'Section note added', 'info');
                     }
                   }}
                   style={{
@@ -828,9 +863,12 @@ export const SurveyBuilder = () => {
                   return (
                     <div
                       key={q.id || idx}
+                      ref={(el) => (questionCardRefs.current[idx] = el)}
                       onClick={() => setActiveQuestionIndex(idx)}
+                      onFocusCapture={() => setActiveQuestionIndex(idx)}
                       className="ls-card"
                       style={{
+                        position: 'relative',
                         backgroundColor: '#ffffff',
                         border: '1px solid',
                         borderColor: isActive ? '#cbd5e1' : '#e2e8f0',
@@ -840,7 +878,7 @@ export const SurveyBuilder = () => {
                         boxShadow: isActive
                           ? '0 6px 16px rgba(16, 185, 129, 0.12)'
                           : '0 1px 3px rgba(0, 0, 0, 0.04)',
-                        transition: 'all 0.2s ease',
+                        transition: 'border-color 0.2s ease, box-shadow 0.2s ease, border-left-color 0.2s ease',
                         cursor: 'pointer',
                       }}
                     >
