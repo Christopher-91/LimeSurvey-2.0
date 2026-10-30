@@ -395,6 +395,47 @@ export const SurveyTaking = () => {
                 />
               )}
 
+              {/* 9. Matrix / Grid */}
+              {q.type === 'matrix' && (
+                <div style={{ overflowX: 'auto', border: '1px solid var(--ls-color-g-300)', borderRadius: 'var(--ls-radius-sm)', background: '#fff' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: 'var(--ls-color-g-100)' }}>
+                        <th style={{ textAlign: 'left', padding: '12px 16px', borderBottom: '1px solid var(--ls-color-g-400)' }}></th>
+                        {(q.settings?.columns || (q.options?.length ? q.options.map((o) => o.text) : ['1', '2', '3', '4', '5'])).map((col, cIdx) => (
+                          <th key={cIdx} style={{ padding: '12px 14px', fontSize: '13px', fontWeight: 600, borderBottom: '1px solid var(--ls-color-g-400)', color: 'var(--ls-color-g-800)' }}>
+                            {col}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(q.settings?.rows || ['Item 1', 'Item 2']).map((row, rIdx) => (
+                        <tr key={rIdx} style={{ borderBottom: '1px solid var(--ls-color-g-200)' }}>
+                          <td style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 500, fontSize: '14px', color: 'var(--ls-color-g-900)' }}>
+                            {row}
+                          </td>
+                          {(q.settings?.columns || (q.options?.length ? q.options.map((o) => o.text) : ['1', '2', '3', '4', '5'])).map((col, cIdx) => (
+                            <td key={cIdx} style={{ padding: '12px 14px' }}>
+                              <input
+                                type="radio"
+                                name={`${q.code}_${rIdx}`}
+                                checked={answers[q.code]?.[row] === col}
+                                onChange={() => {
+                                  const current = typeof answers[q.code] === 'object' && answers[q.code] !== null ? answers[q.code] : {};
+                                  handleAnswerChange(q.code, { ...current, [row]: col });
+                                }}
+                                style={{ accentColor: 'var(--ls-color-primary)', width: '18px', height: '18px', cursor: 'pointer' }}
+                              />
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
               {/* Validation error */}
               {errors[q.code] && (
                 <p className="ls-error-text" style={{ marginTop: '8px' }}>

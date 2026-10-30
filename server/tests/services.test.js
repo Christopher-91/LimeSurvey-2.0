@@ -184,4 +184,45 @@ describe('Survey, Response, and Statistics Service Unit Tests', () => {
     // 3. Test non-existent deletion throws 404
     await expect(SurveyService.delete(999999)).rejects.toThrow('Survey not found');
   });
+
+  it('creates a survey with questions atomically in a single step', async () => {
+    const survey = await SurveyService.create(
+      {
+        title: 'Single Step Builder Survey',
+        description: 'Single-step creation test',
+        active: true,
+        zero_knowledge_enabled: true,
+        questions: [
+          {
+            code: 'Q_FEEDBACK',
+            text: 'Provide your feedback',
+            type: 'long_text',
+            mandatory: true,
+          },
+          {
+            code: 'Q_RATING',
+            text: 'Rate our service',
+            type: 'single_choice',
+            mandatory: false,
+            options: [
+              { code: 'A1', text: 'Good' },
+              { code: 'A2', text: 'Great' },
+            ],
+          },
+        ],
+      },
+      null
+    );
+
+    expect(survey).toBeDefined();
+    expect(survey.zeroKnowledgeEnabled).toBe(true);
+    const questions = await prisma.question.findMany({
+      where: { surveyId: survey.id },
+      include: { options: true },
+    });
+    expect(questions.length).toBe(2);
+    expect(questions[1].options.length).toBe(2);
+
+    await prisma.survey.delete({ where: { id: survey.id } });
+  });
 });
