@@ -78,7 +78,7 @@ export class ResponseService {
 
       const isUnlimited = voter.usesLeft === -1 || voter.usesLeft >= 999999;
 
-      if (!isUnlimited && voter.completed && voter.usesLeft <= 0) {
+      if (!isUnlimited && (voter.completed || voter.usesLeft <= 0)) {
         const error = new Error('This voter access code has already completed the survey.');
         error.statusCode = 400;
         throw error;

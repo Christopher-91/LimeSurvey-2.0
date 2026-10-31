@@ -83,6 +83,21 @@ export const SurveyBuilder = () => {
   const [newVoterToken, setNewVoterToken] = useState('');
   const [isUniversalCode, setIsUniversalCode] = useState(false);
 
+  // Batch Member Generation Modal
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+  const [batchMemberCount, setBatchMemberCount] = useState(10);
+  const [isGeneratingBatch, setIsGeneratingBatch] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isBatchModalOpen && !isGeneratingBatch) {
+        setIsBatchModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isBatchModalOpen, isGeneratingBatch]);
+
   // Fetch Existing Survey Data
   const fetchSurvey = async () => {
     try {
@@ -418,13 +433,42 @@ export const SurveyBuilder = () => {
     }
   };
 
-  const handleGenerateBatchVoters = async () => {
+  const handleOpenBatchModal = () => {
+    setBatchMemberCount(10);
+    setIsBatchModalOpen(true);
+  };
+
+  const handleCloseBatchModal = () => {
+    if (!isGeneratingBatch) {
+      setIsBatchModalOpen(false);
+    }
+  };
+
+  const handleConfirmBatchGenerate = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const count = parseInt(batchMemberCount, 10);
+    if (isNaN(count) || count < 1) {
+      showToast('Please enter a valid number of members (at least 1).', 'error');
+      return;
+    }
+    if (count > 500) {
+      showToast('Please specify 500 or fewer members per batch.', 'error');
+      return;
+    }
+
+    setIsGeneratingBatch(true);
     try {
-      await apiClient.post(`/surveys/${id}/voters/batch`, { count: 5 });
-      showToast('Generated 5 single-use voter tokens!', 'success');
+      await apiClient.post(`/surveys/${id}/voters/batch`, { count });
+      showToast(
+        `Generated ${count} single-use access code${count === 1 ? '' : 's'} for members!`,
+        'success'
+      );
+      setIsBatchModalOpen(false);
       fetchVoters();
     } catch (err) {
-      showToast(err.message || 'Failed to generate batch tokens', 'error');
+      showToast(err.message || 'Failed to generate batch codes', 'error');
+    } finally {
+      setIsGeneratingBatch(false);
     }
   };
 
@@ -1566,11 +1610,11 @@ export const SurveyBuilder = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={handleGenerateBatchVoters}
+                  onClick={handleOpenBatchModal}
                   className="ls-btn ls-btn-outline ls-btn-sm"
-                  title="Generate 5 single-use tokens"
+                  title="Generate single-use access codes for members"
                 >
-                  <i className="ri-magic-line" /> Batch (5 Codes)
+                  <i className="ri-magic-line" /> Batch
                 </button>
               </div>
             </div>
@@ -1795,6 +1839,119 @@ export const SurveyBuilder = () => {
                 Close Preview
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Batch Member Access Codes Modal */}
+      {isBatchModalOpen && (
+        <div
+          className="ls-modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isGeneratingBatch) {
+              handleCloseBatchModal();
+            }
+          }}
+        >
+          <div
+            className="ls-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="batch-modal-title"
+            style={{ maxWidth: '460px' }}
+          >
+            <div className="ls-modal-header">
+              <div className="ls-modal-title" id="batch-modal-title">
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--ls-color-primary-subtle)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--ls-color-primary)',
+                    fontSize: '18px',
+                    flexShrink: 0,
+                  }}
+                >
+                  <i className="ri-magic-line" />
+                </div>
+                <span>Batch Member Access Codes</span>
+              </div>
+              <button
+                type="button"
+                className="ls-modal-close-btn"
+                onClick={handleCloseBatchModal}
+                disabled={isGeneratingBatch}
+                aria-label="Close modal"
+              >
+                <i className="ri-close-line" />
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmBatchGenerate}>
+              <div className="ls-modal-body">
+                <p style={{ marginBottom: '16px', fontSize: '14px', color: 'var(--ls-color-g-700)', lineHeight: 1.5 }}>
+                  Generate unique, single-use access codes for members. Each generated code is assigned to one person and can be used only once to submit a survey response.
+                </p>
+
+                <div className="ls-form-group" style={{ marginBottom: '4px' }}>
+                  <label
+                    htmlFor="batch-member-count"
+                    className="ls-label"
+                    style={{ fontWeight: 600, color: 'var(--ls-color-g-900)', marginBottom: '8px' }}
+                  >
+                    Number of members:
+                  </label>
+                  <input
+                    id="batch-member-count"
+                    type="number"
+                    min="1"
+                    max="500"
+                    className="ls-input"
+                    placeholder="e.g. 10"
+                    value={batchMemberCount}
+                    onChange={(e) => setBatchMemberCount(e.target.value)}
+                    autoFocus
+                    required
+                    disabled={isGeneratingBatch}
+                    style={{ fontSize: '15px' }}
+                  />
+                  <div className="ls-helper-text" style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <i className="ri-shield-user-line" style={{ color: 'var(--ls-color-primary)' }} />
+                    <span>Each code is valid for exactly 1 person and 1 completion.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="ls-modal-footer">
+                <button
+                  type="button"
+                  className="ls-btn ls-btn-outline"
+                  onClick={handleCloseBatchModal}
+                  disabled={isGeneratingBatch}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="ls-btn ls-btn-primary"
+                  disabled={isGeneratingBatch}
+                >
+                  {isGeneratingBatch ? (
+                    <>
+                      <i className="ri-loader-4-line ri-spin" /> Generating...
+                    </>
+                  ) : (
+                    <>
+                      <i className="ri-magic-line" /> Generate Codes
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -72,14 +72,15 @@ export class VoterService {
 
   static async batchGenerate(surveyId, count = 5) {
     const sId = parseInt(surveyId, 10);
+    const numCount = Math.max(1, Math.min(parseInt(count, 10) || 5, 1000));
     const voters = [];
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < numCount; i++) {
       const token = `TK-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
       voters.push({
         surveyId: sId,
-        voterId: `VOTER-${Date.now().toString().slice(-4)}-${i + 1}`,
+        voterId: `VOTER-${Date.now().toString().slice(-4)}-${i + 1}-${crypto.randomBytes(2).toString('hex').toUpperCase()}`,
         token,
-        usesLeft: 1,
+        usesLeft: 1, // Single-use: exactly one person per code
         completed: false,
       });
     }

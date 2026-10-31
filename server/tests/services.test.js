@@ -147,6 +147,47 @@ describe('Survey, Response, and Statistics Service Unit Tests', () => {
     expect(uniInList._count.responses).toBe(3);
   });
 
+  it('generates batch single-use access codes and strictly limits each code to one person per code', async () => {
+    // Generate 10 codes for 10 members
+    const batchList = await VoterService.batchGenerate(createdSurveyId, 10);
+    const batchTokens = batchList.filter((v) => v.token.startsWith('TK-'));
+    expect(batchTokens.length).toBeGreaterThanOrEqual(10);
+
+    const sampleVoter = batchTokens[0];
+    expect(sampleVoter.usesLeft).toBe(1);
+    expect(sampleVoter.completed).toBe(false);
+
+    // Make question optional for submitting response test
+    await prisma.question.update({
+      where: { id: testQuestionId },
+      data: { mandatory: false },
+    });
+
+    // 1st submission with sampleVoter.token (must SUCCEED)
+    const firstSubmission = await ResponseService.submitResponse(
+      createdSurveyId,
+      { Q_UPDATED: ['AO1'] },
+      sampleVoter.token,
+      '127.0.0.1'
+    );
+    expect(firstSubmission).toBeDefined();
+
+    // Verify DB marks completed: true and usesLeft: 0
+    const updatedSample = await prisma.voter.findUnique({ where: { id: sampleVoter.id } });
+    expect(updatedSample.completed).toBe(true);
+    expect(updatedSample.usesLeft).toBe(0);
+
+    // 2nd submission with the SAME token (must be REJECTED as single-use)
+    await expect(
+      ResponseService.submitResponse(
+        createdSurveyId,
+        { Q_UPDATED: ['AO2'] },
+        sampleVoter.token,
+        '127.0.0.1'
+      )
+    ).rejects.toThrow('This voter access code has already completed the survey.');
+  });
+
   it('rejects submission when mandatory question is missing', async () => {
     // Make question mandatory again to test rejection
     await prisma.question.update({
