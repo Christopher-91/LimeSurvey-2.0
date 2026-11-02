@@ -935,17 +935,20 @@ export const SurveyBuilder = () => {
                           marginBottom: '16px',
                         }}
                       >
-                        <div style={{ flex: '1 1 70%' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                            <span
-                              style={{
-                                fontSize: '13px',
-                                fontWeight: 700,
-                                color: '#10b981',
-                              }}
-                            >
-                              {idx + 1}.
-                            </span>
+                        <div style={{ flex: '1 1 70%', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                          <span
+                            style={{
+                              fontSize: '14px',
+                              fontWeight: 700,
+                              color: '#10b981',
+                              paddingTop: '10px',
+                              flexShrink: 0,
+                            }}
+                          >
+                            {idx + 1}.
+                          </span>
+
+                          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', minWidth: 0 }}>
                             <input
                               type="text"
                               placeholder="Question text (e.g. How satisfied are you with team communication?)"
@@ -966,48 +969,49 @@ export const SurveyBuilder = () => {
                               onFocus={(e) => (e.target.style.borderColor = '#10b981')}
                               onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
                             />
+
+                            {q.helpText !== undefined && (
+                              <input
+                                type="text"
+                                placeholder="Optional description / helper instructions..."
+                                value={q.helpText}
+                                onChange={(e) => updateQuestion(idx, { helpText: e.target.value })}
+                                style={{
+                                  width: '100%',
+                                  fontSize: '13px',
+                                  color: '#64748b',
+                                  border: '1px dashed #cbd5e1',
+                                  borderRadius: '4px',
+                                  padding: '6px 10px',
+                                  outline: 'none',
+                                  background: '#f8fafc',
+                                  boxSizing: 'border-box',
+                                }}
+                              />
+                            )}
+
+                            {zeroKnowledgeEnabled && q.type === 'long_text' && (
+                              <div
+                                style={{
+                                  marginTop: '2px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '5px',
+                                  backgroundColor: '#ecfdf5',
+                                  color: '#047857',
+                                  border: '1px solid #a7f3d0',
+                                  padding: '3px 8px',
+                                  borderRadius: '4px',
+                                  fontSize: '11px',
+                                  fontWeight: 600,
+                                  alignSelf: 'flex-start',
+                                }}
+                              >
+                                <i className="ri-shield-keyhole-line" />
+                                ZK Ghost Comment: voter profile decoupled on submission
+                              </div>
+                            )}
                           </div>
-
-                          {q.helpText !== undefined && (
-                            <input
-                              type="text"
-                              placeholder="Optional description / helper instructions..."
-                              value={q.helpText}
-                              onChange={(e) => updateQuestion(idx, { helpText: e.target.value })}
-                              style={{
-                                width: '100%',
-                                fontSize: '13px',
-                                color: '#64748b',
-                                border: '1px dashed #cbd5e1',
-                                borderRadius: '4px',
-                                padding: '6px 10px',
-                                marginTop: '4px',
-                                outline: 'none',
-                                background: '#f8fafc',
-                              }}
-                            />
-                          )}
-
-                          {zeroKnowledgeEnabled && q.type === 'long_text' && (
-                            <div
-                              style={{
-                                marginTop: '8px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '5px',
-                                backgroundColor: '#ecfdf5',
-                                color: '#047857',
-                                border: '1px solid #a7f3d0',
-                                padding: '3px 8px',
-                                borderRadius: '4px',
-                                fontSize: '11px',
-                                fontWeight: 600,
-                              }}
-                            >
-                              <i className="ri-shield-keyhole-line" />
-                              ZK Ghost Comment: voter profile decoupled on submission
-                            </div>
-                          )}
                         </div>
 
                         {/* Question Type Selector */}
