@@ -326,6 +326,13 @@ h1, h2, h3, h4, h5, h6 {
   transition: all var(--ls-transition-fast);
 }
 
+.ls-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+}
+
 .ls-input:focus,
 .ls-select:focus,
 .ls-textarea:focus {

@@ -1015,28 +1015,51 @@ export const SurveyBuilder = () => {
                         </div>
 
                         {/* Question Type Selector */}
-                        <div style={{ flex: '0 0 28%', minWidth: '170px' }}>
-                          <select
-                            className="ls-select"
-                            value={q.type}
-                            onChange={(e) => updateQuestion(idx, { type: e.target.value })}
-                            style={{
-                              padding: '10px 12px',
-                              fontSize: '14px',
-                              fontWeight: 500,
-                              color: '#1e293b',
-                              borderColor: '#cbd5e1',
-                              backgroundColor: '#ffffff',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            <option value="short_text">Short Answer</option>
-                            <option value="long_text">Paragraph / Comment</option>
-                            <option value="single_choice">Multiple Choice (Radio)</option>
-                            <option value="multiple_choice">Checkboxes (Multi-select)</option>
-                            <option value="rating">Linear Scale / Rating (1-5)</option>
-                            <option value="matrix">Matrix / Grid</option>
-                          </select>
+                        <div style={{ flex: '0 0 28%', minWidth: '180px' }}>
+                          <div style={{ position: 'relative', width: '100%' }}>
+                            <select
+                              className="ls-select"
+                              value={q.type}
+                              onChange={(e) => updateQuestion(idx, { type: e.target.value })}
+                              style={{
+                                appearance: 'none',
+                                WebkitAppearance: 'none',
+                                MozAppearance: 'none',
+                                width: '100%',
+                                padding: '10px 36px 10px 12px',
+                                fontSize: '14px',
+                                fontWeight: 500,
+                                color: '#1e293b',
+                                border: '1px solid #cbd5e1',
+                                borderRadius: '6px',
+                                backgroundColor: '#ffffff',
+                                cursor: 'pointer',
+                                outline: 'none',
+                                transition: 'border-color 0.15s ease',
+                              }}
+                              onFocus={(e) => (e.target.style.borderColor = '#10b981')}
+                              onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
+                            >
+                              <option value="short_text">Short Answer</option>
+                              <option value="long_text">Paragraph / Comment</option>
+                              <option value="single_choice">Multiple Choice (Radio)</option>
+                              <option value="multiple_choice">Checkboxes (Multi-select)</option>
+                              <option value="rating">Linear Scale / Rating (1-5)</option>
+                              <option value="matrix">Matrix / Grid</option>
+                            </select>
+                            <i
+                              className="ri-arrow-down-s-line"
+                              style={{
+                                position: 'absolute',
+                                right: '12px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                pointerEvents: 'none',
+                                color: '#64748b',
+                                fontSize: '18px',
+                              }}
+                            />
+                          </div>
                         </div>
                       </div>
 
