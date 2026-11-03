@@ -222,7 +222,8 @@ export const SurveyTaking = () => {
 
               {/* RENDER QUESTION BY TYPE */}
               {/* 1. Single Choice (Radio) */}
-              {q.type === 'single_choice' && (
+              {['single_choice', 'multiple_choice'].includes(q.type) &&
+                !(q.type === 'multiple_choice' || Boolean(q.settings?.allowMultiple)) && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {q.options?.map((opt) => (
                     <label
@@ -254,7 +255,8 @@ export const SurveyTaking = () => {
               )}
 
               {/* 2. Multiple Choice (Checkboxes) */}
-              {q.type === 'multiple_choice' && (
+              {['single_choice', 'multiple_choice'].includes(q.type) &&
+                (q.type === 'multiple_choice' || Boolean(q.settings?.allowMultiple)) && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {q.options?.map((opt) => {
                     const isChecked = Array.isArray(answers[q.code]) && answers[q.code].includes(opt.code);

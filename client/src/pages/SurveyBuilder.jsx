@@ -1020,7 +1020,16 @@ export const SurveyBuilder = () => {
                             <select
                               className="ls-select"
                               value={q.type}
-                              onChange={(e) => updateQuestion(idx, { type: e.target.value })}
+                              onChange={(e) => {
+                                const newType = e.target.value;
+                                const isMulti = newType === 'multiple_choice';
+                                updateQuestion(idx, {
+                                  type: newType,
+                                  settings: ['single_choice', 'multiple_choice'].includes(newType)
+                                    ? { ...(q.settings || {}), allowMultiple: isMulti }
+                                    : q.settings,
+                                });
+                              }}
                               style={{
                                 appearance: 'none',
                                 WebkitAppearance: 'none',
@@ -1101,65 +1110,203 @@ export const SurveyBuilder = () => {
                         {/* 3 & 4. Multiple Choice & Checkboxes Options Builder */}
                         {['single_choice', 'multiple_choice'].includes(q.type) && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {(q.options || []).map((opt, oIdx) => (
-                              <div
-                                key={oIdx}
+                            {/* Selection Mode Control (Single vs Multiple) */}
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                flexWrap: 'wrap',
+                                gap: '10px',
+                                padding: '8px 12px',
+                                backgroundColor: '#f8fafc',
+                                borderRadius: '6px',
+                                border: '1px solid #e2e8f0',
+                                width: 'fit-content',
+                                marginBottom: '2px',
+                              }}
+                            >
+                              <span
                                 style={{
+                                  fontSize: '12px',
+                                  fontWeight: 600,
+                                  color: '#475569',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.5px',
                                   display: 'flex',
                                   alignItems: 'center',
-                                  gap: '10px',
+                                  gap: '5px',
                                 }}
                               >
-                                {q.type === 'single_choice' ? (
+                                <i className="ri-list-check-2" style={{ color: '#10b981', fontSize: '15px' }} />
+                                Selection Mode:
+                              </span>
+                              <div
+                                style={{
+                                  display: 'inline-flex',
+                                  gap: '2px',
+                                  backgroundColor: '#e2e8f0',
+                                  padding: '2px',
+                                  borderRadius: '6px',
+                                }}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    updateQuestion(idx, {
+                                      type: 'single_choice',
+                                      settings: { ...(q.settings || {}), allowMultiple: false },
+                                    })
+                                  }
+                                  style={{
+                                    padding: '5px 12px',
+                                    fontSize: '12px',
+                                    fontWeight: 600,
+                                    borderRadius: '4px',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    backgroundColor:
+                                      !(q.type === 'multiple_choice' || Boolean(q.settings?.allowMultiple))
+                                        ? '#ffffff'
+                                        : 'transparent',
+                                    color:
+                                      !(q.type === 'multiple_choice' || Boolean(q.settings?.allowMultiple))
+                                        ? '#0f172a'
+                                        : '#64748b',
+                                    boxShadow:
+                                      !(q.type === 'multiple_choice' || Boolean(q.settings?.allowMultiple))
+                                        ? '0 1px 3px rgba(0,0,0,0.08)'
+                                        : 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    transition: 'all 0.15s ease',
+                                  }}
+                                >
                                   <i
                                     className="ri-radio-button-line"
-                                    style={{ color: '#94a3b8', fontSize: '18px' }}
-                                  />
-                                ) : (
-                                  <i
-                                    className="ri-checkbox-blank-line"
-                                    style={{ color: '#94a3b8', fontSize: '18px' }}
-                                  />
-                                )}
-                                <input
-                                  type="text"
-                                  value={opt.text}
-                                  onChange={(e) => handleUpdateOption(idx, oIdx, e.target.value)}
-                                  placeholder={`Option ${oIdx + 1}`}
-                                  style={{
-                                    flex: 1,
-                                    maxWidth: '460px',
-                                    padding: '6px 10px',
-                                    fontSize: '14px',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '4px',
-                                    outline: 'none',
-                                    fontFamily: 'inherit',
-                                  }}
-                                  onFocus={(e) => (e.target.style.borderColor = '#10b981')}
-                                  onBlur={(e) => (e.target.style.borderColor = '#e2e8f0')}
-                                />
-                                {(q.options || []).length > 1 && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveOption(idx, oIdx)}
                                     style={{
-                                      background: 'none',
-                                      border: 'none',
-                                      color: '#94a3b8',
-                                      cursor: 'pointer',
-                                      fontSize: '18px',
-                                      padding: '4px',
-                                      display: 'flex',
-                                      alignItems: 'center',
+                                      color:
+                                        !(q.type === 'multiple_choice' || Boolean(q.settings?.allowMultiple))
+                                          ? '#10b981'
+                                          : '#94a3b8',
                                     }}
-                                    title="Remove Option"
-                                  >
-                                    <i className="ri-close-line" />
-                                  </button>
-                                )}
+                                  />
+                                  Single selection (Radio)
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    updateQuestion(idx, {
+                                      type: 'multiple_choice',
+                                      settings: { ...(q.settings || {}), allowMultiple: true },
+                                    })
+                                  }
+                                  style={{
+                                    padding: '5px 12px',
+                                    fontSize: '12px',
+                                    fontWeight: 600,
+                                    borderRadius: '4px',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    backgroundColor:
+                                      q.type === 'multiple_choice' || Boolean(q.settings?.allowMultiple)
+                                        ? '#ffffff'
+                                        : 'transparent',
+                                    color:
+                                      q.type === 'multiple_choice' || Boolean(q.settings?.allowMultiple)
+                                        ? '#0f172a'
+                                        : '#64748b',
+                                    boxShadow:
+                                      q.type === 'multiple_choice' || Boolean(q.settings?.allowMultiple)
+                                        ? '0 1px 3px rgba(0,0,0,0.08)'
+                                        : 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    transition: 'all 0.15s ease',
+                                  }}
+                                >
+                                  <i
+                                    className="ri-checkbox-line"
+                                    style={{
+                                      color:
+                                        q.type === 'multiple_choice' || Boolean(q.settings?.allowMultiple)
+                                          ? '#10b981'
+                                          : '#94a3b8',
+                                    }}
+                                  />
+                                  Multiple selections (Checkboxes)
+                                </button>
                               </div>
-                            ))}
+                              <span style={{ fontSize: '12px', color: '#64748b', marginLeft: '4px' }}>
+                                {q.type === 'multiple_choice' || Boolean(q.settings?.allowMultiple)
+                                  ? '• Voters can select multiple options'
+                                  : '• Voters can select only one option'}
+                              </span>
+                            </div>
+
+                            {(q.options || []).map((opt, oIdx) => {
+                              const isMulti = q.type === 'multiple_choice' || Boolean(q.settings?.allowMultiple);
+                              return (
+                                <div
+                                  key={oIdx}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px',
+                                  }}
+                                >
+                                  {isMulti ? (
+                                    <i
+                                      className="ri-checkbox-blank-line"
+                                      style={{ color: '#94a3b8', fontSize: '18px' }}
+                                    />
+                                  ) : (
+                                    <i
+                                      className="ri-radio-button-line"
+                                      style={{ color: '#94a3b8', fontSize: '18px' }}
+                                    />
+                                  )}
+                                  <input
+                                    type="text"
+                                    value={opt.text}
+                                    onChange={(e) => handleUpdateOption(idx, oIdx, e.target.value)}
+                                    placeholder={`Option ${oIdx + 1}`}
+                                    style={{
+                                      flex: 1,
+                                      maxWidth: '460px',
+                                      padding: '6px 10px',
+                                      fontSize: '14px',
+                                      border: '1px solid #e2e8f0',
+                                      borderRadius: '4px',
+                                      outline: 'none',
+                                      fontFamily: 'inherit',
+                                    }}
+                                    onFocus={(e) => (e.target.style.borderColor = '#10b981')}
+                                    onBlur={(e) => (e.target.style.borderColor = '#e2e8f0')}
+                                  />
+                                  {(q.options || []).length > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveOption(idx, oIdx)}
+                                      style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: '#94a3b8',
+                                        cursor: 'pointer',
+                                        fontSize: '18px',
+                                        padding: '4px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                      }}
+                                      title="Remove Option"
+                                    >
+                                      <i className="ri-close-line" />
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })}
 
                             <div style={{ marginTop: '4px' }}>
                               <button
@@ -1799,7 +1946,7 @@ export const SurveyBuilder = () => {
                     {q.type === 'long_text' && (
                       <textarea className="ls-textarea" disabled rows={3} placeholder="Your comment / feedback..." />
                     )}
-                    {q.type === 'single_choice' && (
+                    {['single_choice', 'multiple_choice'].includes(q.type) && !(q.type === 'multiple_choice' || Boolean(q.settings?.allowMultiple)) && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {(q.options || []).map((o, oIdx) => (
                           <label key={oIdx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
@@ -1808,7 +1955,7 @@ export const SurveyBuilder = () => {
                         ))}
                       </div>
                     )}
-                    {q.type === 'multiple_choice' && (
+                    {['single_choice', 'multiple_choice'].includes(q.type) && (q.type === 'multiple_choice' || Boolean(q.settings?.allowMultiple)) && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {(q.options || []).map((o, oIdx) => (
                           <label key={oIdx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
