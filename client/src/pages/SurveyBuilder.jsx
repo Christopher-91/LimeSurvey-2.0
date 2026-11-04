@@ -3,6 +3,209 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { apiClient } from '../api/apiClient.js';
 import { useToast } from '../context/ToastContext.jsx';
 
+const PreviewRankingQuestion = ({ question, value, onChange }) => {
+  const options = question.options || [];
+
+  const [items, setItems] = useState(() => {
+    if (Array.isArray(value) && value.length === options.length) {
+      return value.map((code) => options.find((o) => o.code === code) || { code, text: code });
+    }
+    return [...options];
+  });
+
+  const [draggedIdx, setDraggedIdx] = useState(null);
+  const [dragOverIdx, setDragOverIdx] = useState(null);
+
+  useEffect(() => {
+    if (Array.isArray(value) && value.length === options.length) {
+      const mapped = value.map((code) => options.find((o) => o.code === code) || { code, text: code });
+      setItems(mapped);
+    } else if (!value || value.length === 0) {
+      onChange(options.map((o) => o.code));
+    }
+  }, [value, options]);
+
+  const updateOrder = (newItems) => {
+    setItems(newItems);
+    onChange(newItems.map((o) => o.code));
+  };
+
+  const moveItem = (fromIdx, toIdx) => {
+    if (toIdx < 0 || toIdx >= items.length) return;
+    const updated = [...items];
+    const [moved] = updated.splice(fromIdx, 1);
+    updated.splice(toIdx, 0, moved);
+    updateOrder(updated);
+  };
+
+  const handleDragStart = (e, index) => {
+    setDraggedIdx(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(index));
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverIdx !== index) setDragOverIdx(index);
+  };
+
+  const handleDrop = (e, targetIdx) => {
+    e.preventDefault();
+    if (draggedIdx === null || draggedIdx === targetIdx) {
+      setDraggedIdx(null);
+      setDragOverIdx(null);
+      return;
+    }
+    moveItem(draggedIdx, targetIdx);
+    setDraggedIdx(null);
+    setDragOverIdx(null);
+  };
+
+  const handleRankSelect = (currentIdx, newRank1Based) => {
+    const targetIdx = newRank1Based - 1;
+    if (targetIdx === currentIdx || targetIdx < 0 || targetIdx >= items.length) return;
+    moveItem(currentIdx, targetIdx);
+  };
+
+  const getRankSuffix = (rank) => {
+    if (rank === 1) return '1st';
+    if (rank === 2) return '2nd';
+    if (rank === 3) return '3rd';
+    return `${rank}th`;
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div style={{ fontSize: '12px', color: '#64748b', fontStyle: 'italic', marginBottom: '2px' }}>
+        <i className="ri-arrow-up-down-line" /> Drag items or select rank dropdowns to reorder (1st to {items.length}):
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        {items.map((item, idx) => {
+          const rank = idx + 1;
+          const isDragging = draggedIdx === idx;
+          const isDragOver = dragOverIdx === idx;
+
+          return (
+            <div
+              key={item.code}
+              draggable
+              onDragStart={(e) => handleDragStart(e, idx)}
+              onDragOver={(e) => handleDragOver(e, idx)}
+              onDrop={(e) => handleDrop(e, idx)}
+              onDragEnd={() => {
+                setDraggedIdx(null);
+                setDragOverIdx(null);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '8px 12px',
+                backgroundColor: isDragOver ? '#ecfdf5' : '#ffffff',
+                border: isDragOver ? '2px dashed #10b981' : isDragging ? '1px dashed #94a3b8' : '1px solid #e2e8f0',
+                borderRadius: '6px',
+                opacity: isDragging ? 0.45 : 1,
+                cursor: 'grab',
+                transition: 'all 0.15s ease',
+                userSelect: 'none',
+              }}
+            >
+              <i className="ri-draggable" style={{ color: '#94a3b8', fontSize: '18px' }} />
+              <div
+                style={{
+                  minWidth: '40px',
+                  height: '26px',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  flexShrink: 0,
+                  backgroundColor: rank === 1 ? '#10b981' : rank === 2 ? '#0284c7' : rank === 3 ? '#6366f1' : '#f1f5f9',
+                  color: rank <= 3 ? '#ffffff' : '#475569',
+                  border: rank === 1 ? '1px solid #059669' : '1px solid #cbd5e1',
+                }}
+              >
+                {getRankSuffix(rank)}
+              </div>
+              <div style={{ flex: 1, fontSize: '14px', fontWeight: 500, color: '#0f172a' }}>
+                {item.text}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>Rank:</span>
+                <select
+                  value={rank}
+                  onChange={(e) => handleRankSelect(idx, parseInt(e.target.value, 10))}
+                  style={{
+                    padding: '3px 6px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    borderRadius: '4px',
+                    border: '1px solid #cbd5e1',
+                    backgroundColor: '#ffffff',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {items.map((_, rIdx) => (
+                    <option key={rIdx + 1} value={rIdx + 1}>
+                      {rIdx + 1} ({getRankSuffix(rIdx + 1)})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ display: 'inline-flex', gap: '2px' }}>
+                <button
+                  type="button"
+                  disabled={idx === 0}
+                  onClick={() => moveItem(idx, idx - 1)}
+                  style={{
+                    width: '26px',
+                    height: '26px',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '4px',
+                    backgroundColor: idx === 0 ? '#f8fafc' : '#ffffff',
+                    color: idx === 0 ? '#cbd5e1' : '#475569',
+                    cursor: idx === 0 ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '14px',
+                  }}
+                >
+                  <i className="ri-arrow-up-s-line" />
+                </button>
+                <button
+                  type="button"
+                  disabled={idx === items.length - 1}
+                  onClick={() => moveItem(idx, idx + 1)}
+                  style={{
+                    width: '26px',
+                    height: '26px',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '4px',
+                    backgroundColor: idx === items.length - 1 ? '#f8fafc' : '#ffffff',
+                    color: idx === items.length - 1 ? '#cbd5e1' : '#475569',
+                    cursor: idx === items.length - 1 ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '14px',
+                  }}
+                >
+                  <i className="ri-arrow-down-s-line" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 export const SurveyBuilder = () => {
   const { id } = useParams();
   const isNew = !id || id === 'new';
@@ -13,6 +216,39 @@ export const SurveyBuilder = () => {
   const [isLoading, setIsLoading] = useState(!isNew);
   const [isSaving, setIsSaving] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [previewAnswers, setPreviewAnswers] = useState({});
+
+  const handlePreviewAnswerChange = (qKey, value) => {
+    setPreviewAnswers((prev) => ({
+      ...prev,
+      [qKey]: value,
+    }));
+  };
+
+  const handleTestSubmitPreview = () => {
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
+      if (q.mandatory) {
+        const val = previewAnswers[q.code || `Q_${i}`];
+        if (
+          val === undefined ||
+          val === null ||
+          val === '' ||
+          (Array.isArray(val) && val.length === 0) ||
+          (typeof val === 'object' && Object.keys(val).length === 0)
+        ) {
+          showToast(`Mandatory question #${i + 1} ("${q.text || `Question ${i + 1}`}") is required before submitting.`, 'warning');
+          return;
+        }
+      }
+    }
+    showToast('Preview test submission successful! All required fields are validated.', 'success');
+  };
+
+  const handleResetPreviewAnswers = () => {
+    setPreviewAnswers({});
+    showToast('Preview responses reset.', 'info');
+  };
 
   // Survey Header Form
   const [title, setTitle] = useState('');
@@ -2073,20 +2309,39 @@ export const SurveyBuilder = () => {
             className="ls-modal"
             style={{ maxWidth: '780px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }}
           >
-            <div className="ls-modal-header">
-              <div className="ls-modal-title">
-                <i className="ri-eye-line" style={{ color: '#10b981' }} /> Survey Preview
+            <div className="ls-modal-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #e2e8f0' }}>
+              <div>
+                <div className="ls-modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>
+                  <i className="ri-eye-line" style={{ color: '#10b981' }} /> Live Survey Preview
+                  <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '12px', backgroundColor: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0' }}>
+                    INTERACTIVE
+                  </span>
+                </div>
+                <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>
+                  Fill out and test your questionnaire below exactly as voters will experience it.
+                </p>
               </div>
-              <button
-                type="button"
-                className="ls-modal-close"
-                onClick={() => setIsPreviewOpen(false)}
-              >
-                &times;
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={handleResetPreviewAnswers}
+                  className="ls-btn ls-btn-outline ls-btn-sm"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}
+                  title="Clear all preview inputs"
+                >
+                  <i className="ri-refresh-line" /> Clear Answers
+                </button>
+                <button
+                  type="button"
+                  className="ls-modal-close"
+                  onClick={() => setIsPreviewOpen(false)}
+                >
+                  &times;
+                </button>
+              </div>
             </div>
 
-            <div style={{ padding: '20px 0' }}>
+            <div style={{ padding: '20px' }}>
               <div
                 className="ls-card"
                 style={{
@@ -2112,134 +2367,231 @@ export const SurveyBuilder = () => {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {questions.map((q, idx) => (
-                  <div key={idx} className="ls-card" style={{ borderRadius: '8px' }}>
-                    <div style={{ marginBottom: '12px' }}>
-                      <span style={{ fontWeight: 700, color: '#10b981', marginRight: '6px' }}>{idx + 1}.</span>
-                      <strong style={{ fontSize: '15px', color: '#0f172a' }}>
-                        {q.text || `Question ${idx + 1}`}
-                      </strong>
-                      {q.mandatory && <span style={{ color: '#ef4444', marginLeft: '4px' }}>*</span>}
-                      {q.helpText && <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>{q.helpText}</p>}
-                    </div>
+                {questions.map((q, idx) => {
+                  const qKey = q.code || `Q_${idx}`;
+                  const currentAnswer = previewAnswers[qKey];
 
-                    {/* Preview Inputs */}
-                    {q.type === 'short_text' && (
-                      <input type="text" className="ls-input" disabled placeholder="Your answer..." />
-                    )}
-                    {q.type === 'long_text' && (
-                      <textarea className="ls-textarea" disabled rows={3} placeholder="Your comment / feedback..." />
-                    )}
-                    {['single_choice', 'multiple_choice'].includes(q.type) && !(q.type === 'multiple_choice' || Boolean(q.settings?.allowMultiple)) && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {(q.options || []).map((o, oIdx) => (
-                          <label key={oIdx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
-                            <input type="radio" disabled name={`preview_${idx}`} /> {o.text}
-                          </label>
-                        ))}
+                  return (
+                    <div key={idx} className="ls-card" style={{ borderRadius: '8px' }}>
+                      <div style={{ marginBottom: '12px' }}>
+                        <span style={{ fontWeight: 700, color: '#10b981', marginRight: '6px' }}>{idx + 1}.</span>
+                        <strong style={{ fontSize: '15px', color: '#0f172a' }}>
+                          {q.text || `Question ${idx + 1}`}
+                        </strong>
+                        {q.mandatory && <span style={{ color: '#ef4444', marginLeft: '4px' }}>*</span>}
+                        {q.helpText && <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>{q.helpText}</p>}
                       </div>
-                    )}
-                    {['single_choice', 'multiple_choice'].includes(q.type) && (q.type === 'multiple_choice' || Boolean(q.settings?.allowMultiple)) && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {(q.options || []).map((o, oIdx) => (
-                          <label key={oIdx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
-                            <input type="checkbox" disabled /> {o.text}
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                    {q.type === 'ranking' && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <div style={{ fontSize: '12px', color: '#64748b', fontStyle: 'italic', marginBottom: '2px' }}>
-                          <i className="ri-arrow-up-down-line" /> Voters can rank these options by dragging or selecting ranks (1st to {(q.options || []).length}):
+
+                      {/* 1. Short Text Input */}
+                      {q.type === 'short_text' && (
+                        <input
+                          type="text"
+                          className="ls-input"
+                          placeholder="Type your answer here..."
+                          value={currentAnswer || ''}
+                          onChange={(e) => handlePreviewAnswerChange(qKey, e.target.value)}
+                        />
+                      )}
+
+                      {/* 2. Long Text / Comment Input */}
+                      {q.type === 'long_text' && (
+                        <textarea
+                          className="ls-textarea"
+                          rows={3}
+                          placeholder="Type your comment / feedback here..."
+                          value={currentAnswer || ''}
+                          onChange={(e) => handlePreviewAnswerChange(qKey, e.target.value)}
+                        />
+                      )}
+
+                      {/* 3. Single Choice (Radio) */}
+                      {['single_choice', 'multiple_choice'].includes(q.type) && !(q.type === 'multiple_choice' || Boolean(q.settings?.allowMultiple)) && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {(q.options || []).map((o, oIdx) => {
+                            const isChecked = currentAnswer === o.code;
+                            return (
+                              <label
+                                key={oIdx}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '10px',
+                                  padding: '9px 12px',
+                                  borderRadius: '6px',
+                                  backgroundColor: isChecked ? '#ecfdf5' : '#f8fafc',
+                                  border: isChecked ? '1px solid #10b981' : '1px solid #e2e8f0',
+                                  cursor: 'pointer',
+                                  fontSize: '14px',
+                                  transition: 'all 0.15s ease',
+                                }}
+                              >
+                                <input
+                                  type="radio"
+                                  name={`preview_${idx}`}
+                                  checked={isChecked}
+                                  onChange={() => handlePreviewAnswerChange(qKey, o.code)}
+                                  style={{ accentColor: '#10b981', width: '16px', height: '16px', cursor: 'pointer' }}
+                                />
+                                <span style={{ color: isChecked ? '#065f46' : '#1e293b', fontWeight: isChecked ? 600 : 400 }}>
+                                  {o.text}
+                                </span>
+                              </label>
+                            );
+                          })}
                         </div>
-                        {(q.options || []).map((o, oIdx) => (
-                          <div
-                            key={oIdx}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '10px',
-                              padding: '8px 12px',
-                              backgroundColor: '#f8fafc',
-                              border: '1px solid #e2e8f0',
-                              borderRadius: '6px',
-                              fontSize: '14px',
-                            }}
-                          >
-                            <span
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: '28px',
-                                height: '24px',
-                                borderRadius: '4px',
-                                backgroundColor: oIdx === 0 ? '#10b981' : '#e2e8f0',
-                                color: oIdx === 0 ? '#ffffff' : '#475569',
-                                fontSize: '11px',
-                                fontWeight: 700,
-                              }}
-                            >
-                              #{oIdx + 1}
-                            </span>
-                            <i className="ri-draggable" style={{ color: '#94a3b8' }} />
-                            <span style={{ flex: 1, fontWeight: 500 }}>{o.text}</span>
-                            <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-                              Rank {oIdx + 1}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {q.type === 'rating' && (
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button key={star} type="button" className="ls-btn ls-btn-outline ls-btn-sm" disabled>
-                            ★ {star}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {q.type === 'matrix' && (
-                      <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', fontSize: '13px' }}>
-                          <thead>
-                            <tr>
-                              <th></th>
-                              {(q.settings?.columns || ['Col 1', 'Col 2', 'Col 3']).map((c, cIdx) => (
-                                <th key={cIdx} style={{ textAlign: 'center', padding: '6px' }}>{c}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {(q.settings?.rows || ['Row 1', 'Row 2']).map((r, rIdx) => (
-                              <tr key={rIdx} style={{ borderTop: '1px solid #f1f5f9' }}>
-                                <td style={{ padding: '8px 4px', fontWeight: 500 }}>{r}</td>
-                                {(q.settings?.columns || ['Col 1', 'Col 2', 'Col 3']).map((_, cIdx) => (
-                                  <td key={cIdx} style={{ textAlign: 'center' }}>
-                                    <input type="radio" disabled name={`preview_m_${idx}_${rIdx}`} />
-                                  </td>
+                      )}
+
+                      {/* 4. Multiple Choice (Checkboxes) */}
+                      {['single_choice', 'multiple_choice'].includes(q.type) && (q.type === 'multiple_choice' || Boolean(q.settings?.allowMultiple)) && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {(q.options || []).map((o, oIdx) => {
+                            const selectedArray = Array.isArray(currentAnswer) ? currentAnswer : [];
+                            const isChecked = selectedArray.includes(o.code);
+                            return (
+                              <label
+                                key={oIdx}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '10px',
+                                  padding: '9px 12px',
+                                  borderRadius: '6px',
+                                  backgroundColor: isChecked ? '#ecfdf5' : '#f8fafc',
+                                  border: isChecked ? '1px solid #10b981' : '1px solid #e2e8f0',
+                                  cursor: 'pointer',
+                                  fontSize: '14px',
+                                  transition: 'all 0.15s ease',
+                                }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={() => {
+                                    const updated = isChecked
+                                      ? selectedArray.filter((c) => c !== o.code)
+                                      : [...selectedArray, o.code];
+                                    handlePreviewAnswerChange(qKey, updated);
+                                  }}
+                                  style={{ accentColor: '#10b981', width: '16px', height: '16px', cursor: 'pointer' }}
+                                />
+                                <span style={{ color: isChecked ? '#065f46' : '#1e293b', fontWeight: isChecked ? 600 : 400 }}>
+                                  {o.text}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* 5. Ranking / Preference (Interactive Drag & Drop + Number Selector) */}
+                      {q.type === 'ranking' && (
+                        <PreviewRankingQuestion
+                          question={q}
+                          value={currentAnswer}
+                          onChange={(rankedCodes) => handlePreviewAnswerChange(qKey, rankedCodes)}
+                        />
+                      )}
+
+                      {/* 6. Linear Scale / Rating (1-5) */}
+                      {q.type === 'rating' && (
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                          {[1, 2, 3, 4, 5].map((star) => {
+                            const isSelected = String(currentAnswer) === String(star);
+                            return (
+                              <button
+                                key={star}
+                                type="button"
+                                onClick={() => handlePreviewAnswerChange(qKey, String(star))}
+                                className="ls-btn"
+                                style={{
+                                  padding: '8px 16px',
+                                  backgroundColor: isSelected ? '#fef3c7' : '#ffffff',
+                                  color: isSelected ? '#92400e' : '#334155',
+                                  border: isSelected ? '1px solid #f59e0b' : '1px solid #cbd5e1',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  borderRadius: '6px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  transition: 'all 0.15s ease',
+                                }}
+                              >
+                                <i className={isSelected ? 'ri-star-fill' : 'ri-star-line'} style={{ color: '#f59e0b' }} />
+                                {star}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* 7. Matrix / Grid */}
+                      {q.type === 'matrix' && (
+                        <div style={{ overflowX: 'auto' }}>
+                          <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse' }}>
+                            <thead>
+                              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                                <th style={{ padding: '8px 12px', textAlign: 'left', color: '#64748b' }}>Statement</th>
+                                {(q.settings?.columns || ['Col 1', 'Col 2', 'Col 3']).map((c, cIdx) => (
+                                  <th key={cIdx} style={{ textAlign: 'center', padding: '8px 12px', color: '#64748b' }}>{c}</th>
                                 ))}
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                            </thead>
+                            <tbody>
+                              {(q.settings?.rows || ['Row 1', 'Row 2']).map((r, rIdx) => {
+                                const matrixMap = (typeof currentAnswer === 'object' && currentAnswer !== null) ? currentAnswer : {};
+                                const selectedCol = matrixMap[r];
+                                return (
+                                  <tr key={rIdx} style={{ borderTop: '1px solid #f1f5f9' }}>
+                                    <td style={{ padding: '10px 12px', fontWeight: 500, color: '#0f172a' }}>{r}</td>
+                                    {(q.settings?.columns || ['Col 1', 'Col 2', 'Col 3']).map((c, cIdx) => (
+                                      <td key={cIdx} style={{ textAlign: 'center', padding: '10px 12px' }}>
+                                        <input
+                                          type="radio"
+                                          name={`preview_m_${idx}_${rIdx}`}
+                                          checked={selectedCol === c}
+                                          onChange={() => {
+                                            const updated = { ...matrixMap, [r]: c };
+                                            handlePreviewAnswerChange(qKey, updated);
+                                          }}
+                                          style={{ accentColor: '#10b981', cursor: 'pointer', width: '16px', height: '16px' }}
+                                        />
+                                      </td>
+                                    ))}
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            <div className="ls-modal-footer">
-              <button
-                type="button"
-                className="ls-btn ls-btn-primary"
-                onClick={() => setIsPreviewOpen(false)}
-              >
-                Close Preview
-              </button>
+            <div className="ls-modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderTop: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>
+              <div style={{ fontSize: '12px', color: '#64748b' }}>
+                <i className="ri-information-line" /> Test answers entered here are temporary and will not be saved to survey results.
+              </div>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  className="ls-btn ls-btn-outline"
+                  onClick={() => setIsPreviewOpen(false)}
+                >
+                  Close Preview
+                </button>
+                <button
+                  type="button"
+                  className="ls-btn ls-btn-primary"
+                  onClick={handleTestSubmitPreview}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <i className="ri-check-line" /> Test Submit
+                </button>
+              </div>
             </div>
           </div>
         </div>
