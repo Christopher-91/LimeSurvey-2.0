@@ -72,7 +72,7 @@ export const swaggerDocument = {
           text: { type: 'string' },
           type: {
             type: 'string',
-            enum: ['single_choice', 'multiple_choice', 'short_text', 'long_text', 'number', 'yes_no', 'date', 'rating'],
+            enum: ['single_choice', 'multiple_choice', 'ranking', 'short_text', 'long_text', 'number', 'yes_no', 'date', 'rating'],
           },
           mandatory: { type: 'boolean' },
         },

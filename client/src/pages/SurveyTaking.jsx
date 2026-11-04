@@ -3,6 +3,272 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { apiClient } from '../api/apiClient.js';
 import { useToast } from '../context/ToastContext.jsx';
 
+const RankingQuestionInput = ({ question, value, onChange }) => {
+  const options = question.options || [];
+
+  const [items, setItems] = useState(() => {
+    if (Array.isArray(value) && value.length === options.length) {
+      return value.map((code) => options.find((o) => o.code === code) || { code, text: code });
+    }
+    return [...options];
+  });
+
+  const [draggedIdx, setDraggedIdx] = useState(null);
+  const [dragOverIdx, setDragOverIdx] = useState(null);
+
+  useEffect(() => {
+    if (Array.isArray(value) && value.length === options.length) {
+      const mapped = value.map((code) => options.find((o) => o.code === code) || { code, text: code });
+      setItems(mapped);
+    } else if (!value || value.length === 0) {
+      onChange(options.map((o) => o.code));
+    }
+  }, [value, options]);
+
+  const updateOrder = (newItems) => {
+    setItems(newItems);
+    onChange(newItems.map((o) => o.code));
+  };
+
+  const moveItem = (fromIdx, toIdx) => {
+    if (toIdx < 0 || toIdx >= items.length) return;
+    const updated = [...items];
+    const [moved] = updated.splice(fromIdx, 1);
+    updated.splice(toIdx, 0, moved);
+    updateOrder(updated);
+  };
+
+  const handleDragStart = (e, index) => {
+    setDraggedIdx(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(index));
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverIdx !== index) {
+      setDragOverIdx(index);
+    }
+  };
+
+  const handleDrop = (e, targetIdx) => {
+    e.preventDefault();
+    if (draggedIdx === null || draggedIdx === targetIdx) {
+      setDraggedIdx(null);
+      setDragOverIdx(null);
+      return;
+    }
+    moveItem(draggedIdx, targetIdx);
+    setDraggedIdx(null);
+    setDragOverIdx(null);
+  };
+
+  const handleRankSelect = (currentIdx, newRank1Based) => {
+    const targetIdx = newRank1Based - 1;
+    if (targetIdx === currentIdx || targetIdx < 0 || targetIdx >= items.length) return;
+    moveItem(currentIdx, targetIdx);
+  };
+
+  const handleReset = () => {
+    updateOrder([...options]);
+  };
+
+  const getRankSuffix = (rank) => {
+    if (rank === 1) return '1st';
+    if (rank === 2) return '2nd';
+    if (rank === 3) return '3rd';
+    return `${rank}th`;
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '8px',
+          padding: '10px 14px',
+          backgroundColor: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px',
+          fontSize: '13px',
+          color: '#475569',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <i className="ri-arrow-up-down-line" style={{ color: '#10b981', fontSize: '16px' }} />
+          <span>
+            Rank items from <strong>1st (highest preference)</strong> to <strong>{items.length}th (lowest)</strong> by dragging or selecting ranks:
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={handleReset}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#64748b',
+            cursor: 'pointer',
+            fontSize: '12px',
+            textDecoration: 'underline',
+            padding: '2px 4px',
+          }}
+          title="Reset to default order"
+        >
+          Reset order
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {items.map((item, idx) => {
+          const rank = idx + 1;
+          const isDragging = draggedIdx === idx;
+          const isDragOver = dragOverIdx === idx;
+
+          return (
+            <div
+              key={item.code}
+              draggable
+              onDragStart={(e) => handleDragStart(e, idx)}
+              onDragOver={(e) => handleDragOver(e, idx)}
+              onDrop={(e) => handleDrop(e, idx)}
+              onDragEnd={() => {
+                setDraggedIdx(null);
+                setDragOverIdx(null);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 16px',
+                backgroundColor: isDragOver ? '#ecfdf5' : '#ffffff',
+                border: isDragOver ? '2px dashed #10b981' : isDragging ? '1px dashed #94a3b8' : '1px solid #e2e8f0',
+                borderRadius: '8px',
+                opacity: isDragging ? 0.45 : 1,
+                cursor: 'grab',
+                transition: 'all 0.15s ease',
+                boxShadow: isDragOver ? '0 4px 12px rgba(16, 185, 129, 0.12)' : '0 1px 2px rgba(0,0,0,0.03)',
+                userSelect: 'none',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: '#94a3b8',
+                  fontSize: '20px',
+                  cursor: 'grab',
+                }}
+                title="Drag to reorder"
+              >
+                <i className="ri-draggable" />
+              </div>
+
+              <div
+                style={{
+                  minWidth: '46px',
+                  height: '32px',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  flexShrink: 0,
+                  backgroundColor: rank === 1 ? '#10b981' : rank === 2 ? '#0284c7' : rank === 3 ? '#6366f1' : '#f1f5f9',
+                  color: rank <= 3 ? '#ffffff' : '#475569',
+                  border: rank === 1 ? '1px solid #059669' : rank === 2 ? '1px solid #0369a1' : rank === 3 ? '1px solid #4f46e5' : '1px solid #cbd5e1',
+                  boxShadow: rank === 1 ? '0 1px 3px rgba(16, 185, 129, 0.3)' : 'none',
+                }}
+              >
+                {getRankSuffix(rank)}
+              </div>
+
+              <div style={{ flex: 1, fontSize: '15px', fontWeight: 500, color: '#0f172a' }}>
+                {item.text}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>Rank:</span>
+                <select
+                  value={rank}
+                  onChange={(e) => handleRankSelect(idx, parseInt(e.target.value, 10))}
+                  style={{
+                    padding: '5px 8px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    borderRadius: '6px',
+                    border: '1px solid #cbd5e1',
+                    backgroundColor: '#ffffff',
+                    color: '#1e293b',
+                    cursor: 'pointer',
+                    outline: 'none',
+                  }}
+                  title="Assign rank position"
+                >
+                  {items.map((_, rIdx) => (
+                    <option key={rIdx + 1} value={rIdx + 1}>
+                      {rIdx + 1} ({getRankSuffix(rIdx + 1)} choice)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'inline-flex', gap: '3px' }}>
+                <button
+                  type="button"
+                  disabled={idx === 0}
+                  onClick={() => moveItem(idx, idx - 1)}
+                  style={{
+                    width: '30px',
+                    height: '30px',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '5px',
+                    backgroundColor: idx === 0 ? '#f8fafc' : '#ffffff',
+                    color: idx === 0 ? '#cbd5e1' : '#475569',
+                    cursor: idx === 0 ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '16px',
+                  }}
+                  title="Move Up"
+                >
+                  <i className="ri-arrow-up-s-line" />
+                </button>
+                <button
+                  type="button"
+                  disabled={idx === items.length - 1}
+                  onClick={() => moveItem(idx, idx + 1)}
+                  style={{
+                    width: '30px',
+                    height: '30px',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '5px',
+                    backgroundColor: idx === items.length - 1 ? '#f8fafc' : '#ffffff',
+                    color: idx === items.length - 1 ? '#cbd5e1' : '#475569',
+                    cursor: idx === items.length - 1 ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '16px',
+                  }}
+                  title="Move Down"
+                >
+                  <i className="ri-arrow-down-s-line" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 export const SurveyTaking = () => {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
@@ -287,6 +553,15 @@ export const SurveyTaking = () => {
                     );
                   })}
                 </div>
+              )}
+
+              {/* 2.5 Ranking / Preference Order */}
+              {q.type === 'ranking' && (
+                <RankingQuestionInput
+                  question={q}
+                  value={answers[q.code]}
+                  onChange={(rankedCodes) => handleAnswerChange(q.code, rankedCodes)}
+                />
               )}
 
               {/* 3. Rating (1 - 5 Stars) */}

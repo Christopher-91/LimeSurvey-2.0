@@ -116,6 +116,83 @@ export class StatsService {
         };
       }
 
+      // Stats for Ranking Choice Questions (1st to Nth Preference)
+      if (q.type === 'ranking') {
+        const optionStats = {};
+        const nOptions = (q.options && q.options.length) || 0;
+
+        if (q.options && q.options.length > 0) {
+          q.options.forEach((opt) => {
+            optionStats[opt.code] = {
+              code: opt.code,
+              text: opt.text,
+              totalScore: 0,
+              rankSum: 0,
+              rankedCount: 0,
+              firstChoiceCount: 0,
+              rankDistribution: {},
+            };
+          });
+        }
+
+        answersForQ.forEach((answer) => {
+          if (Array.isArray(answer)) {
+            answer.forEach((item, rankIdx) => {
+              const optCode = typeof item === 'object' && item !== null && item.code ? item.code : String(item);
+              const rank = (typeof item === 'object' && item !== null && item.rank) ? parseInt(item.rank, 10) : (rankIdx + 1);
+              let stat = optionStats[optCode];
+              if (!stat) {
+                stat = {
+                  code: optCode,
+                  text: optCode,
+                  totalScore: 0,
+                  rankSum: 0,
+                  rankedCount: 0,
+                  firstChoiceCount: 0,
+                  rankDistribution: {},
+                };
+                optionStats[optCode] = stat;
+              }
+              stat.rankedCount += 1;
+              stat.rankSum += rank;
+              stat.totalScore += Math.max(1, nOptions - (rank - 1));
+              if (rank === 1) stat.firstChoiceCount += 1;
+              stat.rankDistribution[rank] = (stat.rankDistribution[rank] || 0) + 1;
+            });
+          }
+        });
+
+        const rankedOptions = Object.values(optionStats).map((stat) => {
+          const avgRank = stat.rankedCount > 0 ? (stat.rankSum / stat.rankedCount).toFixed(2) : 'N/A';
+          const firstChoicePct = totalAnswered > 0 ? Math.round((stat.firstChoiceCount / totalAnswered) * 100) : 0;
+          return {
+            ...stat,
+            averageRank: avgRank,
+            firstChoicePercentage: firstChoicePct,
+            count: stat.firstChoiceCount,
+            percentage: firstChoicePct,
+          };
+        });
+
+        rankedOptions.sort((a, b) => {
+          if (a.averageRank === 'N/A') return 1;
+          if (b.averageRank === 'N/A') return -1;
+          return parseFloat(a.averageRank) - parseFloat(b.averageRank);
+        });
+
+        return {
+          questionId: q.id,
+          code: q.code,
+          text: q.text,
+          type: q.type,
+          totalAnswered,
+          options: rankedOptions,
+          rankingSummary: {
+            winner: rankedOptions[0] ? rankedOptions[0].text : null,
+          },
+        };
+      }
+
       // For Text or Other questions
       // If Zero Knowledge Protocol is active, shuffle answers to prevent correlation with timestamps
       let textAnswers = answersForQ;

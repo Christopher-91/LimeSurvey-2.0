@@ -60,13 +60,23 @@ export class ExportService {
 
         if (raw !== undefined && raw !== null) {
           if (Array.isArray(raw)) {
-            // Multiple choice
-            displayVal = raw
-              .map((val) => {
-                const opt = q.options?.find((o) => o.code === val);
-                return opt ? opt.text : val;
-              })
-              .join('; ');
+            if (q.type === 'ranking') {
+              displayVal = raw
+                .map((val, rIdx) => {
+                  const codeVal = typeof val === 'object' && val !== null && val.code ? val.code : String(val);
+                  const opt = q.options?.find((o) => o.code === codeVal);
+                  const label = opt ? opt.text : codeVal;
+                  return `#${rIdx + 1}: ${label}`;
+                })
+                .join('; ');
+            } else {
+              displayVal = raw
+                .map((val) => {
+                  const opt = q.options?.find((o) => o.code === val);
+                  return opt ? opt.text : val;
+                })
+                .join('; ');
+            }
           } else if (q.options && q.options.length > 0) {
             const opt = q.options.find((o) => o.code === String(raw));
             displayVal = opt ? opt.text : String(raw);

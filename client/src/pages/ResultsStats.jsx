@@ -295,8 +295,8 @@ export const ResultsStats = () => {
               </div>
             )}
 
-            {/* Render Distribution Bars for choices */}
-            {q.options && q.options.length > 0 && (
+            {/* Render Distribution Bars for standard choices */}
+            {q.type !== 'ranking' && q.options && q.options.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {q.options.map((opt) => (
                   <div key={opt.code}>
@@ -320,6 +320,114 @@ export const ResultsStats = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Render Ranking Choice Results */}
+            {q.type === 'ranking' && q.options && q.options.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* Winner Banner if available */}
+                {q.rankingSummary?.winner && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '12px 16px',
+                      backgroundColor: '#ecfdf5',
+                      border: '1px solid #a7f3d0',
+                      borderRadius: '8px',
+                      color: '#065f46',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '38px',
+                        height: '38px',
+                        borderRadius: '50%',
+                        backgroundColor: '#10b981',
+                        color: '#ffffff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '20px',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <i className="ri-trophy-line" />
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
+                        Overall Winner (Top Preference)
+                      </span>
+                      <div style={{ fontSize: '16px', fontWeight: 700 }}>
+                        {q.rankingSummary.winner}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Leaderboard Table */}
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left', color: '#64748b' }}>
+                        <th style={{ padding: '8px 12px', width: '60px' }}>Rank</th>
+                        <th style={{ padding: '8px 12px' }}>Option / Choice</th>
+                        <th style={{ padding: '8px 12px', textAlign: 'center' }}>Avg Rank</th>
+                        <th style={{ padding: '8px 12px', textAlign: 'center' }}>1st Choice Votes</th>
+                        <th style={{ padding: '8px 12px', textAlign: 'center' }}>Borda Score</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {q.options.map((opt, oIdx) => (
+                        <tr
+                          key={opt.code}
+                          style={{
+                            borderBottom: '1px solid #f1f5f9',
+                            backgroundColor: oIdx === 0 ? '#f0fdf4' : 'transparent',
+                          }}
+                        >
+                          <td style={{ padding: '10px 12px', fontWeight: 700 }}>
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '32px',
+                                height: '26px',
+                                borderRadius: '4px',
+                                backgroundColor: oIdx === 0 ? '#10b981' : '#f1f5f9',
+                                color: oIdx === 0 ? '#ffffff' : '#475569',
+                                fontSize: '12px',
+                              }}
+                            >
+                              #{oIdx + 1}
+                            </span>
+                          </td>
+                          <td style={{ padding: '10px 12px', fontWeight: 600, color: '#0f172a' }}>
+                            {opt.text}
+                          </td>
+                          <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, color: '#059669' }}>
+                            {opt.averageRank}
+                          </td>
+                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                            <span style={{ fontWeight: 600 }}>{opt.firstChoiceCount || 0}</span>
+                            <span style={{ fontSize: '12px', color: '#64748b', marginLeft: '4px' }}>
+                              ({opt.firstChoicePercentage || 0}%)
+                            </span>
+                          </td>
+                          <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600, color: '#334155' }}>
+                            {opt.totalScore || 0} pts
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <span style={{ fontSize: '12px', color: '#64748b', fontStyle: 'italic' }}>
+                  * Lower Average Rank indicates stronger overall preference. Borda points assign highest weight to 1st choice.
+                </span>
               </div>
             )}
 

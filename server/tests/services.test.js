@@ -266,4 +266,58 @@ describe('Survey, Response, and Statistics Service Unit Tests', () => {
 
     await prisma.survey.delete({ where: { id: survey.id } });
   });
+
+  it('creates a ranked-choice question, submits ranked preferences, and tallies ranking stats', async () => {
+    const survey = await SurveyService.create(
+      {
+        title: 'Ranked Choice Election Survey',
+        description: 'Testing 1st to Nth preference ranking',
+        active: true,
+        questions: [
+          {
+            code: 'Q_RANK',
+            text: 'Rank your preferred candidates',
+            type: 'ranking',
+            mandatory: true,
+            options: [
+              { code: 'CAND_A', text: 'Alice' },
+              { code: 'CAND_B', text: 'Bob' },
+              { code: 'CAND_C', text: 'Charlie' },
+            ],
+          },
+        ],
+      },
+      null
+    );
+
+    // Voter 1 ranks: Alice (1st), Bob (2nd), Charlie (3rd)
+    await ResponseService.submitResponse(survey.id, {
+      Q_RANK: ['CAND_A', 'CAND_B', 'CAND_C'],
+    });
+
+    // Voter 2 ranks: Alice (1st), Charlie (2nd), Bob (3rd)
+    await ResponseService.submitResponse(survey.id, {
+      Q_RANK: ['CAND_A', 'CAND_C', 'CAND_B'],
+    });
+
+    // Voter 3 ranks: Bob (1st), Alice (2nd), Charlie (3rd)
+    await ResponseService.submitResponse(survey.id, {
+      Q_RANK: ['CAND_B', 'CAND_A', 'CAND_C'],
+    });
+
+    const stats = await StatsService.getSurveyStatistics(survey.id);
+    expect(stats.totalResponses).toBe(3);
+    const qStats = stats.questions.find((q) => q.code === 'Q_RANK');
+    expect(qStats).toBeDefined();
+    expect(qStats.type).toBe('ranking');
+    expect(qStats.options.length).toBe(3);
+
+    // Alice should be the top ranked option
+    expect(qStats.options[0].code).toBe('CAND_A');
+    expect(qStats.options[0].firstChoiceCount).toBe(2);
+    expect(parseFloat(qStats.options[0].averageRank)).toBeLessThan(2.0);
+    expect(qStats.rankingSummary.winner).toBe('Alice');
+
+    await prisma.survey.delete({ where: { id: survey.id } });
+  });
 });

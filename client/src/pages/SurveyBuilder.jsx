@@ -287,6 +287,17 @@ export const SurveyBuilder = () => {
     updateQuestion(qIndex, { options: currentOptions });
   };
 
+  const handleMoveOption = (qIndex, optIndex, direction) => {
+    const q = questions[qIndex];
+    const currentOptions = q.options ? [...q.options] : [];
+    const target = optIndex + direction;
+    if (target < 0 || target >= currentOptions.length) return;
+    const temp = currentOptions[optIndex];
+    currentOptions[optIndex] = currentOptions[target];
+    currentOptions[target] = temp;
+    updateQuestion(qIndex, { options: currentOptions });
+  };
+
   // Matrix helpers
   const handleUpdateMatrixSettings = (qIndex, rowOrCol, index, value) => {
     const q = questions[qIndex];
@@ -368,7 +379,7 @@ export const SurveyBuilder = () => {
           mandatory: Boolean(q.mandatory),
           helpText: q.helpText ? q.helpText.trim() : '',
           sortOrder: idx + 1,
-          options: ['single_choice', 'multiple_choice'].includes(q.type)
+          options: ['single_choice', 'multiple_choice', 'ranking'].includes(q.type)
             ? (q.options || []).map((opt, oIdx) => ({
                 code: opt.code || `AO${oIdx + 1}`,
                 text: opt.text.trim(),
@@ -1023,8 +1034,17 @@ export const SurveyBuilder = () => {
                               onChange={(e) => {
                                 const newType = e.target.value;
                                 const isMulti = newType === 'multiple_choice';
+                                let options = q.options;
+                                if (newType === 'ranking' && (!options || options.length < 2)) {
+                                  options = [
+                                    { code: 'AO1', text: 'Option 1' },
+                                    { code: 'AO2', text: 'Option 2' },
+                                    { code: 'AO3', text: 'Option 3' },
+                                  ];
+                                }
                                 updateQuestion(idx, {
                                   type: newType,
+                                  options,
                                   settings: ['single_choice', 'multiple_choice'].includes(newType)
                                     ? { ...(q.settings || {}), allowMultiple: isMulti }
                                     : q.settings,
@@ -1053,6 +1073,7 @@ export const SurveyBuilder = () => {
                               <option value="long_text">Paragraph / Comment</option>
                               <option value="single_choice">Multiple Choice (Radio)</option>
                               <option value="multiple_choice">Checkboxes (Multi-select)</option>
+                              <option value="ranking">Ranking / Preference (1st to Nth)</option>
                               <option value="rating">Linear Scale / Rating (1-5)</option>
                               <option value="matrix">Matrix / Grid</option>
                             </select>
@@ -1325,6 +1346,169 @@ export const SurveyBuilder = () => {
                                 }}
                               >
                                 <i className="ri-add-line" /> Add Option
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 4.5 Ranking / Preference Options Builder */}
+                        {q.type === 'ranking' && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '8px 12px',
+                                backgroundColor: '#f0fdf4',
+                                border: '1px solid #bbf7d0',
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                color: '#166534',
+                                width: 'fit-content',
+                                marginBottom: '4px',
+                              }}
+                            >
+                              <i className="ri-arrow-up-down-line" style={{ fontSize: '15px', color: '#10b981' }} />
+                              <span>
+                                <strong>Ranked-Choice Voting:</strong> Voters will rank these items (1st to {Math.max(1, (q.options || []).length)}) via drag &amp; drop or number selectors.
+                              </span>
+                            </div>
+
+                            {(q.options || []).map((opt, oIdx) => (
+                              <div
+                                key={oIdx}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '10px',
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '32px',
+                                    height: '28px',
+                                    borderRadius: '5px',
+                                    backgroundColor: oIdx === 0 ? '#10b981' : '#f1f5f9',
+                                    color: oIdx === 0 ? '#ffffff' : '#475569',
+                                    fontSize: '12px',
+                                    fontWeight: 700,
+                                    flexShrink: 0,
+                                    border: oIdx === 0 ? '1px solid #059669' : '1px solid #cbd5e1',
+                                  }}
+                                  title={`Default position #${oIdx + 1}`}
+                                >
+                                  #{oIdx + 1}
+                                </span>
+                                <i
+                                  className="ri-draggable"
+                                  style={{ color: '#94a3b8', fontSize: '18px', cursor: 'grab' }}
+                                  title="Drag handle"
+                                />
+                                <input
+                                  type="text"
+                                  value={opt.text}
+                                  onChange={(e) => handleUpdateOption(idx, oIdx, e.target.value)}
+                                  placeholder={`Item ${oIdx + 1} to rank...`}
+                                  style={{
+                                    flex: 1,
+                                    maxWidth: '460px',
+                                    padding: '6px 10px',
+                                    fontSize: '14px',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '4px',
+                                    outline: 'none',
+                                    fontFamily: 'inherit',
+                                  }}
+                                  onFocus={(e) => (e.target.style.borderColor = '#10b981')}
+                                  onBlur={(e) => (e.target.style.borderColor = '#e2e8f0')}
+                                />
+                                <div style={{ display: 'inline-flex', gap: '2px' }}>
+                                  <button
+                                    type="button"
+                                    disabled={oIdx === 0}
+                                    onClick={() => handleMoveOption(idx, oIdx, -1)}
+                                    style={{
+                                      width: '26px',
+                                      height: '26px',
+                                      border: '1px solid #e2e8f0',
+                                      borderRadius: '4px',
+                                      backgroundColor: oIdx === 0 ? '#f8fafc' : '#ffffff',
+                                      color: oIdx === 0 ? '#cbd5e1' : '#64748b',
+                                      cursor: oIdx === 0 ? 'not-allowed' : 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontSize: '14px',
+                                    }}
+                                    title="Move Item Up"
+                                  >
+                                    <i className="ri-arrow-up-s-line" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={oIdx === (q.options || []).length - 1}
+                                    onClick={() => handleMoveOption(idx, oIdx, 1)}
+                                    style={{
+                                      width: '26px',
+                                      height: '26px',
+                                      border: '1px solid #e2e8f0',
+                                      borderRadius: '4px',
+                                      backgroundColor: oIdx === (q.options || []).length - 1 ? '#f8fafc' : '#ffffff',
+                                      color: oIdx === (q.options || []).length - 1 ? '#cbd5e1' : '#64748b',
+                                      cursor: oIdx === (q.options || []).length - 1 ? 'not-allowed' : 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontSize: '14px',
+                                    }}
+                                    title="Move Item Down"
+                                  >
+                                    <i className="ri-arrow-down-s-line" />
+                                  </button>
+                                </div>
+                                {(q.options || []).length > 2 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveOption(idx, oIdx)}
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: '#94a3b8',
+                                      cursor: 'pointer',
+                                      fontSize: '18px',
+                                      padding: '4px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                    }}
+                                    title="Remove Item"
+                                  >
+                                    <i className="ri-close-line" />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+
+                            <div style={{ marginTop: '4px' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleAddOption(idx)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#10b981',
+                                  fontSize: '13px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                }}
+                              >
+                                <i className="ri-add-line" /> Add Item to Rank
                               </button>
                             </div>
                           </div>
@@ -1961,6 +2145,50 @@ export const SurveyBuilder = () => {
                           <label key={oIdx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
                             <input type="checkbox" disabled /> {o.text}
                           </label>
+                        ))}
+                      </div>
+                    )}
+                    {q.type === 'ranking' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ fontSize: '12px', color: '#64748b', fontStyle: 'italic', marginBottom: '2px' }}>
+                          <i className="ri-arrow-up-down-line" /> Voters can rank these options by dragging or selecting ranks (1st to {(q.options || []).length}):
+                        </div>
+                        {(q.options || []).map((o, oIdx) => (
+                          <div
+                            key={oIdx}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '10px',
+                              padding: '8px 12px',
+                              backgroundColor: '#f8fafc',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '6px',
+                              fontSize: '14px',
+                            }}
+                          >
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '28px',
+                                height: '24px',
+                                borderRadius: '4px',
+                                backgroundColor: oIdx === 0 ? '#10b981' : '#e2e8f0',
+                                color: oIdx === 0 ? '#ffffff' : '#475569',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                              }}
+                            >
+                              #{oIdx + 1}
+                            </span>
+                            <i className="ri-draggable" style={{ color: '#94a3b8' }} />
+                            <span style={{ flex: 1, fontWeight: 500 }}>{o.text}</span>
+                            <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                              Rank {oIdx + 1}
+                            </span>
+                          </div>
                         ))}
                       </div>
                     )}
