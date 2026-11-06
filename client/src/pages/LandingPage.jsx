@@ -30,7 +30,7 @@ export const LandingPage = () => {
   );
 
   return (
-    <div className="ls-container">
+    <div className="ls-container" style={{ paddingBottom: '16px' }}>
       {/* LimeSurvey Public Header & Presentation Jumbotron */}
       <div
         className="ls-card"
@@ -190,7 +190,7 @@ export const LandingPage = () => {
           border: '1px solid #e2e8f0',
           borderRadius: '10px',
           boxShadow: '0 2px 10px rgba(15, 23, 42, 0.04)',
-          marginBottom: 'var(--ls-space-8)',
+          marginBottom: 0,
         }}
       >
         {/* Dual-Color Ukrainian National Stripe (Azure Blue + Golden Yellow) */}

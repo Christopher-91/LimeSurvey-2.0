@@ -145,7 +145,7 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="ls-container" style={{ maxWidth: '480px', marginTop: 'var(--ls-space-8)' }}>
+    <div className="ls-container" style={{ maxWidth: '480px', marginTop: 'var(--ls-space-8)', paddingBottom: '16px' }}>
       <div className="ls-card" style={{ padding: 'var(--ls-space-8) var(--ls-space-6)' }}>
         
         {/* Top-Center Segmented Voter / Admin Toggle */}
@@ -664,6 +664,7 @@ export const LoginPage = () => {
           border: '1px solid #e2e8f0',
           borderRadius: '10px',
           boxShadow: '0 4px 14px rgba(15, 23, 42, 0.05)',
+          marginBottom: 0,
         }}
       >
         <div

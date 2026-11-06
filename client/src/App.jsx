@@ -20,7 +20,7 @@ export const App = () => {
         <AuthProvider>
           <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
             <Navbar />
-            <main style={{ flex: 1, paddingBottom: '40px' }}>
+            <main style={{ flex: 1 }}>
               <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<LandingPage />} />
