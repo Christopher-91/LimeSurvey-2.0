@@ -730,7 +730,6 @@ export const LoginPage = () => {
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#1e293b')}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#0f172a')}
           >
-            <span style={{ color: '#FFD700' }}>★</span>
             <span>Donate to United24</span>
             <i className="ri-arrow-right-up-line" style={{ fontSize: '12px' }} />
           </a>

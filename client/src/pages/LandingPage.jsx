@@ -301,7 +301,6 @@ export const LandingPage = () => {
                 e.currentTarget.style.boxShadow = '0 2px 8px rgba(15, 23, 42, 0.12)';
               }}
             >
-              <span style={{ color: '#FFD700', fontSize: '13px' }}>★</span>
               <span>Donate to United24</span>
               <i className="ri-arrow-right-up-line" style={{ fontSize: '14px', opacity: 0.8 }} />
             </a>
