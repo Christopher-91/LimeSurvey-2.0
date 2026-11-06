@@ -173,7 +173,8 @@ export const LandingPage = () => {
       {/* Horizontal Divider Separating Public Surveys from Solidarity Banner */}
       <div
         style={{
-          margin: 'var(--ls-space-12) 0 var(--ls-space-8) 0',
+          maxWidth: '820px',
+          margin: 'var(--ls-space-12) auto var(--ls-space-8) auto',
           borderTop: '1px solid #e2e8f0',
           position: 'relative',
         }}
@@ -183,13 +184,14 @@ export const LandingPage = () => {
       <div
         className="ls-card"
         style={{
+          maxWidth: '820px',
+          margin: '0 auto var(--ls-space-8) auto',
           padding: 0,
           overflow: 'hidden',
           backgroundColor: '#ffffff',
           border: '1px solid #e2e8f0',
           borderRadius: '12px',
           boxShadow: '0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03)',
-          marginBottom: 'var(--ls-space-8)',
         }}
       >
         {/* Dual-Color Ukrainian National Stripe (Azure Blue + Golden Yellow) */}
@@ -213,14 +215,14 @@ export const LandingPage = () => {
           }}
         >
           {/* Left Content */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '18px', maxWidth: '720px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '18px', maxWidth: '520px' }}>
             <div style={{ position: 'relative', flexShrink: 0, marginTop: '2px' }}>
               <img
                 src={ukraineFlag}
                 alt="Flag of Ukraine"
                 style={{
-                  width: '58px',
-                  height: '39px',
+                  width: '56px',
+                  height: '38px',
                   borderRadius: '6px',
                   objectFit: 'cover',
                   boxShadow: '0 3px 10px rgba(0, 87, 183, 0.2)',
@@ -231,34 +233,14 @@ export const LandingPage = () => {
             </div>
 
             <div>
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '2px 8px',
-                  borderRadius: '9999px',
-                  backgroundColor: '#eff6ff',
-                  border: '1px solid #bfdbfe',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  color: '#1d4ed8',
-                  letterSpacing: '0.4px',
-                  textTransform: 'uppercase',
-                  marginBottom: '6px',
-                }}
-              >
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#0057B7' }} />
-                Global Solidarity Initiative
-              </div>
-
               <h3
                 style={{
-                  fontSize: '17px',
+                  fontSize: '16.5px',
                   fontWeight: 700,
                   color: '#0f172a',
-                  margin: '0 0 4px 0',
+                  margin: '0 0 6px 0',
                   letterSpacing: '-0.2px',
+                  lineHeight: 1.35,
                 }}
               >
                 LimeSurvey supports Ukraine's right to defend itself
@@ -289,10 +271,6 @@ export const LandingPage = () => {
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                   <i className="ri-shield-check-fill" style={{ color: '#10b981', fontSize: '15px' }} />
                   Official Platform: <strong>u24.gov.ua</strong>
-                </span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  <i className="ri-heart-3-fill" style={{ color: '#ef4444', fontSize: '14px' }} />
-                  Direct Humanitarian Aid
                 </span>
               </div>
             </div>
