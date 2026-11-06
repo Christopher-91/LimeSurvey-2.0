@@ -168,6 +168,72 @@ export const LandingPage = () => {
           ))}
         </div>
       )}
+
+      {/* Ukraine Support Banner */}
+      <div
+        className="ls-card"
+        style={{
+          marginTop: 'var(--ls-space-10)',
+          padding: '20px 24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '16px',
+          backgroundColor: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '22px',
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              flexShrink: 0,
+            }}
+          >
+            🇺🇦
+          </div>
+          <div>
+            <div style={{ fontSize: '15px', fontWeight: 600, color: '#0f172a' }}>
+              LimeSurvey supports Ukraine's right to defend itself
+            </div>
+            <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
+              Stand with the people of Ukraine and contribute to humanitarian and medical assistance.
+            </div>
+          </div>
+        </div>
+
+        <a
+          href="https://u24.gov.ua/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ls-btn ls-btn-primary"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            textDecoration: 'none',
+            fontWeight: 600,
+            fontSize: '14px',
+            padding: '10px 20px',
+            borderRadius: '6px',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <span>Donate to United24</span>
+          <i className="ri-external-link-line" style={{ fontSize: '14px' }} />
+        </a>
+      </div>
     </div>
   );
 };

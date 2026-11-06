@@ -649,6 +649,50 @@ export const LoginPage = () => {
         </div>
 
       </div>
+
+      {/* Ukraine Support Banner */}
+      <div
+        className="ls-card"
+        style={{
+          marginTop: 'var(--ls-space-4)',
+          padding: '16px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '12px',
+          backgroundColor: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '20px' }}>🇺🇦</span>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
+            LimeSurvey supports Ukraine's right to defend itself
+          </span>
+        </div>
+        <a
+          href="https://u24.gov.ua/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ls-btn ls-btn-outline ls-btn-sm"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            textDecoration: 'none',
+            fontSize: '13px',
+            fontWeight: 600,
+            whiteSpace: 'nowrap',
+            color: 'var(--ls-color-primary)',
+            borderColor: 'var(--ls-color-primary)',
+          }}
+        >
+          <span>Donate to United24</span>
+          <i className="ri-external-link-line" style={{ fontSize: '12px' }} />
+        </a>
+      </div>
     </div>
   );
 };
