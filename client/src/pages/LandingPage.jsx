@@ -173,31 +173,30 @@ export const LandingPage = () => {
       {/* Horizontal Divider Separating Public Surveys from Solidarity Banner */}
       <div
         style={{
-          maxWidth: '820px',
-          margin: 'var(--ls-space-12) auto var(--ls-space-8) auto',
+          width: '100%',
+          margin: 'var(--ls-space-10) 0 var(--ls-space-6) 0',
           borderTop: '1px solid #e2e8f0',
-          position: 'relative',
         }}
       />
 
-      {/* Ukraine Solidarity Card */}
+      {/* Ukraine Solidarity Banner - Slim Height & Full Horizontal Width */}
       <div
         className="ls-card"
         style={{
-          maxWidth: '820px',
-          margin: '0 auto var(--ls-space-8) auto',
+          width: '100%',
           padding: 0,
           overflow: 'hidden',
           backgroundColor: '#ffffff',
           border: '1px solid #e2e8f0',
-          borderRadius: '12px',
-          boxShadow: '0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03)',
+          borderRadius: '10px',
+          boxShadow: '0 2px 10px rgba(15, 23, 42, 0.04)',
+          marginBottom: 'var(--ls-space-8)',
         }}
       >
         {/* Dual-Color Ukrainian National Stripe (Azure Blue + Golden Yellow) */}
         <div
           style={{
-            height: '4px',
+            height: '3.5px',
             width: '100%',
             background: 'linear-gradient(90deg, #0057B7 0%, #0057B7 50%, #FFD700 50%, #FFD700 100%)',
           }}
@@ -205,79 +204,75 @@ export const LandingPage = () => {
 
         <div
           style={{
-            padding: '24px 28px',
+            padding: '14px 24px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
-            gap: '24px',
+            gap: '16px',
             background: 'linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%)',
           }}
         >
           {/* Left Content */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '18px', maxWidth: '520px' }}>
-            <div style={{ position: 'relative', flexShrink: 0, marginTop: '2px' }}>
-              <img
-                src={ukraineFlag}
-                alt="Flag of Ukraine"
-                style={{
-                  width: '56px',
-                  height: '38px',
-                  borderRadius: '6px',
-                  objectFit: 'cover',
-                  boxShadow: '0 3px 10px rgba(0, 87, 183, 0.2)',
-                  border: '1px solid rgba(0, 0, 0, 0.08)',
-                  display: 'block',
-                }}
-              />
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: '1 1 500px' }}>
+            <img
+              src={ukraineFlag}
+              alt="Flag of Ukraine"
+              style={{
+                width: '44px',
+                height: '30px',
+                borderRadius: '4px',
+                objectFit: 'cover',
+                boxShadow: '0 2px 8px rgba(0, 87, 183, 0.2)',
+                border: '1px solid rgba(0, 0, 0, 0.08)',
+                flexShrink: 0,
+              }}
+            />
 
             <div>
-              <h3
-                style={{
-                  fontSize: '16.5px',
-                  fontWeight: 700,
-                  color: '#0f172a',
-                  margin: '0 0 6px 0',
-                  letterSpacing: '-0.2px',
-                  lineHeight: 1.35,
-                }}
-              >
-                LimeSurvey supports Ukraine's right to defend itself
-              </h3>
-
-              <p
-                style={{
-                  fontSize: '13.5px',
-                  color: '#64748b',
-                  margin: 0,
-                  lineHeight: 1.5,
-                }}
-              >
-                Join the global effort to support defense, humanitarian relief, and medical aid directly through United24, the official fundraising platform launched by the President of Ukraine.
-              </p>
-
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: '16px',
-                  marginTop: '10px',
-                  fontSize: '12px',
-                  color: '#475569',
-                }}
-              >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  <i className="ri-shield-check-fill" style={{ color: '#10b981', fontSize: '15px' }} />
-                  Official Platform: <strong>u24.gov.ua</strong>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <h3
+                  style={{
+                    fontSize: '15px',
+                    fontWeight: 700,
+                    color: '#0f172a',
+                    margin: 0,
+                    letterSpacing: '-0.2px',
+                  }}
+                >
+                  LimeSurvey supports Ukraine's right to defend itself
+                </h3>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    color: '#059669',
+                    backgroundColor: '#ecfdf5',
+                    border: '1px solid #a7f3d0',
+                    padding: '1px 7px',
+                    borderRadius: '4px',
+                    fontWeight: 600,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                  }}
+                >
+                  <i className="ri-shield-check-fill" style={{ fontSize: '12px' }} /> u24.gov.ua
                 </span>
               </div>
+              <p
+                style={{
+                  fontSize: '13px',
+                  color: '#64748b',
+                  margin: '2px 0 0 0',
+                }}
+              >
+                Join the global effort supporting humanitarian and defense assistance directly via United24, the official platform of Ukraine.
+              </p>
             </div>
           </div>
 
           {/* Right Action Button */}
-          <div>
+          <div style={{ flexShrink: 0 }}>
             <a
               href="https://u24.gov.ua/"
               target="_blank"
@@ -285,33 +280,33 @@ export const LandingPage = () => {
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '10px',
+                gap: '8px',
                 textDecoration: 'none',
                 fontWeight: 600,
-                fontSize: '14px',
-                padding: '12px 22px',
-                borderRadius: '8px',
+                fontSize: '13.5px',
+                padding: '9px 18px',
+                borderRadius: '7px',
                 whiteSpace: 'nowrap',
                 backgroundColor: '#0f172a',
                 color: '#ffffff',
                 border: '1px solid #0f172a',
-                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.15)',
-                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 8px rgba(15, 23, 42, 0.12)',
+                transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#1e293b';
                 e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 6px 18px rgba(15, 23, 42, 0.22)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(15, 23, 42, 0.18)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = '#0f172a';
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(15, 23, 42, 0.15)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(15, 23, 42, 0.12)';
               }}
             >
-              <span style={{ color: '#FFD700', fontSize: '14px' }}>★</span>
+              <span style={{ color: '#FFD700', fontSize: '13px' }}>★</span>
               <span>Donate to United24</span>
-              <i className="ri-arrow-right-up-line" style={{ fontSize: '15px', opacity: 0.8 }} />
+              <i className="ri-arrow-right-up-line" style={{ fontSize: '14px', opacity: 0.8 }} />
             </a>
           </div>
         </div>
