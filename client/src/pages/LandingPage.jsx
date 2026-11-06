@@ -251,12 +251,9 @@ export const LandingPage = () => {
                     padding: '1px 7px',
                     borderRadius: '4px',
                     fontWeight: 600,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '3px',
                   }}
                 >
-                  <i className="ri-shield-check-fill" style={{ fontSize: '12px' }} /> u24.gov.ua
+                  u24.gov.ua
                 </span>
               </div>
               <p
