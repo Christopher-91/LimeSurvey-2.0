@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../api/apiClient.js';
+import ukraineFlag from '../assets/ukraine-flag.svg';
 
 export const LandingPage = () => {
   const [surveys, setSurveys] = useState([]);
@@ -187,28 +188,25 @@ export const LandingPage = () => {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div
+          <img
+            src={ukraineFlag}
+            alt="Flag of Ukraine"
             style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '22px',
-              backgroundColor: '#f8fafc',
-              border: '1px solid #e2e8f0',
+              width: '44px',
+              height: '30px',
+              borderRadius: '4px',
+              objectFit: 'cover',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.15)',
+              border: '1px solid rgba(0, 0, 0, 0.08)',
               flexShrink: 0,
             }}
-          >
-            🇺🇦
-          </div>
+          />
           <div>
             <div style={{ fontSize: '15px', fontWeight: 600, color: '#0f172a' }}>
               LimeSurvey supports Ukraine's right to defend itself
             </div>
             <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-              Stand with the people of Ukraine and contribute to humanitarian and medical assistance.
+              Stand with the people of Ukraine and contribute to humanitarian, medical and military assistance.
             </div>
           </div>
         </div>

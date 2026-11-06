@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { SegmentedToggle } from '../components/SegmentedToggle.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import ukraineFlag from '../assets/ukraine-flag.svg';
 
 export const LoginPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -667,7 +668,19 @@ export const LoginPage = () => {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '20px' }}>🇺🇦</span>
+          <img
+            src={ukraineFlag}
+            alt="Flag of Ukraine"
+            style={{
+              width: '32px',
+              height: '22px',
+              borderRadius: '3px',
+              objectFit: 'cover',
+              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+              border: '1px solid rgba(0, 0, 0, 0.08)',
+              flexShrink: 0,
+            }}
+          />
           <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
             LimeSurvey supports Ukraine's right to defend itself
           </span>
