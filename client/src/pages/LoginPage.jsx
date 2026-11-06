@@ -651,60 +651,89 @@ export const LoginPage = () => {
 
       </div>
 
-      {/* Ukraine Support Banner */}
+      {/* Horizontal Divider */}
+      <div style={{ margin: 'var(--ls-space-6) 0 var(--ls-space-4) 0', borderTop: '1px solid #e2e8f0' }} />
+
+      {/* Ukraine Solidarity Card */}
       <div
         className="ls-card"
         style={{
-          marginTop: 'var(--ls-space-4)',
-          padding: '16px 20px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '12px',
+          padding: 0,
+          overflow: 'hidden',
           backgroundColor: '#ffffff',
           border: '1px solid #e2e8f0',
-          borderRadius: '8px',
+          borderRadius: '10px',
+          boxShadow: '0 4px 14px rgba(15, 23, 42, 0.05)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <img
-            src={ukraineFlag}
-            alt="Flag of Ukraine"
-            style={{
-              width: '32px',
-              height: '22px',
-              borderRadius: '3px',
-              objectFit: 'cover',
-              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-              border: '1px solid rgba(0, 0, 0, 0.08)',
-              flexShrink: 0,
-            }}
-          />
-          <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
-            LimeSurvey supports Ukraine's right to defend itself
-          </span>
-        </div>
-        <a
-          href="https://u24.gov.ua/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="ls-btn ls-btn-outline ls-btn-sm"
+        <div
           style={{
-            display: 'inline-flex',
+            height: '3.5px',
+            width: '100%',
+            background: 'linear-gradient(90deg, #0057B7 0%, #0057B7 50%, #FFD700 50%, #FFD700 100%)',
+          }}
+        />
+        <div
+          style={{
+            padding: '16px 18px',
+            display: 'flex',
             alignItems: 'center',
-            gap: '6px',
-            textDecoration: 'none',
-            fontSize: '13px',
-            fontWeight: 600,
-            whiteSpace: 'nowrap',
-            color: 'var(--ls-color-primary)',
-            borderColor: 'var(--ls-color-primary)',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px',
+            background: 'linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%)',
           }}
         >
-          <span>Donate to United24</span>
-          <i className="ri-external-link-line" style={{ fontSize: '12px' }} />
-        </a>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <img
+              src={ukraineFlag}
+              alt="Flag of Ukraine"
+              style={{
+                width: '38px',
+                height: '25px',
+                borderRadius: '4px',
+                objectFit: 'cover',
+                boxShadow: '0 2px 6px rgba(0, 87, 183, 0.22)',
+                border: '1px solid rgba(0, 0, 0, 0.08)',
+                flexShrink: 0,
+              }}
+            />
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
+                LimeSurvey supports Ukraine's right to defend itself
+              </div>
+              <div style={{ fontSize: '11.5px', color: '#64748b' }}>
+                Official fundraising platform: u24.gov.ua
+              </div>
+            </div>
+          </div>
+
+          <a
+            href="https://u24.gov.ua/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              textDecoration: 'none',
+              fontSize: '12.5px',
+              fontWeight: 600,
+              whiteSpace: 'nowrap',
+              padding: '8px 14px',
+              borderRadius: '6px',
+              backgroundColor: '#0f172a',
+              color: '#ffffff',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#1e293b')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#0f172a')}
+          >
+            <span style={{ color: '#FFD700' }}>★</span>
+            <span>Donate to United24</span>
+            <i className="ri-arrow-right-up-line" style={{ fontSize: '12px' }} />
+          </a>
+        </div>
       </div>
     </div>
   );

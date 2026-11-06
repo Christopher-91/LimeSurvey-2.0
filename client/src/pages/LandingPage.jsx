@@ -170,67 +170,173 @@ export const LandingPage = () => {
         </div>
       )}
 
-      {/* Ukraine Support Banner */}
+      {/* Horizontal Divider Separating Public Surveys from Solidarity Banner */}
+      <div
+        style={{
+          margin: 'var(--ls-space-12) 0 var(--ls-space-8) 0',
+          borderTop: '1px solid #e2e8f0',
+          position: 'relative',
+        }}
+      />
+
+      {/* Ukraine Solidarity Card */}
       <div
         className="ls-card"
         style={{
-          marginTop: 'var(--ls-space-10)',
-          padding: '20px 24px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '16px',
+          padding: 0,
+          overflow: 'hidden',
           backgroundColor: '#ffffff',
           border: '1px solid #e2e8f0',
-          borderRadius: '8px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+          borderRadius: '12px',
+          boxShadow: '0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03)',
+          marginBottom: 'var(--ls-space-8)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <img
-            src={ukraineFlag}
-            alt="Flag of Ukraine"
-            style={{
-              width: '44px',
-              height: '30px',
-              borderRadius: '4px',
-              objectFit: 'cover',
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.15)',
-              border: '1px solid rgba(0, 0, 0, 0.08)',
-              flexShrink: 0,
-            }}
-          />
-          <div>
-            <div style={{ fontSize: '15px', fontWeight: 600, color: '#0f172a' }}>
-              LimeSurvey supports Ukraine's right to defend itself
-            </div>
-            <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-              Stand with the people of Ukraine and contribute to humanitarian, medical and military assistance.
-            </div>
-          </div>
-        </div>
-
-        <a
-          href="https://u24.gov.ua/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="ls-btn ls-btn-primary"
+        {/* Dual-Color Ukrainian National Stripe (Azure Blue + Golden Yellow) */}
+        <div
           style={{
-            display: 'inline-flex',
+            height: '4px',
+            width: '100%',
+            background: 'linear-gradient(90deg, #0057B7 0%, #0057B7 50%, #FFD700 50%, #FFD700 100%)',
+          }}
+        />
+
+        <div
+          style={{
+            padding: '24px 28px',
+            display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            textDecoration: 'none',
-            fontWeight: 600,
-            fontSize: '14px',
-            padding: '10px 20px',
-            borderRadius: '6px',
-            whiteSpace: 'nowrap',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '24px',
+            background: 'linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%)',
           }}
         >
-          <span>Donate to United24</span>
-          <i className="ri-external-link-line" style={{ fontSize: '14px' }} />
-        </a>
+          {/* Left Content */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '18px', maxWidth: '720px' }}>
+            <div style={{ position: 'relative', flexShrink: 0, marginTop: '2px' }}>
+              <img
+                src={ukraineFlag}
+                alt="Flag of Ukraine"
+                style={{
+                  width: '58px',
+                  height: '39px',
+                  borderRadius: '6px',
+                  objectFit: 'cover',
+                  boxShadow: '0 3px 10px rgba(0, 87, 183, 0.2)',
+                  border: '1px solid rgba(0, 0, 0, 0.08)',
+                  display: 'block',
+                }}
+              />
+            </div>
+
+            <div>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '2px 8px',
+                  borderRadius: '9999px',
+                  backgroundColor: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: '#1d4ed8',
+                  letterSpacing: '0.4px',
+                  textTransform: 'uppercase',
+                  marginBottom: '6px',
+                }}
+              >
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#0057B7' }} />
+                Global Solidarity Initiative
+              </div>
+
+              <h3
+                style={{
+                  fontSize: '17px',
+                  fontWeight: 700,
+                  color: '#0f172a',
+                  margin: '0 0 4px 0',
+                  letterSpacing: '-0.2px',
+                }}
+              >
+                LimeSurvey supports Ukraine's right to defend itself
+              </h3>
+
+              <p
+                style={{
+                  fontSize: '13.5px',
+                  color: '#64748b',
+                  margin: 0,
+                  lineHeight: 1.5,
+                }}
+              >
+                Join the global effort to support defense, humanitarian relief, and medical aid directly through United24, the official fundraising platform launched by the President of Ukraine.
+              </p>
+
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '16px',
+                  marginTop: '10px',
+                  fontSize: '12px',
+                  color: '#475569',
+                }}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <i className="ri-shield-check-fill" style={{ color: '#10b981', fontSize: '15px' }} />
+                  Official Platform: <strong>u24.gov.ua</strong>
+                </span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <i className="ri-heart-3-fill" style={{ color: '#ef4444', fontSize: '14px' }} />
+                  Direct Humanitarian Aid
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Action Button */}
+          <div>
+            <a
+              href="https://u24.gov.ua/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '10px',
+                textDecoration: 'none',
+                fontWeight: 600,
+                fontSize: '14px',
+                padding: '12px 22px',
+                borderRadius: '8px',
+                whiteSpace: 'nowrap',
+                backgroundColor: '#0f172a',
+                color: '#ffffff',
+                border: '1px solid #0f172a',
+                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.15)',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#1e293b';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 6px 18px rgba(15, 23, 42, 0.22)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#0f172a';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(15, 23, 42, 0.15)';
+              }}
+            >
+              <span style={{ color: '#FFD700', fontSize: '14px' }}>★</span>
+              <span>Donate to United24</span>
+              <i className="ri-arrow-right-up-line" style={{ fontSize: '15px', opacity: 0.8 }} />
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );
