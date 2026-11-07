@@ -126,6 +126,7 @@ export class SurveyService {
           active: surveyActive,
           format: format || 'all_in_one',
           zeroKnowledgeEnabled: zkEnabled,
+          settings: data.settings !== undefined ? data.settings : null,
           ownerId: ownerId || null,
           groups: {
             create: [

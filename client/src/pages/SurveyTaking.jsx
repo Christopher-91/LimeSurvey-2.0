@@ -3,8 +3,9 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { apiClient } from '../api/apiClient.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { formatFileSize, getFileIcon, isImageFile } from '../utils/fileUtils.js';
+import { SUPPORTED_LANGUAGES, getLocalizedQuestion, getLocalizedSurvey, getUiText } from '../utils/i18n.js';
 
-const RankingQuestionInput = ({ question, value, onChange }) => {
+const RankingQuestionInput = ({ question, value, onChange, lang = 'en' }) => {
   const options = question.options || [];
 
   const [items, setItems] = useState(() => {
@@ -102,7 +103,7 @@ const RankingQuestionInput = ({ question, value, onChange }) => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <i className="ri-arrow-up-down-line" style={{ color: '#10b981', fontSize: '16px' }} />
           <span>
-            Rank items from <strong>1st (highest preference)</strong> to <strong>{items.length}th (lowest)</strong> by dragging or selecting ranks:
+            {getUiText('ranking_hint', lang)}
           </span>
         </div>
         <button
@@ -270,7 +271,7 @@ const RankingQuestionInput = ({ question, value, onChange }) => {
   );
 };
 
-const FileUploadQuestionInput = ({ question, value, onChange, error }) => {
+const FileUploadQuestionInput = ({ question, value, onChange, error, lang = 'en' }) => {
   const fileInputRef = useRef(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [fileError, setFileError] = useState(null);
@@ -385,8 +386,8 @@ const FileUploadQuestionInput = ({ question, value, onChange, error }) => {
         </div>
         <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--ls-color-g-900, #0f172a)' }}>
           {filesList.length >= maxFiles
-            ? `Limit of ${maxFiles} file${maxFiles > 1 ? 's' : ''} reached`
-            : 'Click to browse or drop your files here'}
+            ? getUiText('file_limit_reached', lang)
+            : getUiText('file_upload_prompt', lang)}
         </div>
         <div style={{ fontSize: '13px', color: 'var(--ls-color-g-600, #64748b)', marginTop: '4px' }}>
           {allowedTypes === 'images' && 'Images only (PNG, JPG, WebP, SVG)'}
@@ -408,13 +409,13 @@ const FileUploadQuestionInput = ({ question, value, onChange, error }) => {
       {filesList.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ls-color-g-700, #334155)', display: 'flex', justifyContent: 'space-between' }}>
-            <span>Attached Files ({filesList.length} of {maxFiles}):</span>
+            <span>{getUiText('attached_files', lang)} ({filesList.length} of {maxFiles}):</span>
             <button
               type="button"
               onClick={() => onChange([])}
               style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer', padding: 0 }}
             >
-              Remove all
+              {getUiText('remove_all', lang)}
             </button>
           </div>
           {filesList.map((file, fIdx) => (
@@ -547,6 +548,7 @@ export const SurveyTaking = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [selectedLang, setSelectedLang] = useState('en');
 
   useEffect(() => {
     const fetchSurveyToTake = async () => {
@@ -555,6 +557,9 @@ export const SurveyTaking = () => {
         if (res.success && res.data.survey) {
           const s = res.data.survey;
           setSurvey(s);
+          const sSettings = s.settings || {};
+          const defLang = sSettings.defaultLanguage || 'en';
+          setSelectedLang(defLang);
 
           const allQ = [
             ...(s.questions || []),
@@ -615,7 +620,7 @@ export const SurveyTaking = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) {
-      showToast('Please fill out all required questions highlighted in red.', 'error');
+      showToast(getUiText('validation_error', selectedLang), 'error');
       return;
     }
 
@@ -628,7 +633,7 @@ export const SurveyTaking = () => {
 
       if (res.success) {
         setIsCompleted(true);
-        showToast('Thank you! Your response has been submitted.', 'success');
+        showToast(getUiText('success_message', selectedLang), 'success');
       }
     } catch (err) {
       showToast(err.message || 'Submission failed. Please try again.', 'error');
@@ -665,6 +670,11 @@ export const SurveyTaking = () => {
   }
 
   if (isCompleted) {
+    const locEndMessage =
+      survey?.settings?.translations?.[selectedLang]?.endMessage !== undefined
+        ? survey?.settings?.translations?.[selectedLang]?.endMessage
+        : survey.endMessage;
+
     return (
       <div className="ls-container" style={{ maxWidth: '640px', marginTop: 'var(--ls-space-8)' }}>
         <div className="ls-card" style={{ textAlign: 'center', padding: 'var(--ls-space-10) var(--ls-space-6)' }}>
@@ -685,34 +695,95 @@ export const SurveyTaking = () => {
             <i className="ri-check-line" />
           </div>
 
-          <h1 style={{ fontSize: 'var(--ls-font-size-2xl)', marginBottom: '12px' }}>Response Recorded</h1>
+          <h1 style={{ fontSize: 'var(--ls-font-size-2xl)', marginBottom: '12px' }}>
+            {getUiText('success_title', selectedLang)}
+          </h1>
           <p style={{ color: 'var(--ls-color-g-600)', fontSize: '16px', lineHeight: 1.6, marginBottom: 'var(--ls-space-8)' }}>
-            {survey.endMessage || 'Thank you for taking the time to complete this questionnaire. Your answers have been securely submitted.'}
+            {locEndMessage || getUiText('success_message', selectedLang)}
           </p>
 
           <Link to="/" className="ls-btn ls-btn-primary">
-            Return to LimeSurvey Portal
+            {getUiText('return_home', selectedLang)}
           </Link>
         </div>
       </div>
     );
   }
 
+  const localizedSurvey = getLocalizedSurvey(survey, selectedLang);
+  const supportedLangs =
+    Array.isArray(survey?.settings?.supportedLanguages) && survey.settings.supportedLanguages.length > 0
+      ? survey.settings.supportedLanguages
+      : ['en'];
+
   return (
     <div className="ls-container" style={{ maxWidth: '780px' }}>
+      {/* Multilingual Selector Header Bar */}
+      {supportedLangs.length > 1 && (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+            marginBottom: '16px',
+          }}
+        >
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              backgroundColor: '#ffffff',
+              padding: '6px 14px',
+              borderRadius: '9999px',
+              border: '1px solid #cbd5e1',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+            }}
+          >
+            <i className="ri-translate-2" style={{ color: 'var(--ls-color-primary, #10b981)', fontSize: '16px' }} />
+            <label htmlFor="survey-lang-select" style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>
+              {getUiText('language', selectedLang)}:
+            </label>
+            <select
+              id="survey-lang-select"
+              value={selectedLang}
+              onChange={(e) => setSelectedLang(e.target.value)}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#0f172a',
+                cursor: 'pointer',
+                outline: 'none',
+              }}
+            >
+              {supportedLangs.map((code) => {
+                const lObj = SUPPORTED_LANGUAGES.find((l) => l.code === code) || { code, name: code, flag: '🌐' };
+                return (
+                  <option key={code} value={code}>
+                    {lObj.flag} {lObj.nativeName || lObj.name}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+        </div>
+      )}
+
       {/* Survey Title & Welcome Card */}
       <div className="ls-card" style={{ marginBottom: 'var(--ls-space-6)', borderTop: '6px solid var(--ls-color-primary)' }}>
         <h1 style={{ fontSize: 'var(--ls-font-size-2xl)', fontWeight: 700, marginBottom: '8px' }}>
-          {survey.title}
+          {localizedSurvey.title}
         </h1>
-        {survey.description && (
+        {localizedSurvey.description && (
           <p style={{ color: 'var(--ls-color-g-600)', fontSize: '15px', marginBottom: '16px' }}>
-            {survey.description}
+            {localizedSurvey.description}
           </p>
         )}
-        {survey.welcomeMessage && (
+        {localizedSurvey.welcomeMessage && (
           <div style={{ backgroundColor: 'var(--ls-color-g-100)', padding: '14px 18px', borderRadius: 'var(--ls-radius-sm)', fontSize: '14px', borderLeft: '3px solid var(--ls-color-action)' }}>
-            {survey.welcomeMessage}
+            {localizedSurvey.welcomeMessage}
           </div>
         )}
 
@@ -726,15 +797,18 @@ export const SurveyTaking = () => {
       {/* Questionnaire Form */}
       <form onSubmit={handleSubmit} noValidate>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {questions.map((q, idx) => (
-            <div
-              key={q.id}
-              className="ls-card"
-              style={{
-                borderLeft: errors[q.code] ? '4px solid var(--ls-color-danger)' : undefined,
-                transition: 'border 0.2s',
-              }}
-            >
+          {questions.map((rawQ, idx) => {
+            const q = getLocalizedQuestion(rawQ, selectedLang, survey?.settings);
+
+            return (
+              <div
+                key={q.id || idx}
+                className="ls-card"
+                style={{
+                  borderLeft: errors[q.code] ? '4px solid var(--ls-color-danger)' : undefined,
+                  transition: 'border 0.2s',
+                }}
+              >
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '16px' }}>
                 <span style={{ fontWeight: 700, color: 'var(--ls-color-primary)' }}>
                   {idx + 1}.
@@ -826,6 +900,7 @@ export const SurveyTaking = () => {
                   question={q}
                   value={answers[q.code]}
                   onChange={(rankedCodes) => handleAnswerChange(q.code, rankedCodes)}
+                  lang={selectedLang}
                 />
               )}
 
@@ -874,7 +949,7 @@ export const SurveyTaking = () => {
                       border: '1px solid var(--ls-color-g-400)',
                     }}
                   >
-                    <i className="ri-check-line" /> Yes
+                    <i className="ri-check-line" /> {getUiText('yes', selectedLang)}
                   </button>
                   <button
                     type="button"
@@ -887,7 +962,7 @@ export const SurveyTaking = () => {
                       border: '1px solid var(--ls-color-g-400)',
                     }}
                   >
-                    <i className="ri-close-line" /> No
+                    <i className="ri-close-line" /> {getUiText('no', selectedLang)}
                   </button>
                 </div>
               )}
@@ -897,7 +972,7 @@ export const SurveyTaking = () => {
                 <input
                   type="text"
                   className={`ls-input ${errors[q.code] ? 'error' : ''}`}
-                  placeholder="Type your answer here..."
+                  placeholder={getUiText('short_placeholder', selectedLang)}
                   value={answers[q.code] || ''}
                   onChange={(e) => handleAnswerChange(q.code, e.target.value)}
                 />
@@ -908,7 +983,7 @@ export const SurveyTaking = () => {
                 <textarea
                   className={`ls-textarea ${errors[q.code] ? 'error' : ''}`}
                   rows="4"
-                  placeholder="Write your detailed feedback here..."
+                  placeholder={getUiText('long_placeholder', selectedLang)}
                   value={answers[q.code] || ''}
                   onChange={(e) => handleAnswerChange(q.code, e.target.value)}
                 />
@@ -985,6 +1060,7 @@ export const SurveyTaking = () => {
                   value={answers[q.code]}
                   onChange={(files) => handleAnswerChange(q.code, files)}
                   error={errors[q.code]}
+                  lang={selectedLang}
                 />
               )}
 
@@ -995,7 +1071,8 @@ export const SurveyTaking = () => {
                 </p>
               )}
             </div>
-          ))}
+          );
+        })}
         </div>
 
         {/* Submit Bar */}
@@ -1008,11 +1085,11 @@ export const SurveyTaking = () => {
           >
             {isSubmitting ? (
               <>
-                <i className="ri-loader-4-line ri-spin" /> Submitting Answers...
+                <i className="ri-loader-4-line ri-spin" /> {getUiText('submitting', selectedLang)}
               </>
             ) : (
               <>
-                <i className="ri-send-plane-fill" /> Submit Questionnaire
+                <i className="ri-send-plane-fill" /> {getUiText('submit', selectedLang)}
               </>
             )}
           </button>
