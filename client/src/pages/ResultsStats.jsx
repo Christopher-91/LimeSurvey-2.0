@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { apiClient } from '../api/apiClient.js';
 import { useToast } from '../context/ToastContext.jsx';
+import { formatFileSize, getFileIcon, isImageFile } from '../utils/fileUtils.js';
 
 /**
  * Extracts voter initials for the attendance avatar circle
@@ -28,6 +29,50 @@ const formatAnswerValue = (val, question) => {
     if (val.length === 0) {
       return <span style={{ color: 'var(--ls-color-g-600)', fontStyle: 'italic' }}>None selected</span>;
     }
+
+    // Check if array of uploaded file objects
+    if (typeof val[0] === 'object' && val[0] !== null && val[0].name) {
+      return (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
+          {val.map((file, fIdx) => (
+            <a
+              key={fIdx}
+              href={file.dataUrl || '#'}
+              download={file.name}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                backgroundColor: '#f8fafc',
+                border: '1px solid #cbd5e1',
+                color: '#0f172a',
+                textDecoration: 'none',
+                fontSize: '12.5px',
+                fontWeight: 500,
+                boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <i className={getFileIcon(file.type, file.name)} style={{ color: 'var(--ls-color-primary, #10b981)', fontSize: '15px' }} />
+              <span style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {file.name}
+              </span>
+              {file.size ? (
+                <span style={{ color: 'var(--ls-color-g-600, #64748b)', fontSize: '11px' }}>
+                  ({formatFileSize(file.size)})
+                </span>
+              ) : null}
+              <i className="ri-download-2-line" style={{ color: '#94a3b8', fontSize: '13px' }} />
+            </a>
+          ))}
+        </div>
+      );
+    }
+
     return (
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
         {val.map((item, idx) => {
@@ -39,6 +84,43 @@ const formatAnswerValue = (val, question) => {
           );
         })}
       </div>
+    );
+  }
+
+  // Single file object
+  if (typeof val === 'object' && val !== null && val.name) {
+    return (
+      <a
+        href={val.dataUrl || '#'}
+        download={val.name}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          padding: '6px 12px',
+          borderRadius: '6px',
+          backgroundColor: '#f8fafc',
+          border: '1px solid #cbd5e1',
+          color: '#0f172a',
+          textDecoration: 'none',
+          fontSize: '12.5px',
+          fontWeight: 500,
+          boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+        }}
+      >
+        <i className={getFileIcon(val.type, val.name)} style={{ color: 'var(--ls-color-primary, #10b981)', fontSize: '15px' }} />
+        <span style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {val.name}
+        </span>
+        {val.size ? (
+          <span style={{ color: 'var(--ls-color-g-600, #64748b)', fontSize: '11px' }}>
+            ({formatFileSize(val.size)})
+          </span>
+        ) : null}
+        <i className="ri-download-2-line" style={{ color: '#94a3b8', fontSize: '13px' }} />
+      </a>
     );
   }
 
@@ -296,7 +378,7 @@ export const ResultsStats = () => {
             )}
 
             {/* Render Distribution Bars for standard choices */}
-            {q.type !== 'ranking' && q.options && q.options.length > 0 && (
+            {q.type !== 'ranking' && q.type !== 'file_upload' && q.options && q.options.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {q.options.map((opt) => (
                   <div key={opt.code}>
@@ -428,6 +510,163 @@ export const ResultsStats = () => {
                 <span style={{ fontSize: '12px', color: '#64748b', fontStyle: 'italic' }}>
                   * Lower Average Rank indicates stronger overall preference. Borda points assign highest weight to 1st choice.
                 </span>
+              </div>
+            )}
+
+            {/* Render File Upload / Media Attachment Results */}
+            {q.type === 'file_upload' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {/* Metrics Badges */}
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                  <div
+                    style={{
+                      padding: '10px 16px',
+                      borderRadius: '8px',
+                      backgroundColor: 'var(--ls-color-g-100)',
+                      border: '1px solid var(--ls-color-g-300)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                    }}
+                  >
+                    <i className="ri-folder-upload-line" style={{ color: 'var(--ls-color-primary)', fontSize: '20px' }} />
+                    <div>
+                      <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--ls-color-g-600)', fontWeight: 600 }}>
+                        Total Files Uploaded
+                      </div>
+                      <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--ls-color-g-900)' }}>
+                        {q.totalFiles || 0}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      padding: '10px 16px',
+                      borderRadius: '8px',
+                      backgroundColor: 'var(--ls-color-g-100)',
+                      border: '1px solid var(--ls-color-g-300)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                    }}
+                  >
+                    <i className="ri-file-check-line" style={{ color: '#0284c7', fontSize: '20px' }} />
+                    <div>
+                      <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--ls-color-g-600)', fontWeight: 600 }}>
+                        Submissions with Files
+                      </div>
+                      <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--ls-color-g-900)' }}>
+                        {q.totalAnswered}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Uploaded Attachments Gallery */}
+                <div>
+                  <h4 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ls-color-g-800)', marginBottom: '10px' }}>
+                    Uploaded Attachments ({q.recentFiles?.length || 0}):
+                  </h4>
+
+                  {(!q.recentFiles || q.recentFiles.length === 0) ? (
+                    <p style={{ color: 'var(--ls-color-g-600)', fontSize: '14px', fontStyle: 'italic' }}>
+                      No files or media attachments uploaded yet.
+                    </p>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px' }}>
+                      {q.recentFiles.map((file, fIdx) => (
+                        <div
+                          key={fIdx}
+                          style={{
+                            padding: '10px 12px',
+                            borderRadius: '8px',
+                            backgroundColor: '#ffffff',
+                            border: '1px solid var(--ls-color-g-300)',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                          }}
+                        >
+                          {isImageFile(file.type, file.name) && file.dataUrl ? (
+                            <img
+                              src={file.dataUrl}
+                              alt={file.name}
+                              style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '4px',
+                                objectFit: 'cover',
+                                border: '1px solid #cbd5e1',
+                                flexShrink: 0,
+                              }}
+                            />
+                          ) : (
+                            <div
+                              style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '4px',
+                                backgroundColor: 'var(--ls-color-g-100)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '20px',
+                                color: 'var(--ls-color-g-700)',
+                                flexShrink: 0,
+                              }}
+                            >
+                              <i className={getFileIcon(file.type, file.name)} />
+                            </div>
+                          )}
+
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div
+                              style={{
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                color: 'var(--ls-color-g-900)',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                              title={file.name}
+                            >
+                              {file.name}
+                            </div>
+                            <div style={{ fontSize: '11px', color: 'var(--ls-color-g-600)', marginTop: '2px' }}>
+                              {formatFileSize(file.size)}
+                            </div>
+                          </div>
+
+                          {file.dataUrl && (
+                            <a
+                              href={file.dataUrl}
+                              download={file.name}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                padding: '6px',
+                                borderRadius: '4px',
+                                backgroundColor: 'var(--ls-color-g-100)',
+                                color: 'var(--ls-color-primary)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '16px',
+                                textDecoration: 'none',
+                              }}
+                              title="Download File"
+                            >
+                              <i className="ri-download-2-line" />
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 

@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { apiClient } from '../api/apiClient.js';
 import { useToast } from '../context/ToastContext.jsx';
+import { formatFileSize, getFileIcon, isImageFile } from '../utils/fileUtils.js';
 
 const RankingQuestionInput = ({ question, value, onChange }) => {
   const options = question.options || [];
@@ -265,6 +266,270 @@ const RankingQuestionInput = ({ question, value, onChange }) => {
           );
         })}
       </div>
+    </div>
+  );
+};
+
+const FileUploadQuestionInput = ({ question, value, onChange, error }) => {
+  const fileInputRef = useRef(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [fileError, setFileError] = useState(null);
+  const settings = question.settings || {};
+  const maxFiles = settings.maxFiles || 3;
+  const maxFileSize = settings.maxFileSize || 10;
+  const allowedTypes = settings.allowedTypes || 'all';
+
+  const filesList = Array.isArray(value) ? value : [];
+
+  const handleFiles = (incoming) => {
+    setFileError(null);
+    const files = Array.from(incoming);
+    const maxBytes = maxFileSize * 1024 * 1024;
+    const remainingSlots = maxFiles - filesList.length;
+
+    if (remainingSlots <= 0) {
+      setFileError(`Maximum limit of ${maxFiles} file${maxFiles > 1 ? 's' : ''} reached.`);
+      return;
+    }
+
+    const filesToProcess = files.slice(0, remainingSlots);
+    const validFiles = [];
+
+    for (const file of filesToProcess) {
+      if (file.size > maxBytes) {
+        setFileError(`"${file.name}" exceeds the ${maxFileSize} MB size limit.`);
+        return;
+      }
+      if (allowedTypes === 'images' && !file.type.startsWith('image/')) {
+        setFileError(`"${file.name}" is not an image file (PNG, JPG, etc.).`);
+        return;
+      }
+      if (allowedTypes === 'media' && !file.type.startsWith('audio/') && !file.type.startsWith('video/')) {
+        setFileError(`"${file.name}" is not an audio or video file.`);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const fileObj = {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          dataUrl: e.target.result,
+        };
+        validFiles.push(fileObj);
+        if (validFiles.length === filesToProcess.length) {
+          onChange([...filesList, ...validFiles]);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeFile = (idx) => {
+    const updated = filesList.filter((_, i) => i !== idx);
+    onChange(updated);
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {/* Drag & Drop Zone */}
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragOver(true);
+        }}
+        onDragLeave={() => setIsDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDragOver(false);
+          if (e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+        }}
+        onClick={() => fileInputRef.current?.click()}
+        style={{
+          border: `2px dashed ${error || fileError ? 'var(--ls-color-danger, #ef4444)' : isDragOver ? 'var(--ls-color-primary, #10b981)' : 'var(--ls-color-g-400, #cbd5e1)'}`,
+          borderRadius: 'var(--ls-radius-md, 8px)',
+          padding: '24px 20px',
+          textAlign: 'center',
+          backgroundColor: isDragOver ? 'var(--ls-color-primary-subtle, #ecfdf5)' : 'var(--ls-color-g-100, #f8fafc)',
+          cursor: filesList.length >= maxFiles ? 'not-allowed' : 'pointer',
+          transition: 'all 0.15s ease',
+        }}
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple={maxFiles > 1}
+          style={{ display: 'none' }}
+          disabled={filesList.length >= maxFiles}
+          onChange={(e) => {
+            if (e.target.files) handleFiles(e.target.files);
+            e.target.value = '';
+          }}
+        />
+        <div
+          style={{
+            width: '46px',
+            height: '46px',
+            borderRadius: '50%',
+            backgroundColor: isDragOver ? '#d1fae5' : '#e2e8f0',
+            color: 'var(--ls-color-primary, #10b981)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '24px',
+            margin: '0 auto 10px auto',
+          }}
+        >
+          <i className="ri-upload-cloud-2-line" />
+        </div>
+        <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--ls-color-g-900, #0f172a)' }}>
+          {filesList.length >= maxFiles
+            ? `Limit of ${maxFiles} file${maxFiles > 1 ? 's' : ''} reached`
+            : 'Click to browse or drop your files here'}
+        </div>
+        <div style={{ fontSize: '13px', color: 'var(--ls-color-g-600, #64748b)', marginTop: '4px' }}>
+          {allowedTypes === 'images' && 'Images only (PNG, JPG, WebP, SVG)'}
+          {allowedTypes === 'documents' && 'Documents (PDF, Word, Excel, Text)'}
+          {allowedTypes === 'media' && 'Media (Audio & Video files)'}
+          {allowedTypes === 'all' && 'All standard file types supported'}
+          {` • Max ${maxFileSize} MB per file • Up to ${maxFiles} file${maxFiles > 1 ? 's' : ''}`}
+        </div>
+      </div>
+
+      {/* File-level error banner */}
+      {fileError && (
+        <div style={{ fontSize: '12px', color: '#dc2626', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <i className="ri-error-warning-line" /> {fileError}
+        </div>
+      )}
+
+      {/* Attached Files List */}
+      {filesList.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ls-color-g-700, #334155)', display: 'flex', justifyContent: 'space-between' }}>
+            <span>Attached Files ({filesList.length} of {maxFiles}):</span>
+            <button
+              type="button"
+              onClick={() => onChange([])}
+              style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer', padding: 0 }}
+            >
+              Remove all
+            </button>
+          </div>
+          {filesList.map((file, fIdx) => (
+            <div
+              key={fIdx}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '10px 14px',
+                borderRadius: 'var(--ls-radius-sm, 6px)',
+                backgroundColor: '#ffffff',
+                border: '1px solid var(--ls-color-g-300, #e2e8f0)',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              }}
+            >
+              {isImageFile(file.type, file.name) && file.dataUrl ? (
+                <img
+                  src={file.dataUrl}
+                  alt={file.name}
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '4px',
+                    objectFit: 'cover',
+                    border: '1px solid #cbd5e1',
+                    flexShrink: 0,
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '4px',
+                    backgroundColor: 'var(--ls-color-g-100, #f1f5f9)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '20px',
+                    color: 'var(--ls-color-g-700, #475569)',
+                    flexShrink: 0,
+                  }}
+                >
+                  <i className={getFileIcon(file.type, file.name)} />
+                </div>
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: 'var(--ls-color-g-900, #0f172a)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                  title={file.name}
+                >
+                  {file.name}
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--ls-color-g-600, #64748b)', marginTop: '2px' }}>
+                  {formatFileSize(file.size)}
+                </div>
+              </div>
+
+              {/* View / Download preview link */}
+              {file.dataUrl && (
+                <a
+                  href={file.dataUrl}
+                  download={file.name}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    padding: '6px 10px',
+                    fontSize: '12px',
+                    borderRadius: '4px',
+                    backgroundColor: 'var(--ls-color-g-100, #f1f5f9)',
+                    color: 'var(--ls-color-g-800, #334155)',
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                  title="Preview / Download file"
+                >
+                  <i className="ri-external-link-line" />
+                </a>
+              )}
+
+              <button
+                type="button"
+                onClick={() => removeFile(fIdx)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  padding: '6px',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  fontSize: '18px',
+                  transition: 'color 0.15s ease',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
+                title="Remove attachment"
+              >
+                <i className="ri-delete-bin-line" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -711,6 +976,16 @@ export const SurveyTaking = () => {
                     </tbody>
                   </table>
                 </div>
+              )}
+
+              {/* 10. File Upload / Media Attachments */}
+              {q.type === 'file_upload' && (
+                <FileUploadQuestionInput
+                  question={q}
+                  value={answers[q.code]}
+                  onChange={(files) => handleAnswerChange(q.code, files)}
+                  error={errors[q.code]}
+                />
               )}
 
               {/* Validation error */}

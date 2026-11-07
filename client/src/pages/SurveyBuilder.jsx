@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { apiClient } from '../api/apiClient.js';
 import { useToast } from '../context/ToastContext.jsx';
+import { formatFileSize, getFileIcon, isImageFile } from '../utils/fileUtils.js';
 
 const PreviewRankingQuestion = ({ question, value, onChange }) => {
   const options = question.options || [];
@@ -202,6 +203,232 @@ const PreviewRankingQuestion = ({ question, value, onChange }) => {
           );
         })}
       </div>
+    </div>
+  );
+};
+
+const PreviewFileUploadQuestion = ({ question, value, onChange }) => {
+  const fileInputRef = useRef(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const settings = question.settings || {};
+  const maxFiles = settings.maxFiles || 3;
+  const maxFileSize = settings.maxFileSize || 10;
+  const allowedTypes = settings.allowedTypes || 'all';
+
+  const filesList = Array.isArray(value) ? value : [];
+
+  const handleFiles = (incoming) => {
+    const files = Array.from(incoming);
+    const maxBytes = maxFileSize * 1024 * 1024;
+    const remainingSlots = maxFiles - filesList.length;
+
+    if (remainingSlots <= 0) {
+      alert(`Maximum file limit of ${maxFiles} reached.`);
+      return;
+    }
+
+    const filesToProcess = files.slice(0, remainingSlots);
+
+    filesToProcess.forEach((file) => {
+      if (file.size > maxBytes) {
+        alert(`File "${file.name}" exceeds the ${maxFileSize}MB limit.`);
+        return;
+      }
+      if (allowedTypes === 'images' && !file.type.startsWith('image/')) {
+        alert(`File "${file.name}" is not an image.`);
+        return;
+      }
+      if (allowedTypes === 'media' && !file.type.startsWith('audio/') && !file.type.startsWith('video/')) {
+        alert(`File "${file.name}" is not an audio or video file.`);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const newFileObj = {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          dataUrl: e.target.result,
+        };
+        onChange([...(Array.isArray(value) ? value : []), newFileObj]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeFile = (idx) => {
+    const updated = filesList.filter((_, i) => i !== idx);
+    onChange(updated);
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {/* Drag & Drop Zone */}
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragOver(true);
+        }}
+        onDragLeave={() => setIsDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDragOver(false);
+          if (e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+        }}
+        onClick={() => fileInputRef.current?.click()}
+        style={{
+          border: `2px dashed ${isDragOver ? '#10b981' : '#cbd5e1'}`,
+          borderRadius: '8px',
+          padding: '22px 16px',
+          textAlign: 'center',
+          backgroundColor: isDragOver ? '#ecfdf5' : '#f8fafc',
+          cursor: filesList.length >= maxFiles ? 'not-allowed' : 'pointer',
+          transition: 'all 0.2s ease',
+        }}
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple={maxFiles > 1}
+          style={{ display: 'none' }}
+          disabled={filesList.length >= maxFiles}
+          onChange={(e) => {
+            if (e.target.files) handleFiles(e.target.files);
+            e.target.value = '';
+          }}
+        />
+        <div
+          style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '50%',
+            backgroundColor: isDragOver ? '#d1fae5' : '#e2e8f0',
+            color: '#10b981',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '22px',
+            margin: '0 auto 8px auto',
+          }}
+        >
+          <i className="ri-upload-cloud-2-line" />
+        </div>
+        <div style={{ fontSize: '13.5px', fontWeight: 600, color: '#1e293b' }}>
+          {filesList.length >= maxFiles
+            ? `Limit of ${maxFiles} files reached`
+            : 'Click to browse or drag and drop files here'}
+        </div>
+        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+          {allowedTypes === 'images' && 'Images only (PNG, JPG, WebP, SVG)'}
+          {allowedTypes === 'documents' && 'Documents (PDF, Word, Excel, Text)'}
+          {allowedTypes === 'media' && 'Media (Audio & Video files)'}
+          {allowedTypes === 'all' && 'All standard file types supported'}
+          {` • Up to ${maxFileSize} MB per file • Max ${maxFiles} file${maxFiles > 1 ? 's' : ''}`}
+        </div>
+      </div>
+
+      {/* Uploaded Files Preview Cards */}
+      {filesList.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'flex', justifyContent: 'space-between' }}>
+            <span>Attached Files ({filesList.length}/{maxFiles}):</span>
+            <button
+              type="button"
+              onClick={() => onChange([])}
+              style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer', padding: 0 }}
+            >
+              Clear all
+            </button>
+          </div>
+          {filesList.map((file, fIdx) => (
+            <div
+              key={fIdx}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                backgroundColor: '#ffffff',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              }}
+            >
+              {isImageFile(file.type, file.name) && file.dataUrl ? (
+                <img
+                  src={file.dataUrl}
+                  alt={file.name}
+                  style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '4px',
+                    objectFit: 'cover',
+                    border: '1px solid #cbd5e1',
+                    flexShrink: 0,
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '4px',
+                    backgroundColor: '#f1f5f9',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '18px',
+                    color: '#64748b',
+                    flexShrink: 0,
+                  }}
+                >
+                  <i className={getFileIcon(file.type, file.name)} />
+                </div>
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#0f172a',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                  title={file.name}
+                >
+                  {file.name}
+                </div>
+                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                  {formatFileSize(file.size)}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => removeFile(fIdx)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  fontSize: '16px',
+                  transition: 'color 0.15s ease',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
+                title="Remove file"
+              >
+                <i className="ri-close-line" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -1278,12 +1505,21 @@ export const SurveyBuilder = () => {
                                     { code: 'AO3', text: 'Option 3' },
                                   ];
                                 }
+                                let newSettings = q.settings;
+                                if (newType === 'file_upload') {
+                                  newSettings = {
+                                    ...(q.settings || {}),
+                                    allowedTypes: q.settings?.allowedTypes || 'all',
+                                    maxFileSize: q.settings?.maxFileSize || 10,
+                                    maxFiles: q.settings?.maxFiles || 3,
+                                  };
+                                } else if (['single_choice', 'multiple_choice'].includes(newType)) {
+                                  newSettings = { ...(q.settings || {}), allowMultiple: isMulti };
+                                }
                                 updateQuestion(idx, {
                                   type: newType,
                                   options,
-                                  settings: ['single_choice', 'multiple_choice'].includes(newType)
-                                    ? { ...(q.settings || {}), allowMultiple: isMulti }
-                                    : q.settings,
+                                  settings: newSettings,
                                 });
                               }}
                               style={{
@@ -1312,6 +1548,7 @@ export const SurveyBuilder = () => {
                               <option value="ranking">Ranking / Preference (1st to Nth)</option>
                               <option value="rating">Linear Scale / Rating (1-5)</option>
                               <option value="matrix">Matrix / Grid</option>
+                              <option value="file_upload">File Upload / Media Attachments</option>
                             </select>
                             <i
                               className="ri-arrow-down-s-line"
@@ -1862,6 +2099,159 @@ export const SurveyBuilder = () => {
                                 >
                                   + Add Column
                                 </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 7. File Upload / Media Attachments Builder */}
+                        {q.type === 'file_upload' && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {/* Visual Preview Box */}
+                            <div
+                              style={{
+                                border: '2px dashed #cbd5e1',
+                                borderRadius: '8px',
+                                padding: '20px 16px',
+                                textAlign: 'center',
+                                backgroundColor: '#f8fafc',
+                                maxWidth: '640px',
+                              }}
+                            >
+                              <div
+                                style={{
+                                  width: '42px',
+                                  height: '42px',
+                                  borderRadius: '50%',
+                                  backgroundColor: '#ecfdf5',
+                                  color: '#10b981',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '22px',
+                                  margin: '0 auto 8px auto',
+                                }}
+                              >
+                                <i className="ri-upload-cloud-2-line" />
+                              </div>
+                              <div style={{ fontSize: '13.5px', fontWeight: 600, color: '#1e293b' }}>
+                                Drag &amp; drop media files here, or click to browse
+                              </div>
+                              <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                                {(q.settings?.allowedTypes || 'all') === 'images' && 'Images only (PNG, JPG, WebP, SVG, GIF)'}
+                                {(q.settings?.allowedTypes || 'all') === 'documents' && 'Documents (PDF, DOCX, XLSX, TXT)'}
+                                {(q.settings?.allowedTypes || 'all') === 'media' && 'Media (MP3, WAV, MP4, WebM)'}
+                                {(q.settings?.allowedTypes || 'all') === 'all' && 'All formats accepted (Images, PDFs, Documents, Media)'}
+                                {` • Max ${q.settings?.maxFileSize || 10} MB • Up to ${q.settings?.maxFiles || 3} file${(q.settings?.maxFiles || 3) > 1 ? 's' : ''}`}
+                              </div>
+                            </div>
+
+                            {/* Configuration Toolbar */}
+                            <div
+                              style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '10px',
+                                padding: '12px 14px',
+                                backgroundColor: '#ffffff',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '8px',
+                                maxWidth: '640px',
+                              }}
+                            >
+                              <div style={{ fontSize: '12px', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                <i className="ri-settings-4-line" style={{ color: '#10b981', marginRight: '5px' }} />
+                                File Upload Configuration
+                              </div>
+
+                              {/* Allowed Types */}
+                              <div>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                                  Allowed File Types:
+                                </label>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                  {[
+                                    { id: 'all', label: 'All Formats', icon: 'ri-file-line' },
+                                    { id: 'images', label: 'Images Only', icon: 'ri-image-line' },
+                                    { id: 'documents', label: 'Documents & PDFs', icon: 'ri-file-text-line' },
+                                    { id: 'media', label: 'Audio & Video', icon: 'ri-film-line' },
+                                  ].map((cat) => {
+                                    const isSelected = (q.settings?.allowedTypes || 'all') === cat.id;
+                                    return (
+                                      <button
+                                        key={cat.id}
+                                        type="button"
+                                        onClick={() =>
+                                          updateQuestion(idx, {
+                                            settings: { ...(q.settings || {}), allowedTypes: cat.id },
+                                          })
+                                        }
+                                        style={{
+                                          padding: '5px 10px',
+                                          fontSize: '12px',
+                                          fontWeight: 600,
+                                          borderRadius: '6px',
+                                          border: isSelected ? '1px solid #10b981' : '1px solid #cbd5e1',
+                                          backgroundColor: isSelected ? '#ecfdf5' : '#f8fafc',
+                                          color: isSelected ? '#065f46' : '#475569',
+                                          cursor: 'pointer',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: '5px',
+                                          transition: 'all 0.15s ease',
+                                        }}
+                                      >
+                                        <i className={cat.icon} />
+                                        {cat.label}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              {/* Limits: Max Size & Max Files */}
+                              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginTop: '4px' }}>
+                                <div style={{ flex: '1 1 180px' }}>
+                                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                                    Max Size per File:
+                                  </label>
+                                  <select
+                                    className="ls-select"
+                                    value={q.settings?.maxFileSize || 10}
+                                    onChange={(e) =>
+                                      updateQuestion(idx, {
+                                        settings: { ...(q.settings || {}), maxFileSize: parseInt(e.target.value, 10) },
+                                      })
+                                    }
+                                    style={{ padding: '6px 10px', fontSize: '13px' }}
+                                  >
+                                    <option value="5">5 MB</option>
+                                    <option value="10">10 MB (Recommended)</option>
+                                    <option value="25">25 MB</option>
+                                    <option value="50">50 MB</option>
+                                  </select>
+                                </div>
+
+                                <div style={{ flex: '1 1 180px' }}>
+                                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                                    Max Number of Files:
+                                  </label>
+                                  <select
+                                    className="ls-select"
+                                    value={q.settings?.maxFiles || 3}
+                                    onChange={(e) =>
+                                      updateQuestion(idx, {
+                                        settings: { ...(q.settings || {}), maxFiles: parseInt(e.target.value, 10) },
+                                      })
+                                    }
+                                    style={{ padding: '6px 10px', fontSize: '13px' }}
+                                  >
+                                    <option value="1">1 File (Single attachment)</option>
+                                    <option value="3">Up to 3 Files</option>
+                                    <option value="5">Up to 5 Files</option>
+                                    <option value="10">Up to 10 Files</option>
+                                  </select>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -2564,6 +2954,15 @@ export const SurveyBuilder = () => {
                             </tbody>
                           </table>
                         </div>
+                      )}
+
+                      {/* 8. File Upload / Media Attachments Preview */}
+                      {q.type === 'file_upload' && (
+                        <PreviewFileUploadQuestion
+                          question={q}
+                          value={currentAnswer}
+                          onChange={(files) => handlePreviewAnswerChange(qKey, files)}
+                        />
                       )}
                     </div>
                   );

@@ -193,6 +193,46 @@ export class StatsService {
         };
       }
 
+      // Stats for File Upload / Media Attachments Questions
+      if (q.type === 'file_upload') {
+        let totalFilesCount = 0;
+        const allFiles = [];
+
+        answersForQ.forEach((answer) => {
+          if (Array.isArray(answer)) {
+            answer.forEach((file) => {
+              if (file && typeof file === 'object') {
+                totalFilesCount++;
+                allFiles.push(file);
+              }
+            });
+          } else if (answer && typeof answer === 'object') {
+            totalFilesCount++;
+            allFiles.push(answer);
+          }
+        });
+
+        let displayFiles = allFiles;
+        if (survey.zeroKnowledgeEnabled) {
+          displayFiles = [...allFiles];
+          for (let i = displayFiles.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [displayFiles[i], displayFiles[j]] = [displayFiles[j], displayFiles[i]];
+          }
+        }
+
+        return {
+          questionId: q.id,
+          code: q.code,
+          text: q.text,
+          type: q.type,
+          totalAnswered,
+          totalFiles: totalFilesCount,
+          recentFiles: displayFiles.slice(0, 20),
+          settings: q.settings,
+        };
+      }
+
       // For Text or Other questions
       // If Zero Knowledge Protocol is active, shuffle answers to prevent correlation with timestamps
       let textAnswers = answersForQ;
