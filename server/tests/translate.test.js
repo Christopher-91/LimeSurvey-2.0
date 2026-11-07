@@ -60,3 +60,4 @@ describe('Multilingual Translation Service & API Tests', () => {
     expect(res.body.data.translation.length).toBeGreaterThan(0);
   });
 });
+

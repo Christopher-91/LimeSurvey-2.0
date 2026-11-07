@@ -155,3 +155,4 @@ export async function translateQuestionObject(question, targetLang, sourceLang =
     columns: translatedCols.length > 0 ? translatedCols : undefined,
   };
 }
+
