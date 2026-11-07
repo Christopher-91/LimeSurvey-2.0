@@ -1,19 +1,21 @@
+import { apiClient } from '../api/apiClient.js';
+
 /**
  * Multilingual Survey Localization System
  * Supported: English, Spanish, German, French, Japanese, Korean, Finnish, Dutch, Swedish, Mandarin
  */
 
 export const SUPPORTED_LANGUAGES = [
-  { code: 'en', name: 'English', nativeName: 'English', flag: '🇬🇧' },
-  { code: 'es', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸' },
-  { code: 'de', name: 'German', nativeName: 'Deutsch', flag: '🇩🇪' },
-  { code: 'fr', name: 'French', nativeName: 'Français', flag: '🇫🇷' },
-  { code: 'ja', name: 'Japanese', nativeName: '日本語', flag: '🇯🇵' },
-  { code: 'ko', name: 'Korean', nativeName: '한국어', flag: '🇰🇷' },
-  { code: 'fi', name: 'Finnish', nativeName: 'Suomi', flag: '🇫🇮' },
-  { code: 'nl', name: 'Dutch', nativeName: 'Nederlands', flag: '🇳🇱' },
-  { code: 'sv', name: 'Swedish', nativeName: 'Svenska', flag: '🇸🇪' },
-  { code: 'zh', name: 'Mandarin', nativeName: '中文 (简体)', flag: '🇨🇳' },
+  { code: 'en', name: 'English', nativeName: 'English' },
+  { code: 'es', name: 'Spanish', nativeName: 'Español' },
+  { code: 'de', name: 'German', nativeName: 'Deutsch' },
+  { code: 'fr', name: 'French', nativeName: 'Français' },
+  { code: 'ja', name: 'Japanese', nativeName: '日本語' },
+  { code: 'ko', name: 'Korean', nativeName: '한국어' },
+  { code: 'fi', name: 'Finnish', nativeName: 'Suomi' },
+  { code: 'nl', name: 'Dutch', nativeName: 'Nederlands' },
+  { code: 'sv', name: 'Swedish', nativeName: 'Svenska' },
+  { code: 'zh', name: 'Mandarin', nativeName: '中文 (简体)' },
 ];
 
 export const UI_TRANSLATIONS = {
@@ -444,4 +446,61 @@ export const getLocalizedQuestion = (question, lang = 'en', surveySettings = nul
     settings: localizedSettings,
   };
 };
+
+/**
+ * Auto-translates a text string to target language using backend translation service
+ */
+export async function autoTranslateText(text, targetLang, sourceLang = 'en') {
+  if (!text || !text.trim() || targetLang === sourceLang) return text || '';
+  try {
+    const res = await apiClient.post('/translate', { text: text.trim(), targetLang, sourceLang });
+    if (res.success && res.data?.translation) {
+      return res.data.translation;
+    }
+  } catch (err) {
+    // Client fallback: MyMemory direct call
+    try {
+      const tgt = targetLang === 'zh' ? 'zh-CN' : targetLang;
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.trim())}&langpair=${sourceLang}|${tgt}`;
+      const resp = await fetch(url);
+      const json = await resp.json();
+      if (json?.responseData?.translatedText) {
+        return json.responseData.translatedText;
+      }
+    } catch {
+      // Fallback
+    }
+  }
+  return text;
+}
+
+/**
+ * Auto-translates a full question object (text, helpText, options, matrix)
+ */
+export async function autoTranslateQuestion(question, targetLang, sourceLang = 'en') {
+  if (!question || !targetLang || targetLang === sourceLang) return null;
+  try {
+    const res = await apiClient.post('/translate', { question, targetLang, sourceLang });
+    if (res.success && res.data?.question) {
+      return res.data.question;
+    }
+  } catch (err) {
+    try {
+      const transText = await autoTranslateText(question.text, targetLang, sourceLang);
+      const transHelp = question.helpText ? await autoTranslateText(question.helpText, targetLang, sourceLang) : '';
+      const optTranslations = {};
+      for (const opt of question.options || []) {
+        optTranslations[opt.code] = await autoTranslateText(opt.text, targetLang, sourceLang);
+      }
+      return {
+        text: transText,
+        helpText: transHelp,
+        options: optTranslations,
+      };
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
 

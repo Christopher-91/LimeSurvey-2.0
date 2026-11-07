@@ -13,6 +13,7 @@ import questionRoutes from './modules/questions/question.routes.js';
 import responseRoutes from './modules/responses/response.routes.js';
 import statsRoutes from './modules/stats/stats.routes.js';
 import surveyRoutes from './modules/surveys/survey.routes.js';
+import translateRoutes from './modules/translate/translate.routes.js';
 import voterRoutes from './modules/voters/voter.routes.js';
 import { swaggerDocument } from './swagger/swagger.js';
 
@@ -68,6 +69,7 @@ app.use('/api/v1', voterRoutes);
 app.use('/api/v1', responseRoutes);
 app.use('/api/v1', statsRoutes);
 app.use('/api/v1', exportRoutes);
+app.use('/api/v1/translate', translateRoutes);
 
 // 404 handler for unknown API routes
 app.use('/api/*', (req, res) => {

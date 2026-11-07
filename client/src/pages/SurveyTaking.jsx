@@ -3,7 +3,13 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { apiClient } from '../api/apiClient.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { formatFileSize, getFileIcon, isImageFile } from '../utils/fileUtils.js';
-import { SUPPORTED_LANGUAGES, getLocalizedQuestion, getLocalizedSurvey, getUiText } from '../utils/i18n.js';
+import {
+  SUPPORTED_LANGUAGES,
+  autoTranslateQuestion,
+  getLocalizedQuestion,
+  getLocalizedSurvey,
+  getUiText,
+} from '../utils/i18n.js';
 
 const RankingQuestionInput = ({ question, value, onChange, lang = 'en' }) => {
   const options = question.options || [];
@@ -576,6 +582,54 @@ export const SurveyTaking = () => {
     fetchSurveyToTake();
   }, [id]);
 
+  // Auto-translate questions on the fly if respondent toggles to an untranslated language
+  useEffect(() => {
+    if (!survey || selectedLang === (survey?.settings?.defaultLanguage || 'en')) return;
+
+    const missing = questions.some(
+      (q) => q.text?.trim() && !q.settings?.translations?.[selectedLang]?.text?.trim()
+    );
+
+    if (missing) {
+      const translateMissing = async () => {
+        try {
+          const updated = await Promise.all(
+            questions.map(async (q) => {
+              const curTrans = q.settings?.translations || {};
+              if (curTrans[selectedLang]?.text?.trim() || !q.text?.trim()) {
+                return q;
+              }
+              const translatedQ = await autoTranslateQuestion(
+                q,
+                selectedLang,
+                survey?.settings?.defaultLanguage || 'en'
+              );
+              if (translatedQ) {
+                return {
+                  ...q,
+                  settings: {
+                    ...(q.settings || {}),
+                    translations: {
+                      ...curTrans,
+                      [selectedLang]: {
+                        ...translatedQ,
+                      },
+                    },
+                  },
+                };
+              }
+              return q;
+            })
+          );
+          setQuestions(updated);
+        } catch (err) {
+          console.error('Auto-translate on taking survey error:', err);
+        }
+      };
+      translateMissing();
+    }
+  }, [selectedLang, survey]);
+
   const handleAnswerChange = (qCode, value) => {
     setAnswers((prev) => ({
       ...prev,
@@ -759,10 +813,10 @@ export const SurveyTaking = () => {
               }}
             >
               {supportedLangs.map((code) => {
-                const lObj = SUPPORTED_LANGUAGES.find((l) => l.code === code) || { code, name: code, flag: '🌐' };
+                const lObj = SUPPORTED_LANGUAGES.find((l) => l.code === code) || { code, name: code };
                 return (
                   <option key={code} value={code}>
-                    {lObj.flag} {lObj.nativeName || lObj.name}
+                    {lObj.name} ({lObj.nativeName || lObj.name})
                   </option>
                 );
               })}

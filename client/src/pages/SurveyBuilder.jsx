@@ -3,7 +3,14 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { apiClient } from '../api/apiClient.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { formatFileSize, getFileIcon, isImageFile } from '../utils/fileUtils.js';
-import { SUPPORTED_LANGUAGES, getLocalizedQuestion, getLocalizedSurvey, getUiText } from '../utils/i18n.js';
+import {
+  SUPPORTED_LANGUAGES,
+  autoTranslateQuestion,
+  autoTranslateText,
+  getLocalizedQuestion,
+  getLocalizedSurvey,
+  getUiText,
+} from '../utils/i18n.js';
 
 const PreviewRankingQuestion = ({ question, value, onChange }) => {
   const options = question.options || [];
@@ -496,6 +503,8 @@ export const SurveyBuilder = () => {
   const [editingLanguage, setEditingLanguage] = useState('en');
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
   const [previewLang, setPreviewLang] = useState('en');
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translatingQIdx, setTranslatingQIdx] = useState(null);
 
   // Multilingual Field Getters and Setters
   const getQuestionTextForEdit = (q) => {
@@ -735,6 +744,234 @@ export const SurveyBuilder = () => {
       })
     );
     showToast(`Copied base language text into ${SUPPORTED_LANGUAGES.find((l) => l.code === editingLanguage)?.name}`, 'info');
+  };
+
+  // Automatic Machine Translation Handlers
+  const handleSelectLanguage = async (targetLang) => {
+    setEditingLanguage(targetLang);
+    if (targetLang === defaultLanguage) return;
+
+    setIsTranslating(true);
+    try {
+      // 1. Auto-translate survey title / description if needed
+      if (!surveyTranslations[targetLang]?.title && title.trim()) {
+        const transTitle = await autoTranslateText(title, targetLang, defaultLanguage);
+        const transDesc = description.trim() ? await autoTranslateText(description, targetLang, defaultLanguage) : '';
+        const transWelcome = welcomeMessage.trim() ? await autoTranslateText(welcomeMessage, targetLang, defaultLanguage) : '';
+        const transEnd = endMessage.trim() ? await autoTranslateText(endMessage, targetLang, defaultLanguage) : '';
+
+        setSurveyTranslations((prev) => ({
+          ...prev,
+          [targetLang]: {
+            ...(prev[targetLang] || {}),
+            title: transTitle,
+            description: transDesc,
+            welcomeMessage: transWelcome,
+            endMessage: transEnd,
+          },
+        }));
+      }
+
+      // 2. Auto-translate questions missing targetLang translation
+      let translatedCount = 0;
+      const updatedQuestions = await Promise.all(
+        questions.map(async (q) => {
+          const curTrans = q.settings?.translations || {};
+          const langTrans = curTrans[targetLang] || {};
+
+          // If question already translated, keep existing
+          if (langTrans.text && langTrans.text.trim()) {
+            return q;
+          }
+
+          if (!q.text || !q.text.trim()) {
+            return q;
+          }
+
+          translatedCount++;
+          const translatedQ = await autoTranslateQuestion(q, targetLang, defaultLanguage);
+          if (translatedQ) {
+            return {
+              ...q,
+              settings: {
+                ...(q.settings || {}),
+                translations: {
+                  ...curTrans,
+                  [targetLang]: {
+                    ...langTrans,
+                    text: translatedQ.text || q.text,
+                    helpText: translatedQ.helpText !== undefined ? translatedQ.helpText : q.helpText,
+                    options: translatedQ.options || {},
+                    rows: translatedQ.rows || q.settings?.rows,
+                    columns: translatedQ.columns || q.settings?.columns,
+                  },
+                },
+              },
+            };
+          }
+          return q;
+        })
+      );
+
+      setQuestions(updatedQuestions);
+      const targetLangName = SUPPORTED_LANGUAGES.find((l) => l.code === targetLang)?.name || targetLang;
+      if (translatedCount > 0) {
+        showToast(`Questions automatically translated to ${targetLangName}!`, 'success');
+      }
+    } catch (err) {
+      console.error('Auto-translation error:', err);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  const handleTranslateSingleQuestion = async (qIndex, targetLang = editingLanguage) => {
+    if (targetLang === defaultLanguage) return;
+    const q = questions[qIndex];
+    if (!q || !q.text?.trim()) {
+      showToast('Please enter base question text before translating.', 'info');
+      return;
+    }
+
+    setTranslatingQIdx(qIndex);
+    try {
+      const translatedQ = await autoTranslateQuestion(q, targetLang, defaultLanguage);
+      if (translatedQ) {
+        const curTrans = q.settings?.translations || {};
+        const langTrans = curTrans[targetLang] || {};
+
+        updateQuestion(qIndex, {
+          settings: {
+            ...(q.settings || {}),
+            translations: {
+              ...curTrans,
+              [targetLang]: {
+                ...langTrans,
+                text: translatedQ.text || q.text,
+                helpText: translatedQ.helpText !== undefined ? translatedQ.helpText : q.helpText,
+                options: translatedQ.options || {},
+                rows: translatedQ.rows || q.settings?.rows,
+                columns: translatedQ.columns || q.settings?.columns,
+              },
+            },
+          },
+        });
+
+        const targetLangName = SUPPORTED_LANGUAGES.find((l) => l.code === targetLang)?.name || targetLang;
+        showToast(`Question #${qIndex + 1} translated to ${targetLangName}!`, 'success');
+      }
+    } catch (err) {
+      console.error('Single translation error:', err);
+      showToast('Translation service unavailable.', 'error');
+    } finally {
+      setTranslatingQIdx(null);
+    }
+  };
+
+  const handleForceTranslateAll = async (targetLang = editingLanguage) => {
+    if (targetLang === defaultLanguage) return;
+    setIsTranslating(true);
+    try {
+      if (title.trim()) {
+        const transTitle = await autoTranslateText(title, targetLang, defaultLanguage);
+        const transDesc = description.trim() ? await autoTranslateText(description, targetLang, defaultLanguage) : '';
+        const transWelcome = welcomeMessage.trim() ? await autoTranslateText(welcomeMessage, targetLang, defaultLanguage) : '';
+        const transEnd = endMessage.trim() ? await autoTranslateText(endMessage, targetLang, defaultLanguage) : '';
+
+        setSurveyTranslations((prev) => ({
+          ...prev,
+          [targetLang]: {
+            title: transTitle,
+            description: transDesc,
+            welcomeMessage: transWelcome,
+            endMessage: transEnd,
+          },
+        }));
+      }
+
+      const updatedQuestions = await Promise.all(
+        questions.map(async (q) => {
+          if (!q.text || !q.text.trim()) return q;
+          const translatedQ = await autoTranslateQuestion(q, targetLang, defaultLanguage);
+          if (translatedQ) {
+            const curTrans = q.settings?.translations || {};
+            return {
+              ...q,
+              settings: {
+                ...(q.settings || {}),
+                translations: {
+                  ...curTrans,
+                  [targetLang]: {
+                    text: translatedQ.text || q.text,
+                    helpText: translatedQ.helpText !== undefined ? translatedQ.helpText : q.helpText,
+                    options: translatedQ.options || {},
+                    rows: translatedQ.rows || q.settings?.rows,
+                    columns: translatedQ.columns || q.settings?.columns,
+                  },
+                },
+              },
+            };
+          }
+          return q;
+        })
+      );
+
+      setQuestions(updatedQuestions);
+      const targetLangName = SUPPORTED_LANGUAGES.find((l) => l.code === targetLang)?.name || targetLang;
+      showToast(`All survey questions translated to ${targetLangName}!`, 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Translation error occurred.', 'error');
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  const handlePreviewLangChange = async (newLang) => {
+    setPreviewLang(newLang);
+    if (newLang === defaultLanguage) return;
+
+    // Auto-translate questions missing newLang translation for preview
+    const missing = questions.filter(
+      (q) => q.text?.trim() && !q.settings?.translations?.[newLang]?.text?.trim()
+    );
+
+    if (missing.length > 0) {
+      try {
+        const updatedQuestions = await Promise.all(
+          questions.map(async (q) => {
+            const curTrans = q.settings?.translations || {};
+            if (curTrans[newLang]?.text?.trim() || !q.text?.trim()) {
+              return q;
+            }
+            const translatedQ = await autoTranslateQuestion(q, newLang, defaultLanguage);
+            if (translatedQ) {
+              return {
+                ...q,
+                settings: {
+                  ...(q.settings || {}),
+                  translations: {
+                    ...curTrans,
+                    [newLang]: {
+                      ...(curTrans[newLang] || {}),
+                      text: translatedQ.text || q.text,
+                      helpText: translatedQ.helpText !== undefined ? translatedQ.helpText : q.helpText,
+                      options: translatedQ.options || {},
+                      rows: translatedQ.rows || q.settings?.rows,
+                      columns: translatedQ.columns || q.settings?.columns,
+                    },
+                  },
+                },
+              };
+            }
+            return q;
+          })
+        );
+        setQuestions(updatedQuestions);
+      } catch (err) {
+        console.error(err);
+      }
+    }
   };
 
   // Dynamic Questions List
@@ -1430,14 +1667,13 @@ export const SurveyBuilder = () => {
                     const langObj = SUPPORTED_LANGUAGES.find((l) => l.code === lCode) || {
                       code: lCode,
                       name: lCode.toUpperCase(),
-                      flag: '🌐',
                     };
                     const isSelected = editingLanguage === lCode;
                     return (
                       <button
                         key={lCode}
                         type="button"
-                        onClick={() => setEditingLanguage(lCode)}
+                        onClick={() => handleSelectLanguage(lCode)}
                         className={`ls-btn ls-btn-sm ${isSelected ? 'ls-btn-primary' : 'ls-btn-outline'}`}
                         style={{
                           display: 'inline-flex',
@@ -1449,7 +1685,7 @@ export const SurveyBuilder = () => {
                           borderRadius: '6px',
                         }}
                       >
-                        <span>{langObj.flag}</span>
+                        <i className="ri-global-line" style={{ fontSize: '13px', opacity: 0.8 }} />
                         <span>{langObj.name}</span>
                         {lCode === defaultLanguage && (
                           <span style={{ fontSize: '10px', opacity: 0.8, textTransform: 'uppercase' }}>(Default)</span>
@@ -1487,6 +1723,8 @@ export const SurveyBuilder = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '10px',
                   padding: '10px 16px',
                   backgroundColor: '#eff6ff',
                   border: '1px solid #bfdbfe',
@@ -1497,19 +1735,38 @@ export const SurveyBuilder = () => {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <i className="ri-information-line" style={{ fontSize: '16px' }} />
+                  <i className="ri-translate-2" style={{ fontSize: '16px' }} />
                   <span>
-                    Editing translations for <strong>{SUPPORTED_LANGUAGES.find((l) => l.code === editingLanguage)?.name} ({SUPPORTED_LANGUAGES.find((l) => l.code === editingLanguage)?.nativeName})</strong>. If left blank, default text will be used.
+                    Editing <strong>{SUPPORTED_LANGUAGES.find((l) => l.code === editingLanguage)?.name} ({SUPPORTED_LANGUAGES.find((l) => l.code === editingLanguage)?.nativeName})</strong>. Questions are automatically translated from {SUPPORTED_LANGUAGES.find((l) => l.code === defaultLanguage)?.name}.
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleCopyAllFromEnglish}
-                  className="ls-btn ls-btn-outline ls-btn-sm"
-                  style={{ fontSize: '12px', padding: '3px 8px', borderColor: '#93c5fd', color: '#1e40af' }}
-                >
-                  <i className="ri-file-copy-line" style={{ marginRight: '4px' }} /> Copy Base Language
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {isTranslating ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#1e40af', fontWeight: 600 }}>
+                      <i className="ri-loader-4-line ri-spin" /> Translating...
+                    </span>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleForceTranslateAll(editingLanguage)}
+                        className="ls-btn ls-btn-outline ls-btn-sm"
+                        style={{ fontSize: '12px', padding: '3px 8px', borderColor: '#93c5fd', color: '#1e40af' }}
+                        title="Auto-translate all questions and options from base language"
+                      >
+                        <i className="ri-sparkling-fill" style={{ marginRight: '4px', color: '#3b82f6' }} /> Re-translate All
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCopyAllFromEnglish}
+                        className="ls-btn ls-btn-outline ls-btn-sm"
+                        style={{ fontSize: '12px', padding: '3px 8px', borderColor: '#93c5fd', color: '#1e40af' }}
+                      >
+                        <i className="ri-file-copy-line" style={{ marginRight: '4px' }} /> Copy Base
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             )}
 
@@ -1838,6 +2095,57 @@ export const SurveyBuilder = () => {
                               onFocus={(e) => (e.target.style.borderColor = '#10b981')}
                               onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
                             />
+
+                            {/* Base question preview & auto-translate button when in translation mode */}
+                            {editingLanguage !== defaultLanguage && q.text && (
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  gap: '10px',
+                                  fontSize: '12px',
+                                  backgroundColor: '#f8fafc',
+                                  border: '1px solid #e2e8f0',
+                                  padding: '5px 10px',
+                                  borderRadius: '6px',
+                                  color: '#475569',
+                                }}
+                              >
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  <strong style={{ color: '#0f172a' }}>Original ({SUPPORTED_LANGUAGES.find((l) => l.code === defaultLanguage)?.name}):</strong> {q.text}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleTranslateSingleQuestion(idx, editingLanguage)}
+                                  disabled={translatingQIdx === idx || isTranslating}
+                                  style={{
+                                    border: 'none',
+                                    background: 'none',
+                                    color: '#059669',
+                                    cursor: 'pointer',
+                                    fontSize: '11px',
+                                    fontWeight: 600,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    flexShrink: 0,
+                                    padding: '2px 4px',
+                                  }}
+                                  title={`Auto-translate into ${SUPPORTED_LANGUAGES.find((l) => l.code === editingLanguage)?.name}`}
+                                >
+                                  {translatingQIdx === idx ? (
+                                    <>
+                                      <i className="ri-loader-4-line ri-spin" /> Translating...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <i className="ri-sparkling-fill" style={{ color: '#10b981' }} /> Auto-Translate
+                                    </>
+                                  )}
+                                </button>
+                              </div>
+                            )}
 
                             {q.helpText !== undefined && (
                               <input
@@ -3130,7 +3438,7 @@ export const SurveyBuilder = () => {
                     <select
                       id="preview-lang-select"
                       value={previewLang}
-                      onChange={(e) => setPreviewLang(e.target.value)}
+                      onChange={(e) => handlePreviewLangChange(e.target.value)}
                       className="ls-select"
                       style={{ padding: '4px 8px', fontSize: '12px', height: '32px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
                     >
@@ -3138,7 +3446,7 @@ export const SurveyBuilder = () => {
                         const lObj = SUPPORTED_LANGUAGES.find((l) => l.code === code);
                         return (
                           <option key={code} value={code}>
-                            {lObj?.flag} {lObj?.name} ({lObj?.nativeName})
+                            {lObj?.name} ({lObj?.nativeName})
                           </option>
                         );
                       })}
@@ -3633,7 +3941,7 @@ export const SurveyBuilder = () => {
                       const lObj = SUPPORTED_LANGUAGES.find((l) => l.code === code);
                       return (
                         <option key={code} value={code}>
-                          {lObj?.flag} {lObj?.name} ({lObj?.nativeName})
+                          {lObj?.name} ({lObj?.nativeName})
                         </option>
                       );
                     })}
@@ -3719,7 +4027,7 @@ export const SurveyBuilder = () => {
                           }}
                           style={{ accentColor: '#10b981', width: '16px', height: '16px', cursor: isDefault ? 'default' : 'pointer' }}
                         />
-                        <span style={{ fontSize: '18px', lineHeight: 1 }}>{l.flag}</span>
+                        <i className="ri-global-line" style={{ fontSize: '18px', color: isSelected ? '#10b981' : '#94a3b8' }} />
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span style={{ fontSize: '13px', fontWeight: isSelected ? 600 : 500, color: '#0f172a' }}>
                             {l.name}
