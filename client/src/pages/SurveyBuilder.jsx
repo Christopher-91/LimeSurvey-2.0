@@ -747,23 +747,81 @@ export const SurveyBuilder = () => {
   };
 
   // Automatic Machine Translation Handlers
-  const handleSelectLanguage = async (targetLang) => {
-    setEditingLanguage(targetLang);
-    if (targetLang === defaultLanguage) return;
+  const handleChooseSurveyLanguage = async (newLang) => {
+    if (newLang === defaultLanguage && supportedLanguages.length === 1 && supportedLanguages[0] === newLang) {
+      return;
+    }
+
+    const prevLang = defaultLanguage;
+    setDefaultLanguage(newLang);
+    setSupportedLanguages([newLang]);
+    setEditingLanguage(newLang);
+    setPreviewLang(newLang);
+
+    if (newLang === 'en') {
+      if (surveyTranslations.en?.title) {
+        setTitle(surveyTranslations.en.title);
+      }
+      if (surveyTranslations.en?.description !== undefined) {
+        setDescription(surveyTranslations.en.description);
+      }
+      if (surveyTranslations.en?.welcomeMessage !== undefined) {
+        setWelcomeMessage(surveyTranslations.en.welcomeMessage);
+      }
+      if (surveyTranslations.en?.endMessage !== undefined) {
+        setEndMessage(surveyTranslations.en.endMessage);
+      }
+
+      setQuestions((prev) =>
+        prev.map((q) => {
+          const enTrans = q.settings?.translations?.en;
+          if (enTrans?.text) {
+            return {
+              ...q,
+              text: enTrans.text,
+              helpText: enTrans.helpText !== undefined ? enTrans.helpText : q.helpText,
+              options: (q.options || []).map((o) => ({
+                ...o,
+                text: enTrans.options?.[o.code] || o.text,
+              })),
+            };
+          }
+          return q;
+        })
+      );
+      showToast('Survey language set to English!', 'success');
+      return;
+    }
 
     setIsTranslating(true);
     try {
-      // 1. Auto-translate survey title / description if needed
-      if (!surveyTranslations[targetLang]?.title && title.trim()) {
-        const transTitle = await autoTranslateText(title, targetLang, defaultLanguage);
-        const transDesc = description.trim() ? await autoTranslateText(description, targetLang, defaultLanguage) : '';
-        const transWelcome = welcomeMessage.trim() ? await autoTranslateText(welcomeMessage, targetLang, defaultLanguage) : '';
-        const transEnd = endMessage.trim() ? await autoTranslateText(endMessage, targetLang, defaultLanguage) : '';
+      const sourceLang = prevLang || 'en';
+
+      const baseTitle = surveyTranslations.en?.title || title;
+      const baseDesc = surveyTranslations.en?.description || description;
+      const baseWelcome = surveyTranslations.en?.welcomeMessage || welcomeMessage;
+      const baseEnd = surveyTranslations.en?.endMessage || endMessage;
+
+      if (baseTitle.trim()) {
+        const transTitle = await autoTranslateText(baseTitle, newLang, sourceLang);
+        const transDesc = baseDesc.trim() ? await autoTranslateText(baseDesc, newLang, sourceLang) : '';
+        const transWelcome = baseWelcome.trim() ? await autoTranslateText(baseWelcome, newLang, sourceLang) : '';
+        const transEnd = baseEnd.trim() ? await autoTranslateText(baseEnd, newLang, sourceLang) : '';
+
+        setTitle(transTitle);
+        setDescription(transDesc);
+        setWelcomeMessage(transWelcome);
+        setEndMessage(transEnd);
 
         setSurveyTranslations((prev) => ({
           ...prev,
-          [targetLang]: {
-            ...(prev[targetLang] || {}),
+          en: prev.en || {
+            title: baseTitle,
+            description: baseDesc,
+            welcomeMessage: baseWelcome,
+            endMessage: baseEnd,
+          },
+          [newLang]: {
             title: transTitle,
             description: transDesc,
             welcomeMessage: transWelcome,
@@ -772,33 +830,50 @@ export const SurveyBuilder = () => {
         }));
       }
 
-      // 2. Auto-translate questions missing targetLang translation
-      let translatedCount = 0;
       const updatedQuestions = await Promise.all(
         questions.map(async (q) => {
           const curTrans = q.settings?.translations || {};
-          const langTrans = curTrans[targetLang] || {};
+          const baseQText = curTrans.en?.text || q.text;
 
-          // If question already translated, keep existing
-          if (langTrans.text && langTrans.text.trim()) {
-            return q;
-          }
+          if (!baseQText || !baseQText.trim()) return q;
 
-          if (!q.text || !q.text.trim()) {
-            return q;
-          }
+          const optMap = {};
+          (q.options || []).forEach((o) => {
+            optMap[o.code] = curTrans.en?.options?.[o.code] || o.text;
+          });
 
-          translatedCount++;
-          const translatedQ = await autoTranslateQuestion(q, targetLang, defaultLanguage);
+          const qToTranslate = {
+            ...q,
+            text: baseQText,
+            helpText: curTrans.en?.helpText !== undefined ? curTrans.en?.helpText : q.helpText,
+            options: (q.options || []).map((o) => ({
+              ...o,
+              text: curTrans.en?.options?.[o.code] || o.text,
+            })),
+          };
+
+          const translatedQ = await autoTranslateQuestion(qToTranslate, newLang, sourceLang);
           if (translatedQ) {
+            const updatedOpts = (q.options || []).map((o) => ({
+              ...o,
+              text: translatedQ.options?.[o.code] || o.text,
+            }));
+
             return {
               ...q,
+              text: translatedQ.text || q.text,
+              helpText: translatedQ.helpText !== undefined ? translatedQ.helpText : q.helpText,
+              options: updatedOpts,
               settings: {
                 ...(q.settings || {}),
                 translations: {
                   ...curTrans,
-                  [targetLang]: {
-                    ...langTrans,
+                  en: curTrans.en || {
+                    text: q.text,
+                    helpText: q.helpText,
+                    options: optMap,
+                  },
+                  [newLang]: {
                     text: translatedQ.text || q.text,
                     helpText: translatedQ.helpText !== undefined ? translatedQ.helpText : q.helpText,
                     options: translatedQ.options || {},
@@ -814,39 +889,60 @@ export const SurveyBuilder = () => {
       );
 
       setQuestions(updatedQuestions);
-      const targetLangName = SUPPORTED_LANGUAGES.find((l) => l.code === targetLang)?.name || targetLang;
-      if (translatedCount > 0) {
-        showToast(`Questions automatically translated to ${targetLangName}!`, 'success');
-      }
+      const targetLangName = SUPPORTED_LANGUAGES.find((l) => l.code === newLang)?.name || newLang;
+      showToast(`Survey language set to ${targetLangName}! Questions translated.`, 'success');
     } catch (err) {
-      console.error('Auto-translation error:', err);
+      console.error('Error changing survey language:', err);
+      showToast('Could not translate all questions.', 'warning');
     } finally {
       setIsTranslating(false);
     }
   };
 
-  const handleTranslateSingleQuestion = async (qIndex, targetLang = editingLanguage) => {
-    if (targetLang === defaultLanguage) return;
+  const handleTranslateSingleQuestion = async (qIndex, targetLang = defaultLanguage) => {
+    if (targetLang === 'en') return;
     const q = questions[qIndex];
     if (!q || !q.text?.trim()) {
-      showToast('Please enter base question text before translating.', 'info');
+      showToast('Please enter question text before translating.', 'info');
       return;
     }
 
     setTranslatingQIdx(qIndex);
     try {
-      const translatedQ = await autoTranslateQuestion(q, targetLang, defaultLanguage);
+      const curTrans = q.settings?.translations || {};
+      const baseQText = curTrans.en?.text || q.text;
+      const qToTranslate = {
+        ...q,
+        text: baseQText,
+        options: q.options || [],
+      };
+
+      const translatedQ = await autoTranslateQuestion(qToTranslate, targetLang, 'auto');
       if (translatedQ) {
-        const curTrans = q.settings?.translations || {};
-        const langTrans = curTrans[targetLang] || {};
+        const optMap = {};
+        (q.options || []).forEach((o) => {
+          optMap[o.code] = curTrans.en?.options?.[o.code] || o.text;
+        });
+
+        const updatedOpts = (q.options || []).map((o) => ({
+          ...o,
+          text: translatedQ.options?.[o.code] || o.text,
+        }));
 
         updateQuestion(qIndex, {
+          text: translatedQ.text || q.text,
+          helpText: translatedQ.helpText !== undefined ? translatedQ.helpText : q.helpText,
+          options: updatedOpts,
           settings: {
             ...(q.settings || {}),
             translations: {
               ...curTrans,
+              en: curTrans.en || {
+                text: q.text,
+                helpText: q.helpText,
+                options: optMap,
+              },
               [targetLang]: {
-                ...langTrans,
                 text: translatedQ.text || q.text,
                 helpText: translatedQ.helpText !== undefined ? translatedQ.helpText : q.helpText,
                 options: translatedQ.options || {},
@@ -868,18 +964,34 @@ export const SurveyBuilder = () => {
     }
   };
 
-  const handleForceTranslateAll = async (targetLang = editingLanguage) => {
-    if (targetLang === defaultLanguage) return;
+  const handleForceTranslateAll = async (targetLang = defaultLanguage) => {
+    if (targetLang === 'en') return;
     setIsTranslating(true);
     try {
-      if (title.trim()) {
-        const transTitle = await autoTranslateText(title, targetLang, defaultLanguage);
-        const transDesc = description.trim() ? await autoTranslateText(description, targetLang, defaultLanguage) : '';
-        const transWelcome = welcomeMessage.trim() ? await autoTranslateText(welcomeMessage, targetLang, defaultLanguage) : '';
-        const transEnd = endMessage.trim() ? await autoTranslateText(endMessage, targetLang, defaultLanguage) : '';
+      const baseTitle = surveyTranslations.en?.title || title;
+      const baseDesc = surveyTranslations.en?.description || description;
+      const baseWelcome = surveyTranslations.en?.welcomeMessage || welcomeMessage;
+      const baseEnd = surveyTranslations.en?.endMessage || endMessage;
+
+      if (baseTitle.trim()) {
+        const transTitle = await autoTranslateText(baseTitle, targetLang, 'auto');
+        const transDesc = baseDesc.trim() ? await autoTranslateText(baseDesc, targetLang, 'auto') : '';
+        const transWelcome = baseWelcome.trim() ? await autoTranslateText(baseWelcome, targetLang, 'auto') : '';
+        const transEnd = baseEnd.trim() ? await autoTranslateText(baseEnd, targetLang, 'auto') : '';
+
+        setTitle(transTitle);
+        setDescription(transDesc);
+        setWelcomeMessage(transWelcome);
+        setEndMessage(transEnd);
 
         setSurveyTranslations((prev) => ({
           ...prev,
+          en: prev.en || {
+            title: baseTitle,
+            description: baseDesc,
+            welcomeMessage: baseWelcome,
+            endMessage: baseEnd,
+          },
           [targetLang]: {
             title: transTitle,
             description: transDesc,
@@ -891,16 +1003,45 @@ export const SurveyBuilder = () => {
 
       const updatedQuestions = await Promise.all(
         questions.map(async (q) => {
-          if (!q.text || !q.text.trim()) return q;
-          const translatedQ = await autoTranslateQuestion(q, targetLang, defaultLanguage);
+          const curTrans = q.settings?.translations || {};
+          const baseQText = curTrans.en?.text || q.text;
+          if (!baseQText || !baseQText.trim()) return q;
+
+          const optMap = {};
+          (q.options || []).forEach((o) => {
+            optMap[o.code] = curTrans.en?.options?.[o.code] || o.text;
+          });
+
+          const qToTranslate = {
+            ...q,
+            text: baseQText,
+            options: (q.options || []).map((o) => ({
+              ...o,
+              text: curTrans.en?.options?.[o.code] || o.text,
+            })),
+          };
+
+          const translatedQ = await autoTranslateQuestion(qToTranslate, targetLang, 'auto');
           if (translatedQ) {
-            const curTrans = q.settings?.translations || {};
+            const updatedOpts = (q.options || []).map((o) => ({
+              ...o,
+              text: translatedQ.options?.[o.code] || o.text,
+            }));
+
             return {
               ...q,
+              text: translatedQ.text || q.text,
+              helpText: translatedQ.helpText !== undefined ? translatedQ.helpText : q.helpText,
+              options: updatedOpts,
               settings: {
                 ...(q.settings || {}),
                 translations: {
                   ...curTrans,
+                  en: curTrans.en || {
+                    text: q.text,
+                    helpText: q.helpText,
+                    options: optMap,
+                  },
                   [targetLang]: {
                     text: translatedQ.text || q.text,
                     helpText: translatedQ.helpText !== undefined ? translatedQ.helpText : q.helpText,
@@ -1662,37 +1803,24 @@ export const SurveyBuilder = () => {
                   <i className="ri-translate-2" style={{ color: '#10b981', fontSize: '17px' }} />
                   Survey Language:
                 </span>
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                  {supportedLanguages.map((lCode) => {
-                    const langObj = SUPPORTED_LANGUAGES.find((l) => l.code === lCode) || {
-                      code: lCode,
-                      name: lCode.toUpperCase(),
-                    };
-                    const isSelected = editingLanguage === lCode;
-                    return (
-                      <button
-                        key={lCode}
-                        type="button"
-                        onClick={() => handleSelectLanguage(lCode)}
-                        className={`ls-btn ls-btn-sm ${isSelected ? 'ls-btn-primary' : 'ls-btn-outline'}`}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          fontSize: '12px',
-                          padding: '4px 10px',
-                          fontWeight: isSelected ? 700 : 500,
-                          borderRadius: '6px',
-                        }}
-                      >
-                        <i className="ri-global-line" style={{ fontSize: '13px', opacity: 0.8 }} />
-                        <span>{langObj.name}</span>
-                        {lCode === defaultLanguage && (
-                          <span style={{ fontSize: '10px', opacity: 0.8, textTransform: 'uppercase' }}>(Default)</span>
-                        )}
-                      </button>
-                    );
-                  })}
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '13px',
+                    padding: '5px 12px',
+                    fontWeight: 700,
+                    borderRadius: '6px',
+                    backgroundColor: '#ecfdf5',
+                    color: '#047857',
+                    border: '1px solid #a7f3d0',
+                  }}
+                >
+                  <i className="ri-global-line" style={{ fontSize: '14px' }} />
+                  <span>
+                    {(SUPPORTED_LANGUAGES.find((l) => l.code === defaultLanguage) || { name: 'English', nativeName: 'English' }).name} ({ (SUPPORTED_LANGUAGES.find((l) => l.code === defaultLanguage) || { name: 'English', nativeName: 'English' }).nativeName })
+                  </span>
                 </div>
               </div>
 
@@ -1711,13 +1839,13 @@ export const SurveyBuilder = () => {
                     borderColor: '#cbd5e1',
                   }}
                 >
-                  <i className="ri-settings-3-line" /> Manage Languages ({supportedLanguages.length})
+                  <i className="ri-settings-3-line" /> Manage Languages
                 </button>
               </div>
             </div>
 
             {/* Translation Mode Banner */}
-            {editingLanguage !== defaultLanguage && (
+            {defaultLanguage !== 'en' && (
               <div
                 style={{
                   display: 'flex',
@@ -1737,7 +1865,7 @@ export const SurveyBuilder = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <i className="ri-translate-2" style={{ fontSize: '16px' }} />
                   <span>
-                    Editing <strong>{SUPPORTED_LANGUAGES.find((l) => l.code === editingLanguage)?.name} ({SUPPORTED_LANGUAGES.find((l) => l.code === editingLanguage)?.nativeName})</strong>. Questions are automatically translated from {SUPPORTED_LANGUAGES.find((l) => l.code === defaultLanguage)?.name}.
+                    Survey language is <strong>{SUPPORTED_LANGUAGES.find((l) => l.code === defaultLanguage)?.name} ({SUPPORTED_LANGUAGES.find((l) => l.code === defaultLanguage)?.nativeName})</strong>. Questions and options are translated into this language.
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1746,25 +1874,15 @@ export const SurveyBuilder = () => {
                       <i className="ri-loader-4-line ri-spin" /> Translating...
                     </span>
                   ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => handleForceTranslateAll(editingLanguage)}
-                        className="ls-btn ls-btn-outline ls-btn-sm"
-                        style={{ fontSize: '12px', padding: '3px 8px', borderColor: '#93c5fd', color: '#1e40af' }}
-                        title="Auto-translate all questions and options from base language"
-                      >
-                        <i className="ri-sparkling-fill" style={{ marginRight: '4px', color: '#3b82f6' }} /> Re-translate All
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleCopyAllFromEnglish}
-                        className="ls-btn ls-btn-outline ls-btn-sm"
-                        style={{ fontSize: '12px', padding: '3px 8px', borderColor: '#93c5fd', color: '#1e40af' }}
-                      >
-                        <i className="ri-file-copy-line" style={{ marginRight: '4px' }} /> Copy Base
-                      </button>
-                    </>
+                    <button
+                      type="button"
+                      onClick={() => handleForceTranslateAll(defaultLanguage)}
+                      className="ls-btn ls-btn-outline ls-btn-sm"
+                      style={{ fontSize: '12px', padding: '3px 8px', borderColor: '#93c5fd', color: '#1e40af' }}
+                      title="Re-translate all questions and options"
+                    >
+                      <i className="ri-sparkling-fill" style={{ marginRight: '4px', color: '#3b82f6' }} /> Re-translate All
+                    </button>
                   )}
                 </div>
               </div>
@@ -2096,8 +2214,7 @@ export const SurveyBuilder = () => {
                               onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
                             />
 
-                            {/* Base question preview & auto-translate button when in translation mode */}
-                            {editingLanguage !== defaultLanguage && q.text && (
+                            {defaultLanguage !== 'en' && q.text && (
                               <div
                                 style={{
                                   display: 'flex',
@@ -2113,11 +2230,11 @@ export const SurveyBuilder = () => {
                                 }}
                               >
                                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                  <strong style={{ color: '#0f172a' }}>Original ({SUPPORTED_LANGUAGES.find((l) => l.code === defaultLanguage)?.name}):</strong> {q.text}
+                                  <strong style={{ color: '#0f172a' }}>Survey Language:</strong> {SUPPORTED_LANGUAGES.find((l) => l.code === defaultLanguage)?.name}
                                 </span>
                                 <button
                                   type="button"
-                                  onClick={() => handleTranslateSingleQuestion(idx, editingLanguage)}
+                                  onClick={() => handleTranslateSingleQuestion(idx, defaultLanguage)}
                                   disabled={translatingQIdx === idx || isTranslating}
                                   style={{
                                     border: 'none',
@@ -2132,7 +2249,7 @@ export const SurveyBuilder = () => {
                                     flexShrink: 0,
                                     padding: '2px 4px',
                                   }}
-                                  title={`Auto-translate into ${SUPPORTED_LANGUAGES.find((l) => l.code === editingLanguage)?.name}`}
+                                  title={`Auto-translate into ${SUPPORTED_LANGUAGES.find((l) => l.code === defaultLanguage)?.name}`}
                                 >
                                   {translatingQIdx === idx ? (
                                     <>
@@ -2140,7 +2257,7 @@ export const SurveyBuilder = () => {
                                     </>
                                   ) : (
                                     <>
-                                      <i className="ri-sparkling-fill" style={{ color: '#10b981' }} /> Auto-Translate
+                                      <i className="ri-sparkling-fill" style={{ color: '#10b981' }} /> Auto-Translate to {SUPPORTED_LANGUAGES.find((l) => l.code === defaultLanguage)?.name}
                                     </>
                                   )}
                                 </button>
@@ -3937,72 +4054,20 @@ export const SurveyBuilder = () => {
                 minHeight: 0,
               }}
             >
-              <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: '#475569', lineHeight: 1.45 }}>
-                Enable translations in any of the 10 supported languages. Switch languages using the top toolbar tabs to translate survey title, questions, help text, option labels, and matrix columns.
+              <p style={{ margin: '0 0 14px 0', fontSize: '13px', color: '#475569', lineHeight: 1.45 }}>
+                Choose the language for this survey. Only one language can be chosen. When selected, survey questions and options will automatically be translated into this language.
               </p>
 
-              <div style={{ marginBottom: '14px', padding: '12px 14px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                <label
-                  htmlFor="default-lang-select"
-                  style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: '#0f172a', marginBottom: '5px' }}
-                >
-                  Default Survey Language:
-                </label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <select
-                    id="default-lang-select"
-                    value={defaultLanguage}
-                    onChange={(e) => {
-                      const newDef = e.target.value;
-                      setDefaultLanguage(newDef);
-                      if (!supportedLanguages.includes(newDef)) {
-                        setSupportedLanguages([...supportedLanguages, newDef]);
-                      }
-                    }}
-                    className="ls-select"
-                    style={{ flex: 1, padding: '7px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
-                  >
-                    {supportedLanguages.map((code) => {
-                      const lObj = SUPPORTED_LANGUAGES.find((l) => l.code === code);
-                      return (
-                        <option key={code} value={code}>
-                          {lObj?.name} ({lObj?.nativeName})
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-                <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '4px' }}>
-                  This is the default questionnaire language shown to respondents if their preferred language is not selected.
-                </div>
-              </div>
-
               <div style={{ marginBottom: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#0f172a' }}>
-                    Available Survey Languages ({supportedLanguages.length} of {SUPPORTED_LANGUAGES.length} selected):
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
+                    Select Language:
                   </span>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                      type="button"
-                      onClick={() => setSupportedLanguages(SUPPORTED_LANGUAGES.map((l) => l.code))}
-                      style={{ border: 'none', background: 'none', color: '#10b981', cursor: 'pointer', fontSize: '12px', fontWeight: 600, textDecoration: 'underline' }}
-                    >
-                      Select All
-                    </button>
-                    <span style={{ color: '#cbd5e1' }}>|</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSupportedLanguages(['en']);
-                        setDefaultLanguage('en');
-                        setEditingLanguage('en');
-                      }}
-                      style={{ border: 'none', background: 'none', color: '#64748b', cursor: 'pointer', fontSize: '12px', textDecoration: 'underline' }}
-                    >
-                      Reset to English
-                    </button>
-                  </div>
+                  {isTranslating && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#10b981', fontWeight: 600 }}>
+                      <i className="ri-loader-4-line ri-spin" /> Translating survey...
+                    </span>
+                  )}
                 </div>
 
                 <div
@@ -4014,52 +4079,42 @@ export const SurveyBuilder = () => {
                   }}
                 >
                   {SUPPORTED_LANGUAGES.map((l) => {
-                    const isSelected = supportedLanguages.includes(l.code);
-                    const isDefault = defaultLanguage === l.code;
+                    const isSelected = defaultLanguage === l.code;
 
                     return (
                       <label
                         key={l.code}
+                        onClick={() => handleChooseSurveyLanguage(l.code)}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
                           gap: '10px',
-                          padding: '8px 12px',
+                          padding: '10px 14px',
                           borderRadius: '8px',
-                          border: isSelected ? '1px solid #10b981' : '1px solid #e2e8f0',
+                          border: isSelected ? '2px solid #10b981' : '1px solid #e2e8f0',
                           backgroundColor: isSelected ? '#f0fdf4' : '#ffffff',
-                          cursor: isDefault ? 'default' : 'pointer',
+                          cursor: 'pointer',
                           transition: 'all 0.15s ease',
+                          boxShadow: isSelected ? '0 1px 3px rgba(16, 185, 129, 0.15)' : 'none',
                         }}
                       >
                         <input
-                          type="checkbox"
+                          type="radio"
+                          name="survey-language-choice"
                           checked={isSelected}
-                          disabled={isDefault}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSupportedLanguages([...supportedLanguages, l.code]);
-                            } else {
-                              if (supportedLanguages.length > 1 && !isDefault) {
-                                setSupportedLanguages(supportedLanguages.filter((c) => c !== l.code));
-                                if (editingLanguage === l.code) {
-                                  setEditingLanguage(defaultLanguage);
-                                }
-                              }
-                            }
-                          }}
-                          style={{ accentColor: '#10b981', width: '15px', height: '15px', cursor: isDefault ? 'default' : 'pointer' }}
+                          onChange={() => handleChooseSurveyLanguage(l.code)}
+                          style={{ accentColor: '#10b981', width: '16px', height: '16px', cursor: 'pointer' }}
                         />
                         <i className="ri-global-line" style={{ fontSize: '16px', color: isSelected ? '#10b981' : '#94a3b8' }} />
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ fontSize: '12.5px', fontWeight: isSelected ? 600 : 500, color: '#0f172a' }}>
+                          <span style={{ fontSize: '13px', fontWeight: isSelected ? 700 : 500, color: isSelected ? '#065f46' : '#0f172a' }}>
                             {l.name}
                           </span>
                           <span style={{ fontSize: '11px', color: '#64748b' }}>
                             {l.nativeName}
                           </span>
                         </div>
-                        {isDefault && (
+                        {isSelected && (
                           <span
                             style={{
                               marginLeft: 'auto',
@@ -4068,11 +4123,12 @@ export const SurveyBuilder = () => {
                               textTransform: 'uppercase',
                               backgroundColor: '#dcfce7',
                               color: '#15803d',
-                              padding: '2px 6px',
-                              borderRadius: '4px',
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              border: '1px solid #86efac',
                             }}
                           >
-                            Default
+                            Active
                           </span>
                         )}
                       </label>

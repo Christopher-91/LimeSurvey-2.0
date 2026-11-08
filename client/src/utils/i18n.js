@@ -384,8 +384,6 @@ export const getUiText = (key, lang = 'en') => {
  */
 export const getLocalizedSurvey = (survey, lang = 'en') => {
   if (!survey) return survey;
-  if (!lang || lang === 'en') return survey;
-
   const surveySettings = survey.settings || {};
   const trans = surveySettings.translations?.[lang] || {};
 
@@ -403,7 +401,6 @@ export const getLocalizedSurvey = (survey, lang = 'en') => {
  */
 export const getLocalizedQuestion = (question, lang = 'en', surveySettings = null) => {
   if (!question) return question;
-  if (!lang || lang === 'en') return question;
 
   const qSettings = question.settings || {};
   // Translation can be stored directly in question.settings.translations[lang]
