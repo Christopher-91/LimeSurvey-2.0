@@ -3870,27 +3870,47 @@ export const SurveyBuilder = () => {
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsLanguageModalOpen(false);
           }}
+          style={{ padding: '20px 16px', overflowY: 'auto' }}
         >
           <div
             className="ls-modal"
             role="dialog"
             aria-modal="true"
             aria-labelledby="language-modal-title"
-            style={{ maxWidth: '620px', width: '90%' }}
+            style={{
+              maxWidth: '620px',
+              width: '100%',
+              maxHeight: 'calc(100dvh - 40px)',
+              display: 'flex',
+              flexDirection: 'column',
+              margin: 'auto',
+              borderRadius: '12px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+            }}
           >
-            <div className="ls-modal-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #e2e8f0' }}>
-              <div className="ls-modal-title" id="language-modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>
+            <div
+              className="ls-modal-header"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '14px 20px',
+                borderBottom: '1px solid #e2e8f0',
+                flexShrink: 0,
+              }}
+            >
+              <div className="ls-modal-title" id="language-modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '17px', fontWeight: 700, color: '#0f172a' }}>
                 <div
                   style={{
-                    width: '36px',
-                    height: '36px',
+                    width: '32px',
+                    height: '32px',
                     borderRadius: '50%',
                     backgroundColor: '#ecfdf5',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: '#10b981',
-                    fontSize: '18px',
+                    fontSize: '16px',
                     flexShrink: 0,
                   }}
                 >
@@ -3900,7 +3920,7 @@ export const SurveyBuilder = () => {
               </div>
               <button
                 type="button"
-                className="ls-modal-close"
+                className="ls-modal-close-btn"
                 onClick={() => setIsLanguageModalOpen(false)}
                 aria-label="Close modal"
               >
@@ -3908,15 +3928,23 @@ export const SurveyBuilder = () => {
               </button>
             </div>
 
-            <div className="ls-modal-body" style={{ padding: '20px' }}>
-              <p style={{ margin: '0 0 16px 0', fontSize: '14px', color: '#475569', lineHeight: 1.5 }}>
+            <div
+              className="ls-modal-body"
+              style={{
+                padding: '16px 20px',
+                overflowY: 'auto',
+                flex: 1,
+                minHeight: 0,
+              }}
+            >
+              <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: '#475569', lineHeight: 1.45 }}>
                 Enable translations in any of the 10 supported languages. Switch languages using the top toolbar tabs to translate survey title, questions, help text, option labels, and matrix columns.
               </p>
 
-              <div style={{ marginBottom: '20px', padding: '14px 16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+              <div style={{ marginBottom: '14px', padding: '12px 14px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                 <label
                   htmlFor="default-lang-select"
-                  style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#0f172a', marginBottom: '6px' }}
+                  style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: '#0f172a', marginBottom: '5px' }}
                 >
                   Default Survey Language:
                 </label>
@@ -3932,7 +3960,7 @@ export const SurveyBuilder = () => {
                       }
                     }}
                     className="ls-select"
-                    style={{ flex: 1, padding: '8px 12px', fontSize: '14px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                    style={{ flex: 1, padding: '7px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
                   >
                     {supportedLanguages.map((code) => {
                       const lObj = SUPPORTED_LANGUAGES.find((l) => l.code === code);
@@ -3944,14 +3972,14 @@ export const SurveyBuilder = () => {
                     })}
                   </select>
                 </div>
-                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '6px' }}>
+                <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '4px' }}>
                   This is the default questionnaire language shown to respondents if their preferred language is not selected.
                 </div>
               </div>
 
-              <div style={{ marginBottom: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
+              <div style={{ marginBottom: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#0f172a' }}>
                     Available Survey Languages ({supportedLanguages.length} of {SUPPORTED_LANGUAGES.length} selected):
                   </span>
                   <div style={{ display: 'flex', gap: '8px' }}>
@@ -3980,11 +4008,9 @@ export const SurveyBuilder = () => {
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-                    gap: '10px',
-                    maxHeight: '300px',
-                    overflowY: 'auto',
-                    padding: '4px',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))',
+                    gap: '8px',
+                    padding: '2px',
                   }}
                 >
                   {SUPPORTED_LANGUAGES.map((l) => {
@@ -3998,7 +4024,7 @@ export const SurveyBuilder = () => {
                           display: 'flex',
                           alignItems: 'center',
                           gap: '10px',
-                          padding: '10px 14px',
+                          padding: '8px 12px',
                           borderRadius: '8px',
                           border: isSelected ? '1px solid #10b981' : '1px solid #e2e8f0',
                           backgroundColor: isSelected ? '#f0fdf4' : '#ffffff',
@@ -4022,11 +4048,11 @@ export const SurveyBuilder = () => {
                               }
                             }
                           }}
-                          style={{ accentColor: '#10b981', width: '16px', height: '16px', cursor: isDefault ? 'default' : 'pointer' }}
+                          style={{ accentColor: '#10b981', width: '15px', height: '15px', cursor: isDefault ? 'default' : 'pointer' }}
                         />
-                        <i className="ri-global-line" style={{ fontSize: '18px', color: isSelected ? '#10b981' : '#94a3b8' }} />
+                        <i className="ri-global-line" style={{ fontSize: '16px', color: isSelected ? '#10b981' : '#94a3b8' }} />
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ fontSize: '13px', fontWeight: isSelected ? 600 : 500, color: '#0f172a' }}>
+                          <span style={{ fontSize: '12.5px', fontWeight: isSelected ? 600 : 500, color: '#0f172a' }}>
                             {l.name}
                           </span>
                           <span style={{ fontSize: '11px', color: '#64748b' }}>
@@ -4056,7 +4082,7 @@ export const SurveyBuilder = () => {
               </div>
             </div>
 
-            <div className="ls-modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px 20px', borderTop: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>
+            <div className="ls-modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', padding: '14px 20px', borderTop: '1px solid #e2e8f0', backgroundColor: '#f8fafc', flexShrink: 0 }}>
               <button
                 type="button"
                 className="ls-btn ls-btn-primary"

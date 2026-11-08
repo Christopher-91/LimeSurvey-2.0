@@ -578,6 +578,7 @@ h1, h2, h3, h4, h5, h6 {
   justify-content: center;
   z-index: 1050;
   padding: 16px;
+  overflow-y: auto;
   animation: ls-fade-in 0.15s ease-out;
 }
 
@@ -587,17 +588,23 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   width: 100%;
   max-width: 520px;
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--ls-color-g-300);
+  margin: auto;
   animation: ls-modal-pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .ls-modal-header {
-  padding: 20px 24px;
+  padding: 16px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--ls-color-g-300);
+  flex-shrink: 0;
 }
 
 .ls-modal-title {
@@ -629,20 +636,24 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .ls-modal-body {
-  padding: 24px;
+  padding: 20px;
   color: var(--ls-color-g-800);
   font-size: var(--ls-font-size-sm);
   line-height: 1.5;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .ls-modal-footer {
-  padding: 16px 24px;
+  padding: 14px 20px;
   background: var(--ls-color-g-100);
   border-top: 1px solid var(--ls-color-g-300);
   display: flex;
   justify-content: flex-end;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 @keyframes ls-fade-in {
