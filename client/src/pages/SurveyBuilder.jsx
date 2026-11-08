@@ -3420,9 +3420,6 @@ export const SurveyBuilder = () => {
               <div>
                 <div className="ls-modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>
                   <i className="ri-eye-line" style={{ color: '#10b981' }} /> Live Survey Preview
-                  <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '12px', backgroundColor: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0' }}>
-                    INTERACTIVE
-                  </span>
                 </div>
                 <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>
                   Fill out and test your questionnaire below exactly as voters will experience it.
