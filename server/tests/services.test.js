@@ -320,4 +320,65 @@ describe('Survey, Response, and Statistics Service Unit Tests', () => {
 
     await prisma.survey.delete({ where: { id: survey.id } });
   });
+
+  it('creates and updates a survey with custom white-labeling, brand logo, accent color, and completion redirect settings', async () => {
+    const customTheme = {
+      logoUrl: 'https://example.com/brand-logo.png',
+      showLogo: true,
+      accentColor: '#3b82f6',
+      completion: {
+        redirectEnabled: true,
+        redirectUrl: 'https://example.com/thank-you',
+        redirectDelay: 5,
+        buttonText: 'Visit Our Homepage',
+        customTitle: 'Thank You for Your Feedback!',
+        customMessage: 'Your insights help shape our next product release.',
+      },
+    };
+
+    const survey = await SurveyService.create(
+      {
+        title: 'Branded Survey',
+        description: 'White-labeled customer feedback survey',
+        active: true,
+        settings: {
+          theme: customTheme,
+          supportedLanguages: ['en'],
+          defaultLanguage: 'en',
+        },
+      },
+      null
+    );
+
+    expect(survey).toBeDefined();
+    expect(survey.settings).toBeDefined();
+    expect(survey.settings.theme).toBeDefined();
+    expect(survey.settings.theme.accentColor).toBe('#3b82f6');
+    expect(survey.settings.theme.logoUrl).toBe('https://example.com/brand-logo.png');
+    expect(survey.settings.theme.completion.redirectEnabled).toBe(true);
+    expect(survey.settings.theme.completion.redirectUrl).toBe('https://example.com/thank-you');
+
+    const updated = await SurveyService.update(
+      survey.id,
+      {
+        settings: {
+          ...survey.settings,
+          theme: {
+            ...customTheme,
+            accentColor: '#8b5cf6',
+            completion: {
+              ...customTheme.completion,
+              customTitle: 'Updated Thank You Headline',
+            },
+          },
+        },
+      },
+      null
+    );
+
+    expect(updated.settings.theme.accentColor).toBe('#8b5cf6');
+    expect(updated.settings.theme.completion.customTitle).toBe('Updated Thank You Headline');
+
+    await prisma.survey.delete({ where: { id: survey.id } });
+  });
 });

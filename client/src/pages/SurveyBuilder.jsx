@@ -12,6 +12,19 @@ import {
   getUiText,
 } from '../utils/i18n.js';
 
+export const ACCENT_COLOR_PRESETS = [
+  { name: 'Emerald', hex: '#10b981', label: 'Emerald Green (Default)' },
+  { name: 'Blue', hex: '#2563eb', label: 'Corporate Blue' },
+  { name: 'Indigo', hex: '#6366f1', label: 'Indigo' },
+  { name: 'Purple', hex: '#8b5cf6', label: 'Royal Purple' },
+  { name: 'Rose', hex: '#f43f5e', label: 'Rose' },
+  { name: 'Orange', hex: '#f97316', label: 'Warm Orange' },
+  { name: 'Amber', hex: '#f59e0b', label: 'Golden Amber' },
+  { name: 'Teal', hex: '#0d9488', label: 'Teal' },
+  { name: 'Cyan', hex: '#06b6d4', label: 'Electric Cyan' },
+  { name: 'Slate', hex: '#475569', label: 'Modern Slate' },
+];
+
 const PreviewRankingQuestion = ({ question, value, onChange }) => {
   const options = question.options || [];
 
@@ -477,7 +490,14 @@ export const SurveyBuilder = () => {
         }
       }
     }
-    showToast('Preview test submission successful! All required fields are validated.', 'success');
+    if (theme.completion?.redirectEnabled && theme.completion?.redirectUrl) {
+      showToast(
+        `Preview submission successful! (Redirect configured to ${theme.completion.redirectUrl} in ${theme.completion.redirectDelay ?? 3}s)`,
+        'success'
+      );
+    } else {
+      showToast('Preview test submission successful! All required fields are validated.', 'success');
+    }
   };
 
   const handleResetPreviewAnswers = () => {
@@ -505,6 +525,69 @@ export const SurveyBuilder = () => {
   const [previewLang, setPreviewLang] = useState('en');
   const [isTranslating, setIsTranslating] = useState(false);
   const [translatingQIdx, setTranslatingQIdx] = useState(null);
+
+  // Custom White-Labeling, Brand Logo, Accent Color & Completion State
+  const [theme, setTheme] = useState({
+    logoUrl: '',
+    showLogo: true,
+    accentColor: '#10b981',
+    completion: {
+      redirectEnabled: false,
+      redirectUrl: '',
+      redirectDelay: 3,
+      buttonText: 'Continue to Website',
+      customTitle: '',
+      customMessage: '',
+    },
+  });
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+
+  const handleLogoFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file (PNG, JPG, SVG, WebP, GIF).', 'error');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Logo file size must be under 5 MB.', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      setTheme((prev) => ({
+        ...prev,
+        logoUrl: uploadEvent.target.result,
+        showLogo: true,
+      }));
+      showToast('Brand logo uploaded successfully!', 'success');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleLogoDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showToast('Please drop a valid image file.', 'error');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Logo file size must be under 5 MB.', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      setTheme((prev) => ({
+        ...prev,
+        logoUrl: uploadEvent.target.result,
+        showLogo: true,
+      }));
+      showToast('Brand logo uploaded successfully!', 'success');
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Multilingual Field Getters and Setters
   const getQuestionTextForEdit = (q) => {
@@ -1217,6 +1300,16 @@ export const SurveyBuilder = () => {
         if (sSettings.translations) {
           setSurveyTranslations(sSettings.translations);
         }
+        if (sSettings.theme) {
+          setTheme((prev) => ({
+            ...prev,
+            ...sSettings.theme,
+            completion: {
+              ...prev.completion,
+              ...(sSettings.theme.completion || {}),
+            },
+          }));
+        }
 
         const allQ = [
           ...(s.questions || []),
@@ -1476,6 +1569,7 @@ export const SurveyBuilder = () => {
           supportedLanguages,
           defaultLanguage,
           translations: surveyTranslations,
+          theme,
         },
         questions: questions.map((q, idx) => ({
           id: q.id && !String(q.id).startsWith('temp-') ? q.id : undefined,
@@ -1737,6 +1831,26 @@ export const SurveyBuilder = () => {
 
             <button
               type="button"
+              onClick={() => setIsThemeModalOpen(true)}
+              className="ls-btn ls-btn-outline ls-btn-sm"
+              title="Customize Organization Branding, Logo, Accent Color & Completion Redirection"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                color: '#334155',
+                borderColor: '#cbd5e1',
+              }}
+            >
+              <i className="ri-palette-line" style={{ color: theme.accentColor || '#10b981', fontSize: '15px' }} />
+              Theme & Branding
+              {theme.logoUrl && (
+                <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: theme.accentColor || '#10b981' }} />
+              )}
+            </button>
+
+            <button
+              type="button"
               onClick={() => setIsPreviewOpen(true)}
               className="ls-btn ls-btn-outline ls-btn-sm"
               title="Preview Questionnaire"
@@ -1894,7 +2008,7 @@ export const SurveyBuilder = () => {
               style={{
                 backgroundColor: '#ffffff',
                 border: '1px solid #e2e8f0',
-                borderTop: '5px solid #10b981',
+                borderTop: `5px solid ${theme.accentColor || '#10b981'}`,
                 borderRadius: '8px',
                 padding: '28px 32px',
                 boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
@@ -1902,6 +2016,23 @@ export const SurveyBuilder = () => {
                 transition: 'all 0.2s ease',
               }}
             >
+              {theme.showLogo && theme.logoUrl && (
+                <div style={{ marginBottom: '18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid #f1f5f9' }}>
+                  <img
+                    src={theme.logoUrl}
+                    alt="Brand Logo"
+                    style={{ maxHeight: '48px', maxWidth: '180px', objectFit: 'contain' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setIsThemeModalOpen(true)}
+                    className="ls-btn ls-btn-outline ls-btn-sm"
+                    style={{ fontSize: '11px', padding: '2px 8px', color: '#64748b' }}
+                  >
+                    <i className="ri-pencil-line" /> Edit Branding
+                  </button>
+                </div>
+              )}
               <input
                 type="text"
                 placeholder={
@@ -1956,14 +2087,14 @@ export const SurveyBuilder = () => {
               />
 
               {/* Collapsible Accordion Toggle for Welcome & Completion Messages */}
-              <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid #f1f5f9' }}>
+              <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
                 <button
                   type="button"
                   onClick={() => setShowWelcomeCompletion(!showWelcomeCompletion)}
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: '#10b981',
+                    color: theme.accentColor || '#10b981',
                     fontSize: '13px',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -1978,6 +2109,27 @@ export const SurveyBuilder = () => {
                     ? 'Hide Welcome & Completion Messages'
                     : '+ Configure Welcome & Completion Messages'}
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsThemeModalOpen(true)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: theme.accentColor || '#10b981',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '4px 0',
+                  }}
+                >
+                  <i className="ri-palette-line" />
+                  Customize Theme, Logo & Redirect
+                </button>
+              </div>
 
                 {showWelcomeCompletion && (
                   <div
@@ -2045,7 +2197,6 @@ export const SurveyBuilder = () => {
                   </div>
                 )}
               </div>
-            </div>
 
             {/* Questions Canvas & Floating Toolbar */}
             <div ref={questionsContainerRef} style={{ position: 'relative' }}>
@@ -3603,11 +3754,20 @@ export const SurveyBuilder = () => {
                   <div
                     className="ls-card"
                     style={{
-                      borderTop: '6px solid #10b981',
+                      borderTop: `6px solid ${theme.accentColor || '#10b981'}`,
                       marginBottom: '20px',
                       borderRadius: '8px',
                     }}
                   >
+                    {theme.showLogo && theme.logoUrl && (
+                      <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center' }}>
+                        <img
+                          src={theme.logoUrl}
+                          alt="Brand Logo"
+                          style={{ maxHeight: '50px', maxWidth: '200px', objectFit: 'contain' }}
+                        />
+                      </div>
+                    )}
                     <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
                       {previewSurvey.title || 'Untitled Survey'}
                     </h1>
@@ -3857,7 +4017,13 @@ export const SurveyBuilder = () => {
                   type="button"
                   className="ls-btn ls-btn-primary"
                   onClick={handleTestSubmitPreview}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    backgroundColor: theme.accentColor || '#10b981',
+                    borderColor: theme.accentColor || '#10b981',
+                  }}
                 >
                   <i className="ri-check-line" /> {getUiText('submit', previewLang)}
                 </button>
@@ -4144,6 +4310,505 @@ export const SurveyBuilder = () => {
                 className="ls-btn ls-btn-primary"
                 onClick={() => setIsLanguageModalOpen(false)}
                 style={{ minWidth: '100px' }}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom White-Labeling, Brand Logo, Accent Color & Completion Settings Modal */}
+      {isThemeModalOpen && (
+        <div
+          className="ls-modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsThemeModalOpen(false);
+          }}
+          style={{ padding: '20px 16px', overflowY: 'auto' }}
+        >
+          <div
+            className="ls-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="theme-modal-title"
+            style={{
+              maxWidth: '680px',
+              width: '100%',
+              maxHeight: 'calc(100dvh - 40px)',
+              display: 'flex',
+              flexDirection: 'column',
+              margin: 'auto',
+              borderRadius: '12px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <div
+              className="ls-modal-header"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '14px 20px',
+                borderBottom: '1px solid #e2e8f0',
+                flexShrink: 0,
+              }}
+            >
+              <div className="ls-modal-title" id="theme-modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '17px', fontWeight: 700, color: '#0f172a' }}>
+                <div
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    backgroundColor: `${theme.accentColor || '#10b981'}15`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: theme.accentColor || '#10b981',
+                    fontSize: '16px',
+                    flexShrink: 0,
+                  }}
+                >
+                  <i className="ri-palette-line" />
+                </div>
+                <span>Custom White-Labeling & Themes</span>
+              </div>
+              <button
+                type="button"
+                className="ls-modal-close-btn"
+                onClick={() => setIsThemeModalOpen(false)}
+                aria-label="Close modal"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div
+              className="ls-modal-body"
+              style={{
+                padding: '20px',
+                overflowY: 'auto',
+                flex: 1,
+                minHeight: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '20px',
+              }}
+            >
+              {/* SECTION 1: CUSTOM BRAND LOGO */}
+              <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <label style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <i className="ri-image-line" style={{ color: theme.accentColor || '#10b981' }} />
+                    Organization Brand Logo
+                  </label>
+                  {theme.logoUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setTheme((prev) => ({ ...prev, logoUrl: '' }))}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#ef4444',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        padding: 0,
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      Remove Logo
+                    </button>
+                  )}
+                </div>
+                <p style={{ fontSize: '12.5px', color: '#64748b', margin: '0 0 12px 0' }}>
+                  Upload your organization logo or provide an image link. Displayed at the top of your survey and completion pages.
+                </p>
+
+                {theme.logoUrl ? (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '16px',
+                      padding: '12px 16px',
+                      backgroundColor: '#ffffff',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '140px',
+                        height: '56px',
+                        backgroundColor: '#f1f5f9',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '6px',
+                        border: '1px dashed #cbd5e1',
+                      }}
+                    >
+                      <img
+                        src={theme.logoUrl}
+                        alt="Brand Logo Preview"
+                        style={{ maxHeight: '44px', maxWidth: '128px', objectFit: 'contain' }}
+                      />
+                    </div>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#0f172a', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(theme.showLogo)}
+                          onChange={(e) => setTheme((prev) => ({ ...prev, showLogo: e.target.checked }))}
+                          style={{ accentColor: theme.accentColor || '#10b981' }}
+                        />
+                        Display logo on survey header
+                      </label>
+                      <label
+                        style={{
+                          fontSize: '12px',
+                          color: '#2563eb',
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                          display: 'inline-block',
+                        }}
+                      >
+                        Change logo image
+                        <input
+                          type="file"
+                          accept="image/*"
+                          style={{ display: 'none' }}
+                          onChange={handleLogoFileUpload}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <label
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={handleLogoDrop}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '20px',
+                        border: '2px dashed #cbd5e1',
+                        borderRadius: '8px',
+                        backgroundColor: '#ffffff',
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                        transition: 'border-color 0.15s ease',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '42px',
+                          height: '42px',
+                          borderRadius: '50%',
+                          backgroundColor: `${theme.accentColor || '#10b981'}15`,
+                          color: theme.accentColor || '#10b981',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '20px',
+                          marginBottom: '8px',
+                        }}
+                      >
+                        <i className="ri-upload-cloud-line" />
+                      </div>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
+                        Click to upload logo or drag and drop
+                      </span>
+                      <span style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px' }}>
+                        PNG, JPG, SVG, WebP up to 5 MB
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={handleLogoFileUpload}
+                      />
+                    </label>
+
+                    <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '12px', color: '#64748b' }}>Or image URL:</span>
+                      <input
+                        type="url"
+                        placeholder="https://example.com/logo.png"
+                        value={theme.logoUrl || ''}
+                        onChange={(e) => setTheme((prev) => ({ ...prev, logoUrl: e.target.value.trim(), showLogo: true }))}
+                        className="ls-input"
+                        style={{ flex: 1, padding: '6px 10px', fontSize: '12.5px' }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* SECTION 2: CUSTOM ACCENT COLOR */}
+              <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <label style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                  <i className="ri-brush-line" style={{ color: theme.accentColor || '#10b981' }} />
+                  Custom Brand Accent Color
+                </label>
+                <p style={{ fontSize: '12.5px', color: '#64748b', margin: '0 0 12px 0' }}>
+                  Select a preset palette or enter your brand hex color code. Applied to survey banners, buttons, and selection highlights.
+                </p>
+
+                {/* Preset Swatches */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
+                  {ACCENT_COLOR_PRESETS.map((p) => {
+                    const isSelected = (theme.accentColor || '#10b981').toLowerCase() === p.hex.toLowerCase();
+                    return (
+                      <button
+                        key={p.hex}
+                        type="button"
+                        onClick={() => setTheme((prev) => ({ ...prev, accentColor: p.hex }))}
+                        title={p.label}
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '8px',
+                          backgroundColor: p.hex,
+                          border: isSelected ? '3px solid #0f172a' : '2px solid transparent',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#ffffff',
+                          fontSize: '14px',
+                          boxShadow: isSelected ? '0 0 0 2px rgba(15, 23, 42, 0.2)' : 'none',
+                          transition: 'transform 0.1s ease',
+                        }}
+                      >
+                        {isSelected && <i className="ri-check-line" />}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Custom Color Input & Live Preview */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                      type="color"
+                      value={theme.accentColor || '#10b981'}
+                      onChange={(e) => setTheme((prev) => ({ ...prev, accentColor: e.target.value }))}
+                      style={{
+                        width: '38px',
+                        height: '38px',
+                        padding: 0,
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        background: 'transparent',
+                      }}
+                      title="Choose custom color"
+                    />
+                    <input
+                      type="text"
+                      value={theme.accentColor || '#10b981'}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
+                          setTheme((prev) => ({ ...prev, accentColor: val }));
+                        }
+                      }}
+                      placeholder="#10b981"
+                      className="ls-input"
+                      style={{ width: '100px', fontSize: '13px', fontWeight: 600, fontFamily: 'monospace' }}
+                    />
+                  </div>
+
+                  {/* Mini Preview Component */}
+                  <div
+                    style={{
+                      flex: 1,
+                      minWidth: '200px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '8px 12px',
+                      backgroundColor: '#ffffff',
+                      borderRadius: '6px',
+                      border: '1px solid #e2e8f0',
+                      borderLeft: `4px solid ${theme.accentColor || '#10b981'}`,
+                    }}
+                  >
+                    <span style={{ fontSize: '12px', color: '#64748b' }}>Live Swatch:</span>
+                    <button
+                      type="button"
+                      style={{
+                        backgroundColor: theme.accentColor || '#10b981',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '3px 10px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                      }}
+                    >
+                      Sample Button
+                    </button>
+                    <input
+                      type="radio"
+                      checked={true}
+                      readOnly
+                      style={{ accentColor: theme.accentColor || '#10b981', cursor: 'default' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 3: CUSTOM COMPLETION LANDING PAGE & REDIRECT URLS */}
+              <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <label style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                  <i className="ri-external-link-line" style={{ color: theme.accentColor || '#10b981' }} />
+                  Custom Completion Landing Page & Redirection
+                </label>
+                <p style={{ fontSize: '12.5px', color: '#64748b', margin: '0 0 14px 0' }}>
+                  Customize the completion landing page or automatically redirect respondents to an external URL upon questionnaire submission.
+                </p>
+
+                {/* Custom Title & Message */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px', marginBottom: '16px' }}>
+                  <div>
+                    <label style={{ fontSize: '12.5px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                      Custom Completion Headline (Optional):
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Thank You for Choosing Acme Corp!"
+                      value={theme.completion?.customTitle || ''}
+                      onChange={(e) =>
+                        setTheme((prev) => ({
+                          ...prev,
+                          completion: { ...prev.completion, customTitle: e.target.value },
+                        }))
+                      }
+                      className="ls-input"
+                      style={{ fontSize: '13px' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12.5px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                      Custom Completion Message (Optional):
+                    </label>
+                    <textarea
+                      rows={2}
+                      placeholder="e.g. Your feedback directly impacts our product roadmap. We look forward to connecting soon."
+                      value={theme.completion?.customMessage || ''}
+                      onChange={(e) =>
+                        setTheme((prev) => ({
+                          ...prev,
+                          completion: { ...prev.completion, customMessage: e.target.value },
+                        }))
+                      }
+                      className="ls-textarea"
+                      style={{ fontSize: '13px' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Redirect Toggle */}
+                <div style={{ padding: '12px', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13.5px', fontWeight: 600, color: '#0f172a', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(theme.completion?.redirectEnabled)}
+                      onChange={(e) =>
+                        setTheme((prev) => ({
+                          ...prev,
+                          completion: { ...prev.completion, redirectEnabled: e.target.checked },
+                        }))
+                      }
+                      style={{ accentColor: theme.accentColor || '#10b981', width: '16px', height: '16px' }}
+                    />
+                    Redirect respondent to custom external URL upon submission
+                  </label>
+
+                  {theme.completion?.redirectEnabled && (
+                    <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '12px', paddingLeft: '26px' }}>
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                          Destination URL:
+                        </label>
+                        <input
+                          type="url"
+                          placeholder="https://example.com/thank-you"
+                          value={theme.completion?.redirectUrl || ''}
+                          onChange={(e) =>
+                            setTheme((prev) => ({
+                              ...prev,
+                              completion: { ...prev.completion, redirectUrl: e.target.value },
+                            }))
+                          }
+                          className="ls-input"
+                          style={{ fontSize: '13px' }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+                        <div>
+                          <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                            Redirect Delay:
+                          </label>
+                          <select
+                            value={theme.completion?.redirectDelay ?? 3}
+                            onChange={(e) =>
+                              setTheme((prev) => ({
+                                ...prev,
+                                completion: { ...prev.completion, redirectDelay: parseInt(e.target.value, 10) },
+                              }))
+                            }
+                            className="ls-select"
+                            style={{ fontSize: '12.5px', padding: '6px 10px' }}
+                          >
+                            <option value={0}>0s (Instant redirect)</option>
+                            <option value={3}>3s (Recommended)</option>
+                            <option value={5}>5s</option>
+                            <option value={10}>10s</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                            Button Label:
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Continue to Website"
+                            value={theme.completion?.buttonText || 'Continue to Website'}
+                            onChange={(e) =>
+                              setTheme((prev) => ({
+                                ...prev,
+                                completion: { ...prev.completion, buttonText: e.target.value },
+                              }))
+                            }
+                            className="ls-input"
+                            style={{ fontSize: '12.5px', padding: '6px 10px' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="ls-modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', padding: '14px 20px', borderTop: '1px solid #e2e8f0', backgroundColor: '#f8fafc', flexShrink: 0 }}>
+              <button
+                type="button"
+                className="ls-btn ls-btn-primary"
+                onClick={() => setIsThemeModalOpen(false)}
+                style={{
+                  minWidth: '100px',
+                  backgroundColor: theme.accentColor || '#10b981',
+                  borderColor: theme.accentColor || '#10b981',
+                }}
               >
                 Done
               </button>

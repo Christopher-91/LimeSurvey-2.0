@@ -541,6 +541,140 @@ const FileUploadQuestionInput = ({ question, value, onChange, error, lang = 'en'
   );
 };
 
+const CompletionLandingPage = ({ survey, selectedLang }) => {
+  const theme = survey?.settings?.theme || {};
+  const accentColor = theme.accentColor || '#10b981';
+  const showLogo = Boolean(theme.showLogo && theme.logoUrl);
+  const completion = theme.completion || {};
+
+  const locEndMessage =
+    survey?.settings?.translations?.[selectedLang]?.endMessage !== undefined
+      ? survey?.settings?.translations?.[selectedLang]?.endMessage
+      : survey?.endMessage;
+
+  const headline = completion.customTitle?.trim() || getUiText('success_title', selectedLang);
+  const message = completion.customMessage?.trim() || locEndMessage || getUiText('success_message', selectedLang);
+
+  const redirectEnabled = Boolean(completion.redirectEnabled && completion.redirectUrl);
+  const initialDelay = typeof completion.redirectDelay === 'number' ? completion.redirectDelay : 3;
+  const [secondsRemaining, setSecondsRemaining] = useState(initialDelay);
+
+  useEffect(() => {
+    if (!redirectEnabled) return;
+    if (secondsRemaining <= 0) {
+      window.location.href = completion.redirectUrl;
+      return;
+    }
+    const timer = setTimeout(() => {
+      setSecondsRemaining((prev) => prev - 1);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [redirectEnabled, secondsRemaining, completion.redirectUrl]);
+
+  return (
+    <div className="ls-container" style={{ maxWidth: '640px', marginTop: 'var(--ls-space-8)' }}>
+      <div
+        className="ls-card"
+        style={{
+          textAlign: 'center',
+          padding: 'var(--ls-space-10) var(--ls-space-6)',
+          borderTop: `6px solid ${accentColor}`,
+          borderRadius: '12px',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.06)',
+        }}
+      >
+        {showLogo && (
+          <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'center' }}>
+            <img
+              src={theme.logoUrl}
+              alt="Brand Logo"
+              style={{ maxHeight: '60px', maxWidth: '240px', objectFit: 'contain' }}
+            />
+          </div>
+        )}
+
+        <div
+          style={{
+            width: '68px',
+            height: '68px',
+            borderRadius: '50%',
+            backgroundColor: `${accentColor}18`,
+            color: accentColor,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '34px',
+            margin: '0 auto 20px auto',
+          }}
+        >
+          <i className="ri-check-line" />
+        </div>
+
+        <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a', marginBottom: '12px' }}>
+          {headline}
+        </h1>
+        <p style={{ color: '#475569', fontSize: '15px', lineHeight: 1.6, marginBottom: '28px', whiteSpace: 'pre-wrap' }}>
+          {message}
+        </p>
+
+        {redirectEnabled ? (
+          <div
+            style={{
+              padding: '16px',
+              backgroundColor: '#f8fafc',
+              borderRadius: '8px',
+              border: '1px solid #e2e8f0',
+              marginBottom: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '12px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13.5px', color: '#334155' }}>
+              <i className="ri-loader-4-line ri-spin" style={{ color: accentColor }} />
+              <span>
+                Redirecting automatically in <strong>{secondsRemaining}s</strong>...
+              </span>
+            </div>
+
+            <a
+              href={completion.redirectUrl}
+              className="ls-btn ls-btn-primary"
+              style={{
+                backgroundColor: accentColor,
+                borderColor: accentColor,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '10px 24px',
+                fontSize: '14px',
+                textDecoration: 'none',
+              }}
+            >
+              <span>{completion.buttonText || 'Continue to Website'}</span>
+              <i className="ri-arrow-right-line" />
+            </a>
+          </div>
+        ) : (
+          <Link
+            to="/"
+            className="ls-btn ls-btn-primary"
+            style={{
+              backgroundColor: accentColor,
+              borderColor: accentColor,
+              padding: '10px 24px',
+              fontSize: '14px',
+            }}
+          >
+            {getUiText('return_home', selectedLang)}
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const SurveyTaking = () => {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
@@ -724,47 +858,13 @@ export const SurveyTaking = () => {
   }
 
   if (isCompleted) {
-    const locEndMessage =
-      survey?.settings?.translations?.[selectedLang]?.endMessage !== undefined
-        ? survey?.settings?.translations?.[selectedLang]?.endMessage
-        : survey.endMessage;
-
-    return (
-      <div className="ls-container" style={{ maxWidth: '640px', marginTop: 'var(--ls-space-8)' }}>
-        <div className="ls-card" style={{ textAlign: 'center', padding: 'var(--ls-space-10) var(--ls-space-6)' }}>
-          <div
-            style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--ls-color-primary-subtle)',
-              color: 'var(--ls-color-primary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '32px',
-              margin: '0 auto var(--ls-space-4) auto',
-            }}
-          >
-            <i className="ri-check-line" />
-          </div>
-
-          <h1 style={{ fontSize: 'var(--ls-font-size-2xl)', marginBottom: '12px' }}>
-            {getUiText('success_title', selectedLang)}
-          </h1>
-          <p style={{ color: 'var(--ls-color-g-600)', fontSize: '16px', lineHeight: 1.6, marginBottom: 'var(--ls-space-8)' }}>
-            {locEndMessage || getUiText('success_message', selectedLang)}
-          </p>
-
-          <Link to="/" className="ls-btn ls-btn-primary">
-            {getUiText('return_home', selectedLang)}
-          </Link>
-        </div>
-      </div>
-    );
+    return <CompletionLandingPage survey={survey} selectedLang={selectedLang} />;
   }
 
   const localizedSurvey = getLocalizedSurvey(survey, selectedLang);
+  const theme = survey?.settings?.theme || {};
+  const accentColor = theme.accentColor || '#10b981';
+  const showLogo = Boolean(theme.showLogo && theme.logoUrl);
   const supportedLangs =
     Array.isArray(survey?.settings?.supportedLanguages) && survey.settings.supportedLanguages.length > 0
       ? survey.settings.supportedLanguages
@@ -794,7 +894,7 @@ export const SurveyTaking = () => {
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
             }}
           >
-            <i className="ri-translate-2" style={{ color: 'var(--ls-color-primary, #10b981)', fontSize: '16px' }} />
+            <i className="ri-translate-2" style={{ color: accentColor, fontSize: '16px' }} />
             <label htmlFor="survey-lang-select" style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>
               {getUiText('language', selectedLang)}:
             </label>
@@ -826,7 +926,16 @@ export const SurveyTaking = () => {
       )}
 
       {/* Survey Title & Welcome Card */}
-      <div className="ls-card" style={{ marginBottom: 'var(--ls-space-6)', borderTop: '6px solid var(--ls-color-primary)' }}>
+      <div className="ls-card" style={{ marginBottom: 'var(--ls-space-6)', borderTop: `6px solid ${accentColor}` }}>
+        {showLogo && (
+          <div style={{ marginBottom: '18px', display: 'flex', alignItems: 'center' }}>
+            <img
+              src={theme.logoUrl}
+              alt="Brand Logo"
+              style={{ maxHeight: '56px', maxWidth: '220px', objectFit: 'contain' }}
+            />
+          </div>
+        )}
         <h1 style={{ fontSize: 'var(--ls-font-size-2xl)', fontWeight: 700, marginBottom: '8px' }}>
           {localizedSurvey.title}
         </h1>
@@ -836,13 +945,13 @@ export const SurveyTaking = () => {
           </p>
         )}
         {localizedSurvey.welcomeMessage && (
-          <div style={{ backgroundColor: 'var(--ls-color-g-100)', padding: '14px 18px', borderRadius: 'var(--ls-radius-sm)', fontSize: '14px', borderLeft: '3px solid var(--ls-color-action)' }}>
+          <div style={{ backgroundColor: 'var(--ls-color-g-100)', padding: '14px 18px', borderRadius: 'var(--ls-radius-sm)', fontSize: '14px', borderLeft: `3px solid ${accentColor}` }}>
             {localizedSurvey.welcomeMessage}
           </div>
         )}
 
         {token && (
-          <div style={{ marginTop: '12px', fontSize: '13px', color: 'var(--ls-color-primary)' }}>
+          <div style={{ marginTop: '12px', fontSize: '13px', color: accentColor }}>
             <i className="ri-shield-keyhole-line" /> Access Token Verified: <code>{token}</code>
           </div>
         )}
@@ -864,7 +973,7 @@ export const SurveyTaking = () => {
                 }}
               >
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '16px' }}>
-                <span style={{ fontWeight: 700, color: 'var(--ls-color-primary)' }}>
+                <span style={{ fontWeight: 700, color: accentColor }}>
                   {idx + 1}.
                 </span>
                 <div style={{ flex: 1 }}>
@@ -893,10 +1002,10 @@ export const SurveyTaking = () => {
                         gap: '10px',
                         padding: '10px 14px',
                         borderRadius: 'var(--ls-radius-sm)',
-                        backgroundColor: answers[q.code] === opt.code ? 'var(--ls-color-primary-subtle)' : 'var(--ls-color-g-100)',
+                        backgroundColor: answers[q.code] === opt.code ? `${accentColor}18` : 'var(--ls-color-g-100)',
                         cursor: 'pointer',
                         border: '1px solid',
-                        borderColor: answers[q.code] === opt.code ? 'var(--ls-color-primary)' : 'transparent',
+                        borderColor: answers[q.code] === opt.code ? accentColor : 'transparent',
                       }}
                     >
                       <input
@@ -905,7 +1014,7 @@ export const SurveyTaking = () => {
                         value={opt.code}
                         checked={answers[q.code] === opt.code}
                         onChange={() => handleAnswerChange(q.code, opt.code)}
-                        style={{ accentColor: 'var(--ls-color-primary)', width: '18px', height: '18px' }}
+                        style={{ accentColor: accentColor, width: '18px', height: '18px' }}
                       />
                       <span style={{ fontSize: '15px' }}>{opt.text}</span>
                     </label>
@@ -928,10 +1037,10 @@ export const SurveyTaking = () => {
                           gap: '10px',
                           padding: '10px 14px',
                           borderRadius: 'var(--ls-radius-sm)',
-                          backgroundColor: isChecked ? 'var(--ls-color-primary-subtle)' : 'var(--ls-color-g-100)',
+                          backgroundColor: isChecked ? `${accentColor}18` : 'var(--ls-color-g-100)',
                           cursor: 'pointer',
                           border: '1px solid',
-                          borderColor: isChecked ? 'var(--ls-color-primary)' : 'transparent',
+                          borderColor: isChecked ? accentColor : 'transparent',
                         }}
                       >
                         <input
@@ -939,7 +1048,7 @@ export const SurveyTaking = () => {
                           value={opt.code}
                           checked={isChecked}
                           onChange={() => handleMultiChoiceToggle(q.code, opt.code)}
-                          style={{ accentColor: 'var(--ls-color-primary)', width: '18px', height: '18px' }}
+                          style={{ accentColor: accentColor, width: '18px', height: '18px' }}
                         />
                         <span style={{ fontSize: '15px' }}>{opt.text}</span>
                       </label>
@@ -978,7 +1087,7 @@ export const SurveyTaking = () => {
                           fontWeight: 600,
                           fontSize: '16px',
                           border: '1px solid',
-                          borderColor: isSelected ? '#d8bd20' : 'var(--ls-color-g-300)',
+                          borderColor: isSelected ? accentColor : 'var(--ls-color-g-300)',
                         }}
                       >
                         <i className={isSelected ? 'ri-star-fill' : 'ri-star-line'} style={{ color: '#e69500' }} />
@@ -998,9 +1107,10 @@ export const SurveyTaking = () => {
                     className="ls-btn"
                     style={{
                       flex: 1,
-                      backgroundColor: answers[q.code] === 'Y' ? 'var(--ls-color-primary)' : 'var(--ls-color-g-100)',
+                      backgroundColor: answers[q.code] === 'Y' ? accentColor : 'var(--ls-color-g-100)',
                       color: answers[q.code] === 'Y' ? '#fff' : 'var(--ls-color-g-900)',
-                      border: '1px solid var(--ls-color-g-400)',
+                      border: '1px solid',
+                      borderColor: answers[q.code] === 'Y' ? accentColor : 'var(--ls-color-g-400)',
                     }}
                   >
                     <i className="ri-check-line" /> {getUiText('yes', selectedLang)}
@@ -1096,7 +1206,7 @@ export const SurveyTaking = () => {
                                   const current = typeof answers[q.code] === 'object' && answers[q.code] !== null ? answers[q.code] : {};
                                   handleAnswerChange(q.code, { ...current, [row]: col });
                                 }}
-                                style={{ accentColor: 'var(--ls-color-primary)', width: '18px', height: '18px', cursor: 'pointer' }}
+                                style={{ accentColor: accentColor, width: '18px', height: '18px', cursor: 'pointer' }}
                               />
                             </td>
                           ))}
@@ -1134,7 +1244,7 @@ export const SurveyTaking = () => {
           <button
             type="submit"
             className="ls-btn ls-btn-primary ls-btn-lg"
-            style={{ minWidth: '240px' }}
+            style={{ minWidth: '240px', backgroundColor: accentColor, borderColor: accentColor }}
             disabled={isSubmitting}
           >
             {isSubmitting ? (
