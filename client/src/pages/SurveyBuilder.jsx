@@ -25,6 +25,341 @@ export const ACCENT_COLOR_PRESETS = [
   { name: 'Slate', hex: '#475569', label: 'Modern Slate' },
 ];
 
+export const QUESTION_TYPE_CATEGORIES = [
+  {
+    id: 'single_choice',
+    title: 'Single choice',
+    icon: 'ri-list-radio',
+    items: [
+      {
+        id: 'list_radio',
+        label: 'List (radio)',
+        type: 'single_choice',
+        options: [
+          { code: 'AO1', text: 'Option 1' },
+          { code: 'AO2', text: 'Option 2' },
+          { code: 'AO3', text: 'Option 3' },
+        ],
+        settings: { allowMultiple: false, displayType: 'radio' },
+      },
+      {
+        id: 'list_with_comment',
+        label: 'List with comment (Radio)',
+        type: 'single_choice',
+        options: [
+          { code: 'AO1', text: 'Option 1' },
+          { code: 'AO2', text: 'Option 2' },
+          { code: 'AO3', text: 'Option 3' },
+        ],
+        settings: { allowMultiple: false, hasOtherComment: true, displayType: 'radio_comment' },
+      },
+      {
+        id: 'list_image_select',
+        label: 'List image select (Radio)',
+        type: 'single_choice',
+        options: [
+          { code: 'AO1', text: 'Option 1' },
+          { code: 'AO2', text: 'Option 2' },
+        ],
+        settings: { allowMultiple: false, displayType: 'image_select' },
+      },
+      {
+        id: 'five_point_choice',
+        label: '5 point choice',
+        type: 'rating',
+        settings: { minRating: 1, maxRating: 5, minLabel: 'Poor', maxLabel: 'Excellent' },
+      },
+      {
+        id: 'dropdown',
+        label: 'Dropdown',
+        type: 'single_choice',
+        options: [
+          { code: 'AO1', text: 'Option 1' },
+          { code: 'AO2', text: 'Option 2' },
+          { code: 'AO3', text: 'Option 3' },
+        ],
+        settings: { allowMultiple: false, displayType: 'dropdown' },
+      },
+      {
+        id: 'single_choice_buttons',
+        label: 'Single choice buttons',
+        type: 'single_choice',
+        options: [
+          { code: 'AO1', text: 'Option 1' },
+          { code: 'AO2', text: 'Option 2' },
+          { code: 'AO3', text: 'Option 3' },
+        ],
+        settings: { allowMultiple: false, displayType: 'button_group' },
+      },
+    ],
+  },
+  {
+    id: 'multiple_choice',
+    title: 'Multiple choice',
+    icon: 'ri-checkbox-multiple-line',
+    items: [
+      {
+        id: 'multiple_choice',
+        label: 'Multiple choice',
+        type: 'multiple_choice',
+        options: [
+          { code: 'AO1', text: 'Option 1' },
+          { code: 'AO2', text: 'Option 2' },
+          { code: 'AO3', text: 'Option 3' },
+        ],
+        settings: { allowMultiple: true, displayType: 'checkbox' },
+      },
+      {
+        id: 'multiple_choice_comments',
+        label: 'Multiple choice with comments',
+        type: 'multiple_choice',
+        options: [
+          { code: 'AO1', text: 'Option 1' },
+          { code: 'AO2', text: 'Option 2' },
+        ],
+        settings: { allowMultiple: true, hasOtherComment: true },
+      },
+      {
+        id: 'multiple_choice_buttons',
+        label: 'Multiple choice buttons',
+        type: 'multiple_choice',
+        options: [
+          { code: 'AO1', text: 'Option 1' },
+          { code: 'AO2', text: 'Option 2' },
+        ],
+        settings: { allowMultiple: true, displayType: 'button_group' },
+      },
+      {
+        id: 'image_select_multiple_choice',
+        label: 'Image select multiple choice',
+        type: 'multiple_choice',
+        options: [
+          { code: 'AO1', text: 'Option 1' },
+          { code: 'AO2', text: 'Option 2' },
+        ],
+        settings: { allowMultiple: true, displayType: 'image_select' },
+      },
+    ],
+  },
+  {
+    id: 'ranking_rating',
+    title: 'Ranking & rating',
+    icon: 'ri-list-ordered',
+    items: [
+      {
+        id: 'ranking_advanced',
+        label: 'Ranking advanced',
+        type: 'ranking',
+        options: [
+          { code: 'AO1', text: 'Option 1' },
+          { code: 'AO2', text: 'Option 2' },
+          { code: 'AO3', text: 'Option 3' },
+        ],
+      },
+      {
+        id: 'gender',
+        label: 'Gender',
+        type: 'single_choice',
+        options: [
+          { code: 'F', text: 'Female' },
+          { code: 'M', text: 'Male' },
+          { code: 'O', text: 'Other / Prefer not to say' },
+        ],
+        settings: { allowMultiple: false },
+      },
+      {
+        id: 'yes_no',
+        label: 'Yes/No',
+        type: 'single_choice',
+        options: [
+          { code: 'Y', text: 'Yes' },
+          { code: 'N', text: 'No' },
+        ],
+        settings: { allowMultiple: false },
+      },
+    ],
+  },
+  {
+    id: 'dates_data',
+    title: '{ } Dates & data',
+    icon: 'ri-code-line',
+    items: [
+      {
+        id: 'map_browser_detection',
+        label: 'Map/browser detection',
+        type: 'short_text',
+        helpText: 'Automatic browser and environment metadata detection',
+        settings: { autoDetect: true },
+      },
+      {
+        id: 'date_time',
+        label: 'Date/time',
+        type: 'short_text',
+        settings: { inputType: 'date' },
+      },
+      {
+        id: 'file_upload',
+        label: 'File upload',
+        type: 'file_upload',
+        settings: { allowedTypes: 'all', maxFileSize: 10, maxFiles: 3 },
+      },
+    ],
+  },
+  {
+    id: 'text',
+    title: 'Text',
+    icon: 'ri-align-left',
+    items: [
+      {
+        id: 'short_text',
+        label: 'Short text',
+        type: 'short_text',
+      },
+      {
+        id: 'long_text',
+        label: 'Long text',
+        type: 'long_text',
+      },
+      {
+        id: 'multiple_short_text',
+        label: 'Multiple short text',
+        type: 'matrix',
+        settings: {
+          rows: ['Field 1', 'Field 2', 'Field 3'],
+          columns: ['Text input'],
+        },
+      },
+    ],
+  },
+  {
+    id: 'number',
+    title: '123 Number',
+    icon: 'ri-hashtag',
+    items: [
+      {
+        id: 'numerical_input',
+        label: 'Numerical input',
+        type: 'short_text',
+        settings: { inputType: 'number' },
+      },
+      {
+        id: 'multiple_numerical_input',
+        label: 'Multiple numerical input',
+        type: 'matrix',
+        settings: {
+          rows: ['Quantity 1', 'Quantity 2'],
+          columns: ['Number'],
+        },
+      },
+      {
+        id: 'equation',
+        label: 'Equation',
+        type: 'short_text',
+        settings: { isEquation: true },
+      },
+    ],
+  },
+];
+
+export const FONT_PRESETS = [
+  {
+    name: 'IBM Plex Sans',
+    fontFamily: "'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif",
+    category: 'Default Sans',
+    sample: 'The quick brown fox jumps over the lazy dog',
+    description: 'LimeSurvey default corporate typeface, neutral & crisp',
+  },
+  {
+    name: 'Inter',
+    fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+    category: 'Modern Sans',
+    sample: 'The quick brown fox jumps over the lazy dog',
+    description: 'Highly legible UI font crafted for screens',
+  },
+  {
+    name: 'Roboto',
+    fontFamily: "'Roboto', -apple-system, sans-serif",
+    category: 'Geometric Sans',
+    sample: 'The quick brown fox jumps over the lazy dog',
+    description: 'Clean, modern and universally readable',
+  },
+  {
+    name: 'Open Sans',
+    fontFamily: "'Open Sans', sans-serif",
+    category: 'Humanist Sans',
+    sample: 'The quick brown fox jumps over the lazy dog',
+    description: 'Friendly, open letterforms with great reading comfort',
+  },
+  {
+    name: 'Lato',
+    fontFamily: "'Lato', sans-serif",
+    category: 'Balanced Sans',
+    sample: 'The quick brown fox jumps over the lazy dog',
+    description: 'Warm, semi-rounded details with solid structure',
+  },
+  {
+    name: 'Poppins',
+    fontFamily: "'Poppins', sans-serif",
+    category: 'Geometric Sans',
+    sample: 'The quick brown fox jumps over the lazy dog',
+    description: 'Bold, striking contemporary aesthetic',
+  },
+  {
+    name: 'Montserrat',
+    fontFamily: "'Montserrat', sans-serif",
+    category: 'Header Sans',
+    sample: 'The quick brown fox jumps over the lazy dog',
+    description: 'Urban modernist style inspired by Buenos Aires posters',
+  },
+  {
+    name: 'Playfair Display',
+    fontFamily: "'Playfair Display', Georgia, serif",
+    category: 'Editorial Serif',
+    sample: 'The quick brown fox jumps over the lazy dog',
+    description: 'High-contrast elegant transitional serif for premium surveys',
+  },
+  {
+    name: 'Merriweather',
+    fontFamily: "'Merriweather', Georgia, serif",
+    category: 'Literary Serif',
+    sample: 'The quick brown fox jumps over the lazy dog',
+    description: 'Designed for effortless long-form reading on screens',
+  },
+  {
+    name: 'Fira Code',
+    fontFamily: "'Fira Code', 'Courier New', monospace",
+    category: 'Monospace',
+    sample: 'The quick brown fox jumps over the lazy dog',
+    description: 'Technical, developer-oriented monospace font',
+  },
+];
+
+export const getQuestionTypeBadgeLabel = (type, settings = {}) => {
+  if (type === 'rating') return '5 Point Choice / Rating';
+  if (type === 'ranking') return 'Ranking Advanced';
+  if (type === 'file_upload') return 'File Upload';
+  if (type === 'long_text') return 'Long Text / Comment';
+  if (type === 'matrix') return 'Matrix / Grid';
+  if (type === 'multiple_choice') {
+    if (settings?.hasOtherComment) return 'Multiple Choice with Comments';
+    if (settings?.displayType === 'button_group') return 'Multiple Choice Buttons';
+    return 'Multiple Choice';
+  }
+  if (type === 'single_choice') {
+    if (settings?.hasOtherComment) return 'List with Comment (Radio)';
+    if (settings?.displayType === 'dropdown') return 'Dropdown (Single)';
+    if (settings?.displayType === 'button_group') return 'Single Choice Buttons';
+    if (settings?.displayType === 'image_select') return 'List Image Select (Radio)';
+    return 'List (Radio)';
+  }
+  if (settings?.inputType === 'date') return 'Date / Time';
+  if (settings?.inputType === 'number') return 'Numerical Input';
+  if (settings?.autoDetect) return 'Map / Browser Detection';
+  if (settings?.isEquation) return 'Equation';
+  if (settings?.isGroupHeader) return 'Question Group Header';
+  return 'Short Text';
+};
+
 const PreviewRankingQuestion = ({ question, value, onChange }) => {
   const options = question.options || [];
 
@@ -531,6 +866,8 @@ export const SurveyBuilder = () => {
     logoUrl: '',
     showLogo: true,
     accentColor: '#10b981',
+    fontFamily: '',
+    fontName: 'IBM Plex Sans',
     completion: {
       redirectEnabled: false,
       redirectUrl: '',
@@ -541,6 +878,12 @@ export const SurveyBuilder = () => {
     },
   });
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+
+  // Question Type Selection Modal & Typography State
+  const [isQuestionTypeModalOpen, setIsQuestionTypeModalOpen] = useState(false);
+  const [questionTypeSearchQuery, setQuestionTypeSearchQuery] = useState('');
+  const [targetAddIndex, setTargetAddIndex] = useState(null);
+  const [isFontModalOpen, setIsFontModalOpen] = useState(false);
 
   const handleLogoFileUpload = (e) => {
     const file = e.target.files?.[0];
@@ -1263,13 +1606,15 @@ export const SurveyBuilder = () => {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isBatchModalOpen && !isGeneratingBatch) {
-        setIsBatchModalOpen(false);
+      if (e.key === 'Escape') {
+        if (isBatchModalOpen && !isGeneratingBatch) setIsBatchModalOpen(false);
+        if (isQuestionTypeModalOpen) setIsQuestionTypeModalOpen(false);
+        if (isFontModalOpen) setIsFontModalOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isBatchModalOpen, isGeneratingBatch]);
+  }, [isBatchModalOpen, isGeneratingBatch, isQuestionTypeModalOpen, isFontModalOpen]);
 
   // Fetch Existing Survey Data
   const fetchSurvey = async () => {
@@ -1375,20 +1720,36 @@ export const SurveyBuilder = () => {
     });
   };
 
-  const handleAddQuestion = (afterIndex = null) => {
+  const handleAddQuestion = (afterIndex = null, type = 'single_choice') => {
     const newIdx = questions.length + 1;
+    let initialOptions = null;
+    let initialSettings = null;
+
+    if (['single_choice', 'multiple_choice'].includes(type)) {
+      initialOptions = [
+        { code: 'AO1', text: 'Option 1' },
+        { code: 'AO2', text: 'Option 2' },
+      ];
+      initialSettings = { allowMultiple: type === 'multiple_choice' };
+    } else if (type === 'ranking') {
+      initialOptions = [
+        { code: 'AO1', text: 'Option 1' },
+        { code: 'AO2', text: 'Option 2' },
+        { code: 'AO3', text: 'Option 3' },
+      ];
+    } else if (type === 'rating') {
+      initialSettings = { minRating: 1, maxRating: 5, minLabel: 'Poor', maxLabel: 'Excellent' };
+    }
+
     const newQ = {
       id: `temp-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       code: `Q${newIdx}`,
       text: '',
-      type: 'single_choice',
+      type,
       mandatory: false,
       helpText: '',
-      options: [
-        { code: 'AO1', text: 'Option 1' },
-        { code: 'AO2', text: 'Option 2' },
-      ],
-      settings: null,
+      options: initialOptions,
+      settings: initialSettings,
     };
 
     setQuestions((prev) => {
@@ -1405,6 +1766,99 @@ export const SurveyBuilder = () => {
         : questions.length;
     setActiveQuestionIndex(targetIndex);
   };
+
+  const handleSelectQuestionType = (item, afterIndex = null) => {
+    const insertAfter = afterIndex !== null ? afterIndex : targetAddIndex;
+    const newIdx = questions.length + 1;
+    let initialOptions = item.options ? item.options.map((o) => ({ ...o })) : null;
+    let initialSettings = item.settings ? JSON.parse(JSON.stringify(item.settings)) : null;
+
+    if (['single_choice', 'multiple_choice'].includes(item.type) && (!initialOptions || initialOptions.length === 0)) {
+      initialOptions = [
+        { code: 'AO1', text: 'Option 1' },
+        { code: 'AO2', text: 'Option 2' },
+      ];
+    } else if (item.type === 'ranking' && (!initialOptions || initialOptions.length === 0)) {
+      initialOptions = [
+        { code: 'AO1', text: 'Option 1' },
+        { code: 'AO2', text: 'Option 2' },
+        { code: 'AO3', text: 'Option 3' },
+      ];
+    }
+
+    const newQ = {
+      id: `temp-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      code: `Q${newIdx}`,
+      text: '',
+      type: item.type,
+      mandatory: false,
+      helpText: item.helpText || '',
+      options: initialOptions,
+      settings: initialSettings,
+    };
+
+    setQuestions((prev) => {
+      const insertAt =
+        insertAfter !== null && insertAfter >= 0 ? insertAfter + 1 : prev.length;
+      const copy = [...prev];
+      copy.splice(insertAt, 0, newQ);
+      return copy;
+    });
+
+    const targetIndex =
+      insertAfter !== null && insertAfter >= 0
+        ? insertAfter + 1
+        : questions.length;
+    setActiveQuestionIndex(targetIndex);
+    setIsQuestionTypeModalOpen(false);
+    setQuestionTypeSearchQuery('');
+    showToast(`Added ${item.label} question!`, 'success');
+  };
+
+  const handleAddQuestionGroup = (afterIndex = null) => {
+    const insertAfter = afterIndex !== null ? afterIndex : targetAddIndex;
+    const newIdx = questions.length + 1;
+    const groupQ = {
+      id: `temp-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      code: `G${newIdx}`,
+      text: 'New Question Group',
+      type: 'short_text',
+      mandatory: false,
+      helpText: 'Group description and instructions for this section...',
+      options: null,
+      settings: { isGroupHeader: true },
+    };
+
+    setQuestions((prev) => {
+      const insertAt =
+        insertAfter !== null && insertAfter >= 0 ? insertAfter + 1 : prev.length;
+      const copy = [...prev];
+      copy.splice(insertAt, 0, groupQ);
+      return copy;
+    });
+
+    const targetIndex =
+      insertAfter !== null && insertAfter >= 0
+        ? insertAfter + 1
+        : questions.length;
+    setActiveQuestionIndex(targetIndex);
+    setIsQuestionTypeModalOpen(false);
+    setQuestionTypeSearchQuery('');
+    showToast('Question group added successfully!', 'success');
+  };
+
+  const filteredQuestionCategories = QUESTION_TYPE_CATEGORIES.map((cat) => {
+    if (!questionTypeSearchQuery.trim()) return cat;
+    const q = questionTypeSearchQuery.trim().toLowerCase();
+    const catMatches = cat.title.toLowerCase().includes(q);
+    const matchingItems = cat.items.filter(
+      (item) => item.label.toLowerCase().includes(q) || catMatches
+    );
+    return {
+      ...cat,
+      items: matchingItems,
+    };
+  }).filter((cat) => cat.items.length > 0);
 
   const handleDuplicateQuestion = (index) => {
     const source = questions[index];
@@ -2221,7 +2675,10 @@ export const SurveyBuilder = () => {
               >
                 <button
                   type="button"
-                  onClick={() => handleAddQuestion(activeQuestionIndex)}
+                  onClick={() => {
+                    setTargetAddIndex(activeQuestionIndex);
+                    setIsQuestionTypeModalOpen(true);
+                  }}
                   style={{
                     width: '36px',
                     height: '36px',
@@ -2236,35 +2693,29 @@ export const SurveyBuilder = () => {
                     fontSize: '18px',
                     transition: 'all 0.15s ease',
                   }}
-                  title="Add Question Below Selected"
+                  title="Choose Question Type to Add"
                 >
                   <i className="ri-add-line" />
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    const q = questions[activeQuestionIndex];
-                    if (q) {
-                      const newHelp = q.helpText ? '' : 'Add guidance or note for this question...';
-                      updateQuestion(activeQuestionIndex, { helpText: newHelp });
-                      showToast(q.helpText ? 'Section note removed' : 'Section note added', 'info');
-                    }
-                  }}
+                  onClick={() => setIsFontModalOpen(true)}
                   style={{
                     width: '36px',
                     height: '36px',
                     borderRadius: '50%',
                     border: 'none',
-                    backgroundColor: '#f1f5f9',
-                    color: '#475569',
+                    backgroundColor: theme.fontFamily ? '#eef2ff' : '#f1f5f9',
+                    color: theme.fontFamily ? '#6366f1' : '#475569',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
                     fontSize: '14px',
                     fontWeight: 700,
+                    transition: 'all 0.15s ease',
                   }}
-                  title="Toggle Section Note / Description"
+                  title="Select Question Text Font"
                 >
                   Tt
                 </button>
@@ -2317,227 +2768,185 @@ export const SurveyBuilder = () => {
                         cursor: 'pointer',
                       }}
                     >
-                      {/* Question Top Row: Text (70%) & Type Selector (30%) */}
+                      {/* Question Top Row: Full-Width Question Text with Type Badge (Question Type Box moved to Plus Button) */}
                       <div
                         style={{
                           display: 'flex',
                           alignItems: 'flex-start',
-                          gap: '16px',
+                          gap: '12px',
                           marginBottom: '16px',
+                          width: '100%',
                         }}
                       >
-                        <div style={{ flex: '1 1 70%', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                          <span
-                            style={{
-                              fontSize: '14px',
-                              fontWeight: 700,
-                              color: '#10b981',
-                              paddingTop: '10px',
-                              flexShrink: 0,
-                            }}
-                          >
-                            {idx + 1}.
-                          </span>
+                        <span
+                          style={{
+                            fontSize: '14px',
+                            fontWeight: 700,
+                            color: '#10b981',
+                            paddingTop: '10px',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {idx + 1}.
+                        </span>
 
-                          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', minWidth: 0 }}>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+                            <span
+                              style={{
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                color: '#6366f1',
+                                backgroundColor: '#eef2ff',
+                                border: '1px solid #e0e7ff',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                            >
+                              <i className="ri-questionnaire-line" />
+                              {getQuestionTypeBadgeLabel(q.type, q.settings)}
+                            </span>
+                            {theme.fontName && (
+                              <span
+                                style={{
+                                  fontSize: '11px',
+                                  color: '#64748b',
+                                  backgroundColor: '#f8fafc',
+                                  border: '1px solid #f1f5f9',
+                                  padding: '2px 8px',
+                                  borderRadius: '4px',
+                                  fontFamily: theme.fontFamily || 'inherit',
+                                }}
+                              >
+                                Font: {theme.fontName}
+                              </span>
+                            )}
+                          </div>
+
+                          <input
+                            type="text"
+                            placeholder={
+                              editingLanguage === defaultLanguage
+                                ? 'Question text (e.g. How satisfied are you with team communication?)'
+                                : (q.text ? `Translate: ${q.text}` : 'Question translation...')
+                            }
+                            value={getQuestionTextForEdit(q)}
+                            onChange={(e) => setQuestionTextForEdit(idx, e.target.value)}
+                            style={{
+                              width: '100%',
+                              fontSize: '16px',
+                              fontWeight: 600,
+                              color: '#0f172a',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '6px',
+                              padding: '10px 12px',
+                              outline: 'none',
+                              fontFamily: theme.fontFamily || 'inherit',
+                              transition: 'border-color 0.15s ease',
+                            }}
+                            onFocus={(e) => (e.target.style.borderColor = '#10b981')}
+                            onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
+                          />
+
+                          {defaultLanguage !== 'en' && q.text && (
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '10px',
+                                fontSize: '12px',
+                                backgroundColor: '#f8fafc',
+                                border: '1px solid #e2e8f0',
+                                padding: '5px 10px',
+                                borderRadius: '6px',
+                                color: '#475569',
+                              }}
+                            >
+                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                <strong style={{ color: '#0f172a' }}>Survey Language:</strong> {SUPPORTED_LANGUAGES.find((l) => l.code === defaultLanguage)?.name}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleTranslateSingleQuestion(idx, defaultLanguage)}
+                                disabled={translatingQIdx === idx || isTranslating}
+                                style={{
+                                  border: 'none',
+                                  background: 'none',
+                                  color: '#059669',
+                                  cursor: 'pointer',
+                                  fontSize: '11px',
+                                  fontWeight: 600,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  flexShrink: 0,
+                                  padding: '2px 4px',
+                                }}
+                                title={`Auto-translate into ${SUPPORTED_LANGUAGES.find((l) => l.code === defaultLanguage)?.name}`}
+                              >
+                                {translatingQIdx === idx ? (
+                                  <>
+                                    <i className="ri-loader-4-line ri-spin" /> Translating...
+                                  </>
+                                ) : (
+                                  <>
+                                    <i className="ri-sparkling-fill" style={{ color: '#10b981' }} /> Auto-Translate to {SUPPORTED_LANGUAGES.find((l) => l.code === defaultLanguage)?.name}
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          )}
+
+                          {q.helpText !== undefined && (
                             <input
                               type="text"
                               placeholder={
                                 editingLanguage === defaultLanguage
-                                  ? 'Question text (e.g. How satisfied are you with team communication?)'
-                                  : (q.text ? `Translate: ${q.text}` : 'Question translation...')
+                                  ? 'Optional description / helper instructions...'
+                                  : (q.helpText ? `Translate: ${q.helpText}` : 'Help text translation...')
                               }
-                              value={getQuestionTextForEdit(q)}
-                              onChange={(e) => setQuestionTextForEdit(idx, e.target.value)}
+                              value={getQuestionHelpForEdit(q)}
+                              onChange={(e) => setQuestionHelpForEdit(idx, e.target.value)}
                               style={{
                                 width: '100%',
-                                fontSize: '16px',
-                                fontWeight: 600,
-                                color: '#0f172a',
-                                border: '1px solid #cbd5e1',
-                                borderRadius: '6px',
-                                padding: '10px 12px',
-                                outline: 'none',
-                                fontFamily: 'inherit',
-                                transition: 'border-color 0.15s ease',
-                              }}
-                              onFocus={(e) => (e.target.style.borderColor = '#10b981')}
-                              onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
-                            />
-
-                            {defaultLanguage !== 'en' && q.text && (
-                              <div
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'space-between',
-                                  gap: '10px',
-                                  fontSize: '12px',
-                                  backgroundColor: '#f8fafc',
-                                  border: '1px solid #e2e8f0',
-                                  padding: '5px 10px',
-                                  borderRadius: '6px',
-                                  color: '#475569',
-                                }}
-                              >
-                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                  <strong style={{ color: '#0f172a' }}>Survey Language:</strong> {SUPPORTED_LANGUAGES.find((l) => l.code === defaultLanguage)?.name}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleTranslateSingleQuestion(idx, defaultLanguage)}
-                                  disabled={translatingQIdx === idx || isTranslating}
-                                  style={{
-                                    border: 'none',
-                                    background: 'none',
-                                    color: '#059669',
-                                    cursor: 'pointer',
-                                    fontSize: '11px',
-                                    fontWeight: 600,
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
-                                    flexShrink: 0,
-                                    padding: '2px 4px',
-                                  }}
-                                  title={`Auto-translate into ${SUPPORTED_LANGUAGES.find((l) => l.code === defaultLanguage)?.name}`}
-                                >
-                                  {translatingQIdx === idx ? (
-                                    <>
-                                      <i className="ri-loader-4-line ri-spin" /> Translating...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <i className="ri-sparkling-fill" style={{ color: '#10b981' }} /> Auto-Translate to {SUPPORTED_LANGUAGES.find((l) => l.code === defaultLanguage)?.name}
-                                    </>
-                                  )}
-                                </button>
-                              </div>
-                            )}
-
-                            {q.helpText !== undefined && (
-                              <input
-                                type="text"
-                                placeholder={
-                                  editingLanguage === defaultLanguage
-                                    ? 'Optional description / helper instructions...'
-                                    : (q.helpText ? `Translate: ${q.helpText}` : 'Help text translation...')
-                                }
-                                value={getQuestionHelpForEdit(q)}
-                                onChange={(e) => setQuestionHelpForEdit(idx, e.target.value)}
-                                style={{
-                                  width: '100%',
-                                  fontSize: '13px',
-                                  color: '#64748b',
-                                  border: '1px dashed #cbd5e1',
-                                  borderRadius: '4px',
-                                  padding: '6px 10px',
-                                  outline: 'none',
-                                  background: '#f8fafc',
-                                  boxSizing: 'border-box',
-                                }}
-                              />
-                            )}
-
-                            {zeroKnowledgeEnabled && q.type === 'long_text' && (
-                              <div
-                                style={{
-                                  marginTop: '2px',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '5px',
-                                  backgroundColor: '#ecfdf5',
-                                  color: '#047857',
-                                  border: '1px solid #a7f3d0',
-                                  padding: '3px 8px',
-                                  borderRadius: '4px',
-                                  fontSize: '11px',
-                                  fontWeight: 600,
-                                  alignSelf: 'flex-start',
-                                }}
-                              >
-                                <i className="ri-shield-keyhole-line" />
-                                ZK Ghost Comment: voter profile decoupled on submission
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Question Type Selector */}
-                        <div style={{ flex: '0 0 28%', minWidth: '180px' }}>
-                          <div style={{ position: 'relative', width: '100%' }}>
-                            <select
-                              className="ls-select"
-                              value={q.type}
-                              onChange={(e) => {
-                                const newType = e.target.value;
-                                const isMulti = newType === 'multiple_choice';
-                                let options = q.options;
-                                if (newType === 'ranking' && (!options || options.length < 2)) {
-                                  options = [
-                                    { code: 'AO1', text: 'Option 1' },
-                                    { code: 'AO2', text: 'Option 2' },
-                                    { code: 'AO3', text: 'Option 3' },
-                                  ];
-                                }
-                                let newSettings = q.settings;
-                                if (newType === 'file_upload') {
-                                  newSettings = {
-                                    ...(q.settings || {}),
-                                    allowedTypes: q.settings?.allowedTypes || 'all',
-                                    maxFileSize: q.settings?.maxFileSize || 10,
-                                    maxFiles: q.settings?.maxFiles || 3,
-                                  };
-                                } else if (['single_choice', 'multiple_choice'].includes(newType)) {
-                                  newSettings = { ...(q.settings || {}), allowMultiple: isMulti };
-                                }
-                                updateQuestion(idx, {
-                                  type: newType,
-                                  options,
-                                  settings: newSettings,
-                                });
-                              }}
-                              style={{
-                                appearance: 'none',
-                                WebkitAppearance: 'none',
-                                MozAppearance: 'none',
-                                width: '100%',
-                                padding: '10px 36px 10px 12px',
-                                fontSize: '14px',
-                                fontWeight: 500,
-                                color: '#1e293b',
-                                border: '1px solid #cbd5e1',
-                                borderRadius: '6px',
-                                backgroundColor: '#ffffff',
-                                cursor: 'pointer',
-                                outline: 'none',
-                                transition: 'border-color 0.15s ease',
-                              }}
-                              onFocus={(e) => (e.target.style.borderColor = '#10b981')}
-                              onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
-                            >
-                              <option value="short_text">Short Answer</option>
-                              <option value="long_text">Paragraph / Comment</option>
-                              <option value="single_choice">Multiple Choice (Radio)</option>
-                              <option value="multiple_choice">Checkboxes (Multi-select)</option>
-                              <option value="ranking">Ranking / Preference (1st to Nth)</option>
-                              <option value="rating">Linear Scale / Rating (1-5)</option>
-                              <option value="matrix">Matrix / Grid</option>
-                              <option value="file_upload">File Upload / Media Attachments</option>
-                            </select>
-                            <i
-                              className="ri-arrow-down-s-line"
-                              style={{
-                                position: 'absolute',
-                                right: '12px',
-                                top: '50%',
-                                transform: 'translateY(-50%)',
-                                pointerEvents: 'none',
+                                fontSize: '13px',
                                 color: '#64748b',
-                                fontSize: '18px',
+                                border: '1px dashed #cbd5e1',
+                                borderRadius: '4px',
+                                padding: '6px 10px',
+                                outline: 'none',
+                                background: '#f8fafc',
+                                boxSizing: 'border-box',
+                                fontFamily: theme.fontFamily || 'inherit',
                               }}
                             />
-                          </div>
+                          )}
+
+                          {zeroKnowledgeEnabled && q.type === 'long_text' && (
+                            <div
+                              style={{
+                                marginTop: '2px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                backgroundColor: '#ecfdf5',
+                                color: '#047857',
+                                border: '1px solid #a7f3d0',
+                                padding: '3px 8px',
+                                borderRadius: '4px',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                alignSelf: 'flex-start',
+                              }}
+                            >
+                              <i className="ri-shield-keyhole-line" />
+                              ZK Ghost Comment: voter profile decoupled on submission
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -3378,7 +3787,10 @@ export const SurveyBuilder = () => {
               {/* Big Bottom Add Question Button */}
               <button
                 type="button"
-                onClick={() => handleAddQuestion()}
+                onClick={() => {
+                  setTargetAddIndex(questions.length - 1);
+                  setIsQuestionTypeModalOpen(true);
+                }}
                 style={{
                   width: '100%',
                   padding: '16px',
@@ -4811,6 +5223,452 @@ export const SurveyBuilder = () => {
                 }}
               >
                 Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* LimeSurvey Question Type Selection Modal (Triggered by Quick Action '+' Button) */}
+      {isQuestionTypeModalOpen && (
+        <div
+          className="ls-modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsQuestionTypeModalOpen(false);
+          }}
+          style={{
+            padding: '24px 16px',
+            overflowY: 'auto',
+            backgroundColor: 'rgba(15, 23, 42, 0.45)',
+            backdropFilter: 'blur(3px)',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            className="ls-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="question-type-modal-title"
+            style={{
+              maxWidth: '920px',
+              width: '100%',
+              borderRadius: '8px',
+              border: '2px solid #8b5cf6',
+              boxShadow: '0 20px 40px rgba(139, 92, 246, 0.15), 0 8px 24px rgba(0, 0, 0, 0.12)',
+              backgroundColor: '#ffffff',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              margin: 'auto',
+            }}
+          >
+            {/* Top Search Bar with Purple Outline Border */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 18px',
+                backgroundColor: '#f8fafc',
+                borderBottom: '1px solid #e2e8f0',
+              }}
+            >
+              <div
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  backgroundColor: '#ffffff',
+                  border: '1.5px solid #cbd5e1',
+                  borderRadius: '6px',
+                  padding: '8px 14px',
+                  boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.03)',
+                }}
+              >
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="Search for a question type"
+                  value={questionTypeSearchQuery}
+                  onChange={(e) => setQuestionTypeSearchQuery(e.target.value)}
+                  style={{
+                    flex: 1,
+                    border: 'none',
+                    outline: 'none',
+                    fontSize: '15px',
+                    color: '#0f172a',
+                    backgroundColor: 'transparent',
+                    fontFamily: 'inherit',
+                  }}
+                />
+                <i
+                  className="ri-search-line"
+                  style={{ fontSize: '18px', color: '#1e293b' }}
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsQuestionTypeModalOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#94a3b8',
+                  fontSize: '22px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '4px',
+                  borderRadius: '4px',
+                }}
+                title="Close"
+              >
+                <i className="ri-close-line" />
+              </button>
+            </div>
+
+            {/* Sub-bar: + Add question group */}
+            <div style={{ padding: '16px 24px 8px 24px' }}>
+              <button
+                type="button"
+                onClick={() => handleAddQuestionGroup(targetAddIndex)}
+                style={{
+                  backgroundColor: '#f3e8ff',
+                  color: '#7c3aed',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '8px 16px',
+                  fontSize: '13.5px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'background-color 0.15s ease',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#ede9fe')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f3e8ff')}
+              >
+                <i className="ri-add-line" style={{ fontSize: '16px' }} />
+                Add question group
+              </button>
+            </div>
+
+            {/* Categories & Question Types Grid matching attached screenshot */}
+            <div
+              style={{
+                padding: '16px 28px 32px 28px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                columnGap: '32px',
+                rowGap: '28px',
+                maxHeight: '68vh',
+                overflowY: 'auto',
+              }}
+            >
+              {filteredQuestionCategories.map((cat) => (
+                <div key={cat.id} style={{ display: 'flex', flexDirection: 'column' }}>
+                  {/* Category Title with Icon */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      marginBottom: '12px',
+                      fontSize: '14.5px',
+                      fontWeight: 700,
+                      color: '#0f172a',
+                    }}
+                  >
+                    {cat.id === 'dates_data' ? (
+                      <span style={{ fontWeight: 800, fontSize: '15px', color: '#1e293b' }}>&#123; &#125;</span>
+                    ) : cat.id === 'number' ? (
+                      <span style={{ fontWeight: 800, fontSize: '15px', color: '#1e293b' }}>123</span>
+                    ) : (
+                      <i className={cat.icon} style={{ fontSize: '16px', color: '#1e293b' }} />
+                    )}
+                    <span>{cat.title}</span>
+                  </div>
+
+                  {/* Items list */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {cat.items.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => handleSelectQuestionType(item, targetAddIndex)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: '3px 0',
+                          textAlign: 'left',
+                          fontSize: '13.5px',
+                          color: '#6366f1',
+                          cursor: 'pointer',
+                          display: 'block',
+                          fontFamily: 'inherit',
+                          lineHeight: 1.4,
+                          transition: 'color 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = '#4338ca';
+                          e.currentTarget.style.textDecoration = 'underline';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = '#6366f1';
+                          e.currentTarget.style.textDecoration = 'none';
+                        }}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {filteredQuestionCategories.length === 0 && (
+                <div style={{ gridColumn: 'span 3', textAlign: 'center', padding: '36px 12px', color: '#64748b' }}>
+                  <i className="ri-search-line" style={{ fontSize: '28px', color: '#cbd5e1', marginBottom: '8px', display: 'block' }} />
+                  <div style={{ fontSize: '15px', fontWeight: 600 }}>No question types found</div>
+                  <div style={{ fontSize: '13px', marginTop: '4px' }}>
+                    No results for &ldquo;{questionTypeSearchQuery}&rdquo;. Try another term.
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Question Text Font Selection Modal ('Tt' Button) */}
+      {isFontModalOpen && (
+        <div
+          className="ls-modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsFontModalOpen(false);
+          }}
+          style={{
+            padding: '24px 16px',
+            overflowY: 'auto',
+            backgroundColor: 'rgba(15, 23, 42, 0.45)',
+            backdropFilter: 'blur(3px)',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            className="ls-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="font-modal-title"
+            style={{
+              maxWidth: '680px',
+              width: '100%',
+              borderRadius: '10px',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
+              backgroundColor: '#ffffff',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              margin: 'auto',
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '18px 24px',
+                borderBottom: '1px solid #e2e8f0',
+                backgroundColor: '#f8fafc',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '8px',
+                    backgroundColor: '#eef2ff',
+                    color: '#6366f1',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '18px',
+                    fontWeight: 800,
+                  }}
+                >
+                  Tt
+                </div>
+                <div>
+                  <h3 id="font-modal-title" style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
+                    Question Text Font & Typography
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
+                    Select the font style for question titles, notes, and response choices
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsFontModalOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#94a3b8',
+                  fontSize: '22px',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '4px',
+                }}
+              >
+                <i className="ri-close-line" />
+              </button>
+            </div>
+
+            {/* Fonts List */}
+            <div
+              style={{
+                padding: '20px 24px',
+                maxHeight: '60vh',
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+              }}
+            >
+              {FONT_PRESETS.map((f) => {
+                const isSelected =
+                  (theme.fontFamily && theme.fontFamily === f.fontFamily) ||
+                  (!theme.fontFamily && f.name === 'IBM Plex Sans');
+
+                return (
+                  <div
+                    key={f.name}
+                    onClick={() => {
+                      setTheme((prev) => ({
+                        ...prev,
+                        fontFamily: f.fontFamily,
+                        fontName: f.name,
+                      }));
+                      showToast(`Question font updated to ${f.name}!`, 'success');
+                    }}
+                    style={{
+                      padding: '14px 18px',
+                      borderRadius: '8px',
+                      border: '2px solid',
+                      borderColor: isSelected ? '#6366f1' : '#e2e8f0',
+                      backgroundColor: isSelected ? '#f5f3ff' : '#ffffff',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '16px',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.borderColor = '#cbd5e1';
+                        e.currentTarget.style.backgroundColor = '#f8fafc';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.borderColor = '#e2e8f0';
+                        e.currentTarget.style.backgroundColor = '#ffffff';
+                      }
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
+                          {f.name}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            color: '#64748b',
+                            backgroundColor: '#e2e8f0',
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            fontWeight: 500,
+                          }}
+                        >
+                          {f.category}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          fontSize: '14px',
+                          color: '#334155',
+                          fontFamily: f.fontFamily,
+                          letterSpacing: '0.01em',
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        {f.sample}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
+                        {f.description}
+                      </div>
+                    </div>
+
+                    <div style={{ flexShrink: 0 }}>
+                      {isSelected ? (
+                        <div
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            color: '#6366f1',
+                            fontWeight: 700,
+                            fontSize: '13px',
+                            backgroundColor: '#ede9fe',
+                            padding: '4px 10px',
+                            borderRadius: '6px',
+                          }}
+                        >
+                          <i className="ri-check-line" style={{ fontSize: '16px' }} />
+                          Active
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          className="ls-btn ls-btn-outline ls-btn-sm"
+                          style={{ fontSize: '12px', padding: '4px 12px' }}
+                        >
+                          Select
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Modal Footer */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '14px 24px',
+                borderTop: '1px solid #e2e8f0',
+                backgroundColor: '#f8fafc',
+              }}
+            >
+              <div style={{ fontSize: '12px', color: '#64748b' }}>
+                Active Font: <strong style={{ color: '#0f172a' }}>{theme.fontName || 'IBM Plex Sans'}</strong>
+              </div>
+              <button
+                type="button"
+                className="ls-btn ls-btn-primary"
+                onClick={() => setIsFontModalOpen(false)}
+                style={{ minWidth: '100px', backgroundColor: '#6366f1', borderColor: '#6366f1' }}
+              >
+                Apply Font
               </button>
             </div>
           </div>

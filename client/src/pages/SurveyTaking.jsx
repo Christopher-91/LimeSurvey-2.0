@@ -871,7 +871,7 @@ export const SurveyTaking = () => {
       : ['en'];
 
   return (
-    <div className="ls-container" style={{ maxWidth: '780px' }}>
+    <div className="ls-container" style={{ maxWidth: '780px', fontFamily: theme.fontFamily || 'inherit' }}>
       {/* Multilingual Selector Header Bar */}
       {supportedLangs.length > 1 && (
         <div
