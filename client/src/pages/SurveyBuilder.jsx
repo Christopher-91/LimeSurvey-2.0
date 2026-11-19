@@ -58,8 +58,9 @@ export const QUESTION_TYPE_CATEGORIES = [
         label: 'List image select (Radio)',
         type: 'single_choice',
         options: [
-          { code: 'AO1', text: 'Option 1' },
-          { code: 'AO2', text: 'Option 2' },
+          { code: 'AO1', text: 'Option 1', imageUrl: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=300&q=80' },
+          { code: 'AO2', text: 'Option 2', imageUrl: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=300&q=80' },
+          { code: 'AO3', text: 'Option 3', imageUrl: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=300&q=80' },
         ],
         settings: { allowMultiple: false, displayType: 'image_select' },
       },
@@ -67,7 +68,7 @@ export const QUESTION_TYPE_CATEGORIES = [
         id: 'five_point_choice',
         label: '5 point choice',
         type: 'rating',
-        settings: { minRating: 1, maxRating: 5, minLabel: 'Poor', maxLabel: 'Excellent' },
+        settings: { minRating: 1, maxRating: 5, minLabel: 'Strongly Disagree', maxLabel: 'Strongly Agree' },
       },
       {
         id: 'dropdown',
@@ -117,7 +118,7 @@ export const QUESTION_TYPE_CATEGORIES = [
           { code: 'AO1', text: 'Option 1' },
           { code: 'AO2', text: 'Option 2' },
         ],
-        settings: { allowMultiple: true, hasOtherComment: true },
+        settings: { allowMultiple: true, hasOtherComment: true, displayType: 'checkbox_comment' },
       },
       {
         id: 'multiple_choice_buttons',
@@ -126,6 +127,7 @@ export const QUESTION_TYPE_CATEGORIES = [
         options: [
           { code: 'AO1', text: 'Option 1' },
           { code: 'AO2', text: 'Option 2' },
+          { code: 'AO3', text: 'Option 3' },
         ],
         settings: { allowMultiple: true, displayType: 'button_group' },
       },
@@ -134,8 +136,9 @@ export const QUESTION_TYPE_CATEGORIES = [
         label: 'Image select multiple choice',
         type: 'multiple_choice',
         options: [
-          { code: 'AO1', text: 'Option 1' },
-          { code: 'AO2', text: 'Option 2' },
+          { code: 'AO1', text: 'Option 1', imageUrl: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=300&q=80' },
+          { code: 'AO2', text: 'Option 2', imageUrl: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=300&q=80' },
+          { code: 'AO3', text: 'Option 3', imageUrl: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=300&q=80' },
         ],
         settings: { allowMultiple: true, displayType: 'image_select' },
       },
@@ -163,14 +166,15 @@ export const QUESTION_TYPE_CATEGORIES = [
         options: [
           { code: 'F', text: 'Female' },
           { code: 'M', text: 'Male' },
-          { code: 'O', text: 'Other / Prefer not to say' },
+          { code: 'NB', text: 'Non-binary / Diverse' },
+          { code: 'O', text: 'Prefer not to say' },
         ],
-        settings: { allowMultiple: false },
+        settings: { allowMultiple: false, displayType: 'gender_cards' },
       },
       {
         id: 'yes_no',
         label: 'Yes/No',
-        type: 'single_choice',
+        type: 'yes_no',
         options: [
           { code: 'Y', text: 'Yes' },
           { code: 'N', text: 'No' },
@@ -187,15 +191,15 @@ export const QUESTION_TYPE_CATEGORIES = [
       {
         id: 'map_browser_detection',
         label: 'Map/browser detection',
-        type: 'short_text',
-        helpText: 'Automatic browser and environment metadata detection',
+        type: 'map_browser',
+        helpText: 'Automatic browser, platform, and geolocation environment detection',
         settings: { autoDetect: true },
       },
       {
         id: 'date_time',
         label: 'Date/time',
-        type: 'short_text',
-        settings: { inputType: 'date' },
+        type: 'date_time',
+        settings: { inputType: 'datetime', format: 'YYYY-MM-DD HH:mm' },
       },
       {
         id: 'file_upload',
@@ -223,10 +227,9 @@ export const QUESTION_TYPE_CATEGORIES = [
       {
         id: 'multiple_short_text',
         label: 'Multiple short text',
-        type: 'matrix',
+        type: 'multiple_short_text',
         settings: {
-          rows: ['Field 1', 'Field 2', 'Field 3'],
-          columns: ['Text input'],
+          fields: ['First Name', 'Last Name', 'Email Address', 'Organization'],
         },
       },
     ],
@@ -239,123 +242,122 @@ export const QUESTION_TYPE_CATEGORIES = [
       {
         id: 'numerical_input',
         label: 'Numerical input',
-        type: 'short_text',
-        settings: { inputType: 'number' },
+        type: 'numerical_input',
+        settings: { min: 0, max: 1000000, step: 1, prefix: '', suffix: '' },
       },
       {
         id: 'multiple_numerical_input',
         label: 'Multiple numerical input',
-        type: 'matrix',
+        type: 'multiple_numerical_input',
         settings: {
-          rows: ['Quantity 1', 'Quantity 2'],
-          columns: ['Number'],
+          rows: ['Budget Item 1', 'Budget Item 2', 'Budget Item 3'],
+          showSum: true,
+          prefix: '$',
         },
       },
       {
         id: 'equation',
         label: 'Equation',
-        type: 'short_text',
-        settings: { isEquation: true },
+        type: 'equation',
+        settings: { formula: '{Q1 + Q2}', label: 'Calculated Score' },
       },
     ],
   },
 ];
 
 export const FONT_PRESETS = [
-  {
-    name: 'IBM Plex Sans',
-    fontFamily: "'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif",
-    category: 'Default Sans',
-    sample: 'The quick brown fox jumps over the lazy dog',
-    description: 'LimeSurvey default corporate typeface, neutral & crisp',
-  },
-  {
-    name: 'Inter',
-    fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-    category: 'Modern Sans',
-    sample: 'The quick brown fox jumps over the lazy dog',
-    description: 'Highly legible UI font crafted for screens',
-  },
-  {
-    name: 'Roboto',
-    fontFamily: "'Roboto', -apple-system, sans-serif",
-    category: 'Geometric Sans',
-    sample: 'The quick brown fox jumps over the lazy dog',
-    description: 'Clean, modern and universally readable',
-  },
-  {
-    name: 'Open Sans',
-    fontFamily: "'Open Sans', sans-serif",
-    category: 'Humanist Sans',
-    sample: 'The quick brown fox jumps over the lazy dog',
-    description: 'Friendly, open letterforms with great reading comfort',
-  },
-  {
-    name: 'Lato',
-    fontFamily: "'Lato', sans-serif",
-    category: 'Balanced Sans',
-    sample: 'The quick brown fox jumps over the lazy dog',
-    description: 'Warm, semi-rounded details with solid structure',
-  },
-  {
-    name: 'Poppins',
-    fontFamily: "'Poppins', sans-serif",
-    category: 'Geometric Sans',
-    sample: 'The quick brown fox jumps over the lazy dog',
-    description: 'Bold, striking contemporary aesthetic',
-  },
-  {
-    name: 'Montserrat',
-    fontFamily: "'Montserrat', sans-serif",
-    category: 'Header Sans',
-    sample: 'The quick brown fox jumps over the lazy dog',
-    description: 'Urban modernist style inspired by Buenos Aires posters',
-  },
-  {
-    name: 'Playfair Display',
-    fontFamily: "'Playfair Display', Georgia, serif",
-    category: 'Editorial Serif',
-    sample: 'The quick brown fox jumps over the lazy dog',
-    description: 'High-contrast elegant transitional serif for premium surveys',
-  },
-  {
-    name: 'Merriweather',
-    fontFamily: "'Merriweather', Georgia, serif",
-    category: 'Literary Serif',
-    sample: 'The quick brown fox jumps over the lazy dog',
-    description: 'Designed for effortless long-form reading on screens',
-  },
-  {
-    name: 'Fira Code',
-    fontFamily: "'Fira Code', 'Courier New', monospace",
-    category: 'Monospace',
-    sample: 'The quick brown fox jumps over the lazy dog',
-    description: 'Technical, developer-oriented monospace font',
-  },
+  // --- SANS-SERIF (29 FONTS) ---
+  { name: 'IBM Plex Sans', fontFamily: "'IBM Plex Sans', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'LimeSurvey default corporate typeface' },
+  { name: 'Inter', fontFamily: "'Inter', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Highly legible screen UI font' },
+  { name: 'Roboto', fontFamily: "'Roboto', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Modern, geometric and friendly' },
+  { name: 'Open Sans', fontFamily: "'Open Sans', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Humanist sans with open letterforms' },
+  { name: 'Lato', fontFamily: "'Lato', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Warm and corporate harmony' },
+  { name: 'Poppins', fontFamily: "'Poppins', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Geometric, stylish and bold' },
+  { name: 'Montserrat', fontFamily: "'Montserrat', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Contemporary urban modernist style' },
+  { name: 'Nunito', fontFamily: "'Nunito', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Well-balanced rounded terminal sans' },
+  { name: 'Raleway', fontFamily: "'Raleway', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Elegant and refined geometric sans' },
+  { name: 'Work Sans', fontFamily: "'Work Sans', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Optimized for screen readability' },
+  { name: 'Rubik', fontFamily: "'Rubik', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Slightly rounded corners, friendly feel' },
+  { name: 'Plus Jakarta Sans', fontFamily: "'Plus Jakarta Sans', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Fresh, modern neo-grotesque sans' },
+  { name: 'Source Sans 3', fontFamily: "'Source Sans 3', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Adobe open-source UI standard' },
+  { name: 'Quicksand', fontFamily: "'Quicksand', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Approachable rounded display sans' },
+  { name: 'Manrope', fontFamily: "'Manrope', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Modern crossover geometric grotesque' },
+  { name: 'DM Sans', fontFamily: "'DM Sans', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Low-contrast geometric sans' },
+  { name: 'Ubuntu', fontFamily: "'Ubuntu', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Distinctive contemporary character' },
+  { name: 'Outfit', fontFamily: "'Outfit', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Branded geometric neo-grotesque' },
+  { name: 'Fira Sans', fontFamily: "'Fira Sans', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Designed for Mozilla OS ecosystem' },
+  { name: 'Cabin', fontFamily: "'Cabin', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Humanist sans with modern proportions' },
+  { name: 'PT Sans', fontFamily: "'PT Sans', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Universal pan-European sans' },
+  { name: 'Barlow', fontFamily: "'Barlow', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'California highway inspired grotesque' },
+  { name: 'Mulish', fontFamily: "'Mulish', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Minimalist versatile text sans' },
+  { name: 'Josefin Sans', fontFamily: "'Josefin Sans', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Vintage 1920s geometric look' },
+  { name: 'Oxygen', fontFamily: "'Oxygen', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'KDE desktop clean interface font' },
+  { name: 'Heebo', fontFamily: "'Heebo', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Sturdy structured typeface' },
+  { name: 'Titillium Web', fontFamily: "'Titillium Web', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Architectural industrial sans' },
+  { name: 'Karla', fontFamily: "'Karla', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Quirky grotesque sans-serif' },
+  { name: 'Lexend', fontFamily: "'Lexend', sans-serif", category: 'Sans-serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Engineered for reading fluency' },
+
+  // --- SERIF (14 FONTS) ---
+  { name: 'Playfair Display', fontFamily: "'Playfair Display', serif", category: 'Serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'High-contrast luxury editorial serif' },
+  { name: 'Merriweather', fontFamily: "'Merriweather', serif", category: 'Serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Pleasant reading serif on digital displays' },
+  { name: 'Lora', fontFamily: "'Lora', serif", category: 'Serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Contemporary calligraphic serif' },
+  { name: 'PT Serif', fontFamily: "'PT Serif', serif", category: 'Serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Universal classical text serif' },
+  { name: 'Noto Serif', fontFamily: "'Noto Serif', serif", category: 'Serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Global linguistic harmonious serif' },
+  { name: 'Cinzel', fontFamily: "'Cinzel', serif", category: 'Serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Roman inscription inspired classical' },
+  { name: 'Cormorant Garamond', fontFamily: "'Cormorant Garamond', serif", category: 'Serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Fine traditional French Garamond' },
+  { name: 'EB Garamond', fontFamily: "'EB Garamond', serif", category: 'Serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Revival of 16th-century Claude Garamont' },
+  { name: 'Libre Baskerville', fontFamily: "'Libre Baskerville', serif", category: 'Serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Optimized 1950s Baskerville revival' },
+  { name: 'Bitter', fontFamily: "'Bitter', serif", category: 'Serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Slab-serif designed for comfortable reading' },
+  { name: 'Bodoni Moda', fontFamily: "'Bodoni Moda', serif", category: 'Serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'High-fashion dramatic Italian serif' },
+  { name: 'Frank Ruhl Libre', fontFamily: "'Frank Ruhl Libre', serif", category: 'Serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Classic proportioned Hebrew/Latin serif' },
+  { name: 'Spectral', fontFamily: "'Spectral', serif", category: 'Serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Design-first editorial serif by Production Type' },
+  { name: 'Crimson Pro', fontFamily: "'Crimson Pro', serif", category: 'Serif', sample: 'The quick brown fox jumps over the lazy dog', description: 'Bookish elegant renaissance text serif' },
+
+  // --- MONOSPACE (7 FONTS) ---
+  { name: 'Fira Code', fontFamily: "'Fira Code', monospace", category: 'Monospace', sample: 'The quick brown fox jumps over the lazy dog', description: 'Monospaced with programmatic clarity' },
+  { name: 'IBM Plex Mono', fontFamily: "'IBM Plex Mono', monospace", category: 'Monospace', sample: 'The quick brown fox jumps over the lazy dog', description: 'Industrial technical monospace' },
+  { name: 'JetBrains Mono', fontFamily: "'JetBrains Mono', monospace", category: 'Monospace', sample: 'The quick brown fox jumps over the lazy dog', description: 'Developer-crafted monospaced font' },
+  { name: 'Source Code Pro', fontFamily: "'Source Code Pro', monospace", category: 'Monospace', sample: 'The quick brown fox jumps over the lazy dog', description: 'Adobe coding monospace typeface' },
+  { name: 'Space Mono', fontFamily: "'Space Mono', monospace", category: 'Monospace', sample: 'The quick brown fox jumps over the lazy dog', description: 'Retro-futuristic fixed-width font' },
+  { name: 'Inconsolata', fontFamily: "'Inconsolata', monospace", category: 'Monospace', sample: 'The quick brown fox jumps over the lazy dog', description: 'Clean humanist monospaced font' },
+  { name: 'Roboto Mono', fontFamily: "'Roboto Mono', monospace", category: 'Monospace', sample: 'The quick brown fox jumps over the lazy dog', description: 'Geometric fixed-width companion to Roboto' },
+
+  // --- DISPLAY & SCRIPT (6 FONTS) ---
+  { name: 'Caveat', fontFamily: "'Caveat', cursive", category: 'Display', sample: 'The quick brown fox jumps over the lazy dog', description: 'Playful and warm handwriting style' },
+  { name: 'Pacifico', fontFamily: "'Pacifico', cursive", category: 'Display', sample: 'The quick brown fox jumps over the lazy dog', description: '1950s American surf culture brush script' },
+  { name: 'Comfortaa', fontFamily: "'Comfortaa', cursive", category: 'Display', sample: 'The quick brown fox jumps over the lazy dog', description: 'Geometric rounded display font' },
+  { name: 'Righteous', fontFamily: "'Righteous', cursive", category: 'Display', sample: 'The quick brown fox jumps over the lazy dog', description: 'Retro Art Deco musical poster font' },
+  { name: 'Lobster', fontFamily: "'Lobster', cursive", category: 'Display', sample: 'The quick brown fox jumps over the lazy dog', description: 'Bold lively cursive script' },
+  { name: 'Dancing Script', fontFamily: "'Dancing Script', cursive", category: 'Display', sample: 'The quick brown fox jumps over the lazy dog', description: 'Spontaneous casual bouncing script' },
 ];
 
 export const getQuestionTypeBadgeLabel = (type, settings = {}) => {
   if (type === 'rating') return '5 Point Choice / Rating';
   if (type === 'ranking') return 'Ranking Advanced';
   if (type === 'file_upload') return 'File Upload';
+  if (type === 'map_browser') return 'Map / Browser Detection';
+  if (type === 'date_time') return 'Date / Time';
+  if (type === 'numerical_input') return 'Numerical Input';
+  if (type === 'multiple_numerical_input') return 'Multiple Numerical Input';
+  if (type === 'multiple_short_text') return 'Multiple Short Text';
+  if (type === 'equation') return 'Equation (Calculated)';
+  if (type === 'yes_no') return 'Yes / No';
   if (type === 'long_text') return 'Long Text / Comment';
   if (type === 'matrix') return 'Matrix / Grid';
   if (type === 'multiple_choice') {
-    if (settings?.hasOtherComment) return 'Multiple Choice with Comments';
+    if (settings?.displayType === 'image_select') return 'Image Select Multiple Choice';
     if (settings?.displayType === 'button_group') return 'Multiple Choice Buttons';
+    if (settings?.hasOtherComment) return 'Multiple Choice with Comments';
     return 'Multiple Choice';
   }
   if (type === 'single_choice') {
-    if (settings?.hasOtherComment) return 'List with Comment (Radio)';
+    if (settings?.displayType === 'gender_cards') return 'Gender';
+    if (settings?.displayType === 'image_select') return 'List Image Select (Radio)';
     if (settings?.displayType === 'dropdown') return 'Dropdown (Single)';
     if (settings?.displayType === 'button_group') return 'Single Choice Buttons';
-    if (settings?.displayType === 'image_select') return 'List Image Select (Radio)';
+    if (settings?.hasOtherComment) return 'List with Comment (Radio)';
     return 'List (Radio)';
   }
-  if (settings?.inputType === 'date') return 'Date / Time';
-  if (settings?.inputType === 'number') return 'Numerical Input';
-  if (settings?.autoDetect) return 'Map / Browser Detection';
-  if (settings?.isEquation) return 'Equation';
   if (settings?.isGroupHeader) return 'Question Group Header';
   return 'Short Text';
 };
@@ -884,6 +886,8 @@ export const SurveyBuilder = () => {
   const [questionTypeSearchQuery, setQuestionTypeSearchQuery] = useState('');
   const [targetAddIndex, setTargetAddIndex] = useState(null);
   const [isFontModalOpen, setIsFontModalOpen] = useState(false);
+  const [fontSearchQuery, setFontSearchQuery] = useState('');
+  const [selectedFontCategory, setSelectedFontCategory] = useState('All');
 
   const handleLogoFileUpload = (e) => {
     const file = e.target.files?.[0];
@@ -1946,6 +1950,77 @@ export const SurveyBuilder = () => {
     updateQuestion(qIndex, { options: currentOptions });
   };
 
+  const handleOptionImageChange = (qIndex, optIndex, imageUrl) => {
+    const q = questions[qIndex];
+    const currentOptions = q.options ? [...q.options] : [];
+    if (currentOptions[optIndex]) {
+      currentOptions[optIndex] = { ...currentOptions[optIndex], imageUrl };
+      updateQuestion(qIndex, { options: currentOptions });
+    }
+  };
+
+  const handleAddMultipleShortTextField = (qIndex) => {
+    const q = questions[qIndex];
+    const currentFields = q.settings?.fields || ['Field 1', 'Field 2'];
+    const updated = [...currentFields, `Field ${currentFields.length + 1}`];
+    updateQuestion(qIndex, {
+      settings: { ...(q.settings || {}), fields: updated },
+    });
+  };
+
+  const handleRemoveMultipleShortTextField = (qIndex, fieldIdx) => {
+    const q = questions[qIndex];
+    const currentFields = q.settings?.fields || ['Field 1', 'Field 2'];
+    if (currentFields.length <= 1) {
+      showToast('Must have at least one text field.', 'info');
+      return;
+    }
+    const updated = currentFields.filter((_, i) => i !== fieldIdx);
+    updateQuestion(qIndex, {
+      settings: { ...(q.settings || {}), fields: updated },
+    });
+  };
+
+  const handleUpdateMultipleShortTextField = (qIndex, fieldIdx, value) => {
+    const q = questions[qIndex];
+    const currentFields = [...(q.settings?.fields || ['Field 1', 'Field 2'])];
+    currentFields[fieldIdx] = value;
+    updateQuestion(qIndex, {
+      settings: { ...(q.settings || {}), fields: currentFields },
+    });
+  };
+
+  const handleAddMultipleNumericalRow = (qIndex) => {
+    const q = questions[qIndex];
+    const currentRows = q.settings?.rows || ['Item 1', 'Item 2'];
+    const updated = [...currentRows, `Item ${currentRows.length + 1}`];
+    updateQuestion(qIndex, {
+      settings: { ...(q.settings || {}), rows: updated },
+    });
+  };
+
+  const handleRemoveMultipleNumericalRow = (qIndex, rowIdx) => {
+    const q = questions[qIndex];
+    const currentRows = q.settings?.rows || ['Item 1', 'Item 2'];
+    if (currentRows.length <= 1) {
+      showToast('Must have at least one numerical row.', 'info');
+      return;
+    }
+    const updated = currentRows.filter((_, i) => i !== rowIdx);
+    updateQuestion(qIndex, {
+      settings: { ...(q.settings || {}), rows: updated },
+    });
+  };
+
+  const handleUpdateMultipleNumericalRow = (qIndex, rowIdx, value) => {
+    const q = questions[qIndex];
+    const currentRows = [...(q.settings?.rows || ['Item 1', 'Item 2'])];
+    currentRows[rowIdx] = value;
+    updateQuestion(qIndex, {
+      settings: { ...(q.settings || {}), rows: currentRows },
+    });
+  };
+
   // Matrix helpers
   const handleUpdateMatrixSettings = (qIndex, rowOrCol, index, value) => {
     const q = questions[qIndex];
@@ -2033,10 +2108,10 @@ export const SurveyBuilder = () => {
           mandatory: Boolean(q.mandatory),
           helpText: q.helpText ? q.helpText.trim() : '',
           sortOrder: idx + 1,
-          options: ['single_choice', 'multiple_choice', 'ranking'].includes(q.type)
-            ? (q.options || []).map((opt, oIdx) => ({
+          options: Array.isArray(q.options) && q.options.length > 0
+            ? q.options.map((opt, oIdx) => ({
                 code: opt.code || `AO${oIdx + 1}`,
-                text: opt.text.trim(),
+                text: (opt.text || '').trim(),
                 sortOrder: oIdx + 1,
               }))
             : [],
@@ -3167,6 +3242,24 @@ export const SurveyBuilder = () => {
                                     onFocus={(e) => (e.target.style.borderColor = '#10b981')}
                                     onBlur={(e) => (e.target.style.borderColor = '#e2e8f0')}
                                   />
+                                  {q.settings?.displayType === 'image_select' && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      {opt.imageUrl && (
+                                        <img
+                                          src={opt.imageUrl}
+                                          alt="Preview"
+                                          style={{ width: '28px', height: '28px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                                        />
+                                      )}
+                                      <input
+                                        type="text"
+                                        value={opt.imageUrl || ''}
+                                        placeholder="Image URL (https://...)"
+                                        onChange={(e) => handleOptionImageChange(idx, oIdx, e.target.value)}
+                                        style={{ width: '160px', padding: '4px 8px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                      />
+                                    </div>
+                                  )}
                                   {(q.options || []).length > 1 && (
                                     <button
                                       type="button"
@@ -3190,7 +3283,7 @@ export const SurveyBuilder = () => {
                               );
                             })}
 
-                            <div style={{ marginTop: '4px' }}>
+                            <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                               <button
                                 type="button"
                                 onClick={() => handleAddOption(idx)}
@@ -3208,6 +3301,32 @@ export const SurveyBuilder = () => {
                               >
                                 <i className="ri-add-line" /> Add Option
                               </button>
+
+                              {q.settings?.hasOtherComment && (
+                                <span style={{ fontSize: '12px', color: '#6366f1', backgroundColor: '#eef2ff', padding: '3px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <i className="ri-chat-1-line" /> Includes &ldquo;Other / Comments&rdquo; Field
+                                </span>
+                              )}
+                              {q.settings?.displayType === 'dropdown' && (
+                                <span style={{ fontSize: '12px', color: '#6366f1', backgroundColor: '#eef2ff', padding: '3px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <i className="ri-arrow-down-s-line" /> Dropdown Menu Display
+                                </span>
+                              )}
+                              {q.settings?.displayType === 'button_group' && (
+                                <span style={{ fontSize: '12px', color: '#0284c7', backgroundColor: '#f0f9ff', padding: '3px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <i className="ri-shape-line" /> Segmented Button Pills Display
+                                </span>
+                              )}
+                              {q.settings?.displayType === 'gender_cards' && (
+                                <span style={{ fontSize: '12px', color: '#7c3aed', backgroundColor: '#f5f3ff', padding: '3px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <i className="ri-user-smile-line" /> Gender Selection Cards
+                                </span>
+                              )}
+                              {q.settings?.displayType === 'image_select' && (
+                                <span style={{ fontSize: '12px', color: '#0d9488', backgroundColor: '#f0fdfa', padding: '3px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <i className="ri-image-line" /> Image Select Cards Display
+                                </span>
+                              )}
                             </div>
                           </div>
                         )}
@@ -3646,6 +3765,730 @@ export const SurveyBuilder = () => {
                                     <option value="10">Up to 10 Files</option>
                                   </select>
                                 </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 8. Yes / No Switch Builder */}
+                        {q.type === 'yes_no' && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>
+                              Binary Yes/No Switch (Standard Green / Red Choice)
+                            </div>
+                            <div style={{ display: 'flex', gap: '12px', maxWidth: '360px' }}>
+                              <button
+                                type="button"
+                                disabled
+                                style={{
+                                  flex: 1,
+                                  padding: '10px 16px',
+                                  borderRadius: '6px',
+                                  border: '1px solid #10b981',
+                                  backgroundColor: '#ecfdf5',
+                                  color: '#065f46',
+                                  fontWeight: 700,
+                                  fontSize: '14px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '6px',
+                                  cursor: 'default',
+                                }}
+                              >
+                                <i className="ri-check-line" style={{ fontSize: '18px' }} />
+                                Yes
+                              </button>
+                              <button
+                                type="button"
+                                disabled
+                                style={{
+                                  flex: 1,
+                                  padding: '10px 16px',
+                                  borderRadius: '6px',
+                                  border: '1px solid #ef4444',
+                                  backgroundColor: '#fef2f2',
+                                  color: '#991b1b',
+                                  fontWeight: 700,
+                                  fontSize: '14px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '6px',
+                                  cursor: 'default',
+                                }}
+                              >
+                                <i className="ri-close-line" style={{ fontSize: '18px' }} />
+                                No
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 9. Map / Browser Detection Telemetry Builder */}
+                        {q.type === 'map_browser' && (
+                          <div
+                            style={{
+                              backgroundColor: '#f8fafc',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '8px',
+                              padding: '14px 18px',
+                              maxWidth: '640px',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                              <div
+                                style={{
+                                  width: '32px',
+                                  height: '32px',
+                                  borderRadius: '6px',
+                                  backgroundColor: '#e0f2fe',
+                                  color: '#0284c7',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '16px',
+                                }}
+                              >
+                                <i className="ri-global-line" />
+                              </div>
+                              <div>
+                                <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
+                                  Map &amp; Browser Environment Telemetry
+                                </div>
+                                <div style={{ fontSize: '11px', color: '#64748b' }}>
+                                  Automatically captures respondent&apos;s browser, OS, display, and location metadata
+                                </div>
+                              </div>
+                            </div>
+
+                            <div
+                              style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                                gap: '8px',
+                                backgroundColor: '#ffffff',
+                                padding: '12px',
+                                borderRadius: '6px',
+                                border: '1px solid #cbd5e1',
+                                marginBottom: '12px',
+                              }}
+                            >
+                              <div style={{ fontSize: '11.5px', color: '#475569' }}>
+                                <strong style={{ color: '#0f172a', display: 'block' }}>Browser / OS:</strong>
+                                <span style={{ color: '#0284c7' }}>Auto-detected at survey launch</span>
+                              </div>
+                              <div style={{ fontSize: '11.5px', color: '#475569' }}>
+                                <strong style={{ color: '#0f172a', display: 'block' }}>Screen / Viewport:</strong>
+                                <span style={{ color: '#0284c7' }}>Device resolution &amp; ratio</span>
+                              </div>
+                              <div style={{ fontSize: '11.5px', color: '#475569' }}>
+                                <strong style={{ color: '#0f172a', display: 'block' }}>Timezone &amp; Locale:</strong>
+                                <span style={{ color: '#0284c7' }}>Local timezone &amp; language</span>
+                              </div>
+                              <div style={{ fontSize: '11.5px', color: '#475569' }}>
+                                <strong style={{ color: '#0f172a', display: 'block' }}>Map / GPS:</strong>
+                                <span style={{ color: '#10b981' }}>Optional coordinates capture</span>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', fontSize: '12px', color: '#334155' }}>
+                              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={q.settings?.captureGps !== false}
+                                  onChange={(e) =>
+                                    updateQuestion(idx, {
+                                      settings: { ...(q.settings || {}), captureGps: e.target.checked },
+                                    })
+                                  }
+                                  style={{ accentColor: '#10b981' }}
+                                />
+                                <span>Prompt for GPS Location Coordinates</span>
+                              </label>
+                              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={q.settings?.showSummaryToRespondent !== false}
+                                  onChange={(e) =>
+                                    updateQuestion(idx, {
+                                      settings: { ...(q.settings || {}), showSummaryToRespondent: e.target.checked },
+                                    })
+                                  }
+                                  style={{ accentColor: '#10b981' }}
+                                />
+                                <span>Show telemetry confirmation card to respondent</span>
+                              </label>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 10. Date / Time Picker Configuration Builder */}
+                        {q.type === 'date_time' && (
+                          <div
+                            style={{
+                              backgroundColor: '#f8fafc',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '8px',
+                              padding: '14px 18px',
+                              maxWidth: '640px',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                              <div
+                                style={{
+                                  width: '32px',
+                                  height: '32px',
+                                  borderRadius: '6px',
+                                  backgroundColor: '#fef3c7',
+                                  color: '#d97706',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '16px',
+                                }}
+                              >
+                                <i className="ri-calendar-event-line" />
+                              </div>
+                              <div>
+                                <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
+                                  Date &amp; Time Picker Configuration
+                                </div>
+                                <div style={{ fontSize: '11px', color: '#64748b' }}>
+                                  Configure whether respondents pick a date, a time, or both
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '12px' }}>
+                              <div>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                                  Picker Mode:
+                                </label>
+                                <div style={{ display: 'flex', gap: '6px' }}>
+                                  {[
+                                    { id: 'datetime', label: 'Date & Time', icon: 'ri-calendar-2-line' },
+                                    { id: 'date', label: 'Date Only', icon: 'ri-calendar-line' },
+                                    { id: 'time', label: 'Time Only', icon: 'ri-time-line' },
+                                  ].map((mode) => {
+                                    const isSelected = (q.settings?.inputType || 'datetime') === mode.id;
+                                    return (
+                                      <button
+                                        key={mode.id}
+                                        type="button"
+                                        onClick={() =>
+                                          updateQuestion(idx, {
+                                            settings: { ...(q.settings || {}), inputType: mode.id },
+                                          })
+                                        }
+                                        style={{
+                                          padding: '5px 10px',
+                                          fontSize: '12px',
+                                          fontWeight: 600,
+                                          borderRadius: '6px',
+                                          border: isSelected ? '1px solid #d97706' : '1px solid #cbd5e1',
+                                          backgroundColor: isSelected ? '#fffbeb' : '#ffffff',
+                                          color: isSelected ? '#b45309' : '#475569',
+                                          cursor: 'pointer',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: '4px',
+                                        }}
+                                      >
+                                        <i className={mode.icon} />
+                                        {mode.label}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{ maxWidth: '300px' }}>
+                              <input
+                                type={
+                                  (q.settings?.inputType || 'datetime') === 'time'
+                                    ? 'time'
+                                    : (q.settings?.inputType || 'datetime') === 'date'
+                                    ? 'date'
+                                    : 'datetime-local'
+                                }
+                                disabled
+                                className="ls-input"
+                                style={{ backgroundColor: '#ffffff', cursor: 'default' }}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 11. Numerical Input Builder */}
+                        {q.type === 'numerical_input' && (
+                          <div
+                            style={{
+                              backgroundColor: '#f8fafc',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '8px',
+                              padding: '14px 18px',
+                              maxWidth: '640px',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                              <div
+                                style={{
+                                  width: '32px',
+                                  height: '32px',
+                                  borderRadius: '6px',
+                                  backgroundColor: '#dbeafe',
+                                  color: '#2563eb',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '16px',
+                                }}
+                              >
+                                <i className="ri-hashtag" />
+                              </div>
+                              <div>
+                                <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
+                                  Numerical Input Settings
+                                </div>
+                                <div style={{ fontSize: '11px', color: '#64748b' }}>
+                                  Single numerical field with custom units, minimum, maximum, and step increments
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                              <div style={{ width: '90px' }}>
+                                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                                  Prefix:
+                                </label>
+                                <input
+                                  type="text"
+                                  value={q.settings?.prefix || ''}
+                                  onChange={(e) =>
+                                    updateQuestion(idx, {
+                                      settings: { ...(q.settings || {}), prefix: e.target.value },
+                                    })
+                                  }
+                                  placeholder="$"
+                                  style={{ width: '100%', padding: '5px 8px', fontSize: '13px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                />
+                              </div>
+
+                              <div style={{ width: '90px' }}>
+                                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                                  Suffix:
+                                </label>
+                                <input
+                                  type="text"
+                                  value={q.settings?.suffix || ''}
+                                  onChange={(e) =>
+                                    updateQuestion(idx, {
+                                      settings: { ...(q.settings || {}), suffix: e.target.value },
+                                    })
+                                  }
+                                  placeholder="kg"
+                                  style={{ width: '100%', padding: '5px 8px', fontSize: '13px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                />
+                              </div>
+
+                              <div style={{ width: '90px' }}>
+                                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                                  Min:
+                                </label>
+                                <input
+                                  type="number"
+                                  value={q.settings?.min !== undefined ? q.settings.min : ''}
+                                  onChange={(e) =>
+                                    updateQuestion(idx, {
+                                      settings: { ...(q.settings || {}), min: e.target.value === '' ? undefined : Number(e.target.value) },
+                                    })
+                                  }
+                                  placeholder="0"
+                                  style={{ width: '100%', padding: '5px 8px', fontSize: '13px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                />
+                              </div>
+
+                              <div style={{ width: '90px' }}>
+                                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                                  Max:
+                                </label>
+                                <input
+                                  type="number"
+                                  value={q.settings?.max !== undefined ? q.settings.max : ''}
+                                  onChange={(e) =>
+                                    updateQuestion(idx, {
+                                      settings: { ...(q.settings || {}), max: e.target.value === '' ? undefined : Number(e.target.value) },
+                                    })
+                                  }
+                                  placeholder="1000"
+                                  style={{ width: '100%', padding: '5px 8px', fontSize: '13px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                />
+                              </div>
+
+                              <div style={{ width: '80px' }}>
+                                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                                  Step:
+                                </label>
+                                <input
+                                  type="number"
+                                  value={q.settings?.step || 1}
+                                  onChange={(e) =>
+                                    updateQuestion(idx, {
+                                      settings: { ...(q.settings || {}), step: Number(e.target.value) || 1 },
+                                    })
+                                  }
+                                  style={{ width: '100%', padding: '5px 8px', fontSize: '13px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                />
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', maxWidth: '260px' }}>
+                              {q.settings?.prefix && (
+                                <span style={{ padding: '6px 10px', backgroundColor: '#e2e8f0', border: '1px solid #cbd5e1', borderRight: 'none', borderRadius: '4px 0 0 4px', fontSize: '13px', fontWeight: 600, color: '#475569' }}>
+                                  {q.settings.prefix}
+                                </span>
+                              )}
+                              <input
+                                type="number"
+                                disabled
+                                placeholder="0.00"
+                                style={{
+                                  flex: 1,
+                                  padding: '6px 10px',
+                                  fontSize: '14px',
+                                  border: '1px solid #cbd5e1',
+                                  borderRadius: q.settings?.prefix && q.settings?.suffix ? '0' : q.settings?.prefix ? '0 4px 4px 0' : q.settings?.suffix ? '4px 0 0 4px' : '4px',
+                                  backgroundColor: '#ffffff',
+                                }}
+                              />
+                              {q.settings?.suffix && (
+                                <span style={{ padding: '6px 10px', backgroundColor: '#e2e8f0', border: '1px solid #cbd5e1', borderLeft: 'none', borderRadius: '0 4px 4px 0', fontSize: '13px', fontWeight: 600, color: '#475569' }}>
+                                  {q.settings.suffix}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 12. Multiple Numerical Input Rows Builder */}
+                        {q.type === 'multiple_numerical_input' && (
+                          <div
+                            style={{
+                              backgroundColor: '#f8fafc',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '8px',
+                              padding: '14px 18px',
+                              maxWidth: '640px',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <div
+                                  style={{
+                                    width: '32px',
+                                    height: '32px',
+                                    borderRadius: '6px',
+                                    backgroundColor: '#e0e7ff',
+                                    color: '#4f46e5',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '16px',
+                                  }}
+                                >
+                                  <i className="ri-numbers-line" />
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
+                                    Multiple Numerical Input Rows
+                                  </div>
+                                  <div style={{ fontSize: '11px', color: '#64748b' }}>
+                                    Collect multiple numeric values with real-time automatic Grand Total calculation
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <input
+                                  type="text"
+                                  value={q.settings?.prefix || ''}
+                                  onChange={(e) =>
+                                    updateQuestion(idx, {
+                                      settings: { ...(q.settings || {}), prefix: e.target.value },
+                                    })
+                                  }
+                                  placeholder="Prefix ($)"
+                                  style={{ width: '80px', padding: '4px 8px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                />
+                                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#334155', cursor: 'pointer' }}>
+                                  <input
+                                    type="checkbox"
+                                    checked={q.settings?.showSum !== false}
+                                    onChange={(e) =>
+                                      updateQuestion(idx, {
+                                        settings: { ...(q.settings || {}), showSum: e.target.checked },
+                                      })
+                                    }
+                                    style={{ accentColor: '#4f46e5' }}
+                                  />
+                                  <span>Show Grand Total</span>
+                                </label>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+                              {(q.settings?.rows || ['Budget Item 1', 'Budget Item 2', 'Budget Item 3']).map((row, rIdx) => (
+                                <div key={rIdx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <i className="ri-drag-move-fill" style={{ color: '#94a3b8', fontSize: '14px' }} />
+                                  <input
+                                    type="text"
+                                    value={row}
+                                    onChange={(e) => handleUpdateMultipleNumericalRow(idx, rIdx, e.target.value)}
+                                    placeholder={`Item ${rIdx + 1}`}
+                                    style={{ flex: 1, padding: '6px 10px', fontSize: '13px', border: '1px solid #cbd5e1', borderRadius: '4px', backgroundColor: '#ffffff' }}
+                                  />
+                                  <div style={{ display: 'flex', alignItems: 'center', width: '130px' }}>
+                                    {q.settings?.prefix && (
+                                      <span style={{ padding: '6px 8px', backgroundColor: '#e2e8f0', border: '1px solid #cbd5e1', borderRight: 'none', borderRadius: '4px 0 0 4px', fontSize: '12px', fontWeight: 600, color: '#475569' }}>
+                                        {q.settings.prefix}
+                                      </span>
+                                    )}
+                                    <input
+                                      type="number"
+                                      disabled
+                                      placeholder="0.00"
+                                      style={{
+                                        width: '100%',
+                                        padding: '6px 8px',
+                                        fontSize: '13px',
+                                        border: '1px solid #cbd5e1',
+                                        borderRadius: q.settings?.prefix ? '0 4px 4px 0' : '4px',
+                                        backgroundColor: '#f8fafc',
+                                        cursor: 'default',
+                                      }}
+                                    />
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveMultipleNumericalRow(idx, rIdx)}
+                                    style={{ border: 'none', background: 'transparent', color: '#94a3b8', cursor: 'pointer', padding: '4px', fontSize: '16px' }}
+                                    title="Remove item"
+                                  >
+                                    <i className="ri-close-line" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px dashed #cbd5e1', paddingTop: '10px' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleAddMultipleNumericalRow(idx)}
+                                style={{ background: 'none', border: 'none', color: '#4f46e5', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                              >
+                                <i className="ri-add-line" /> Add Numerical Row
+                              </button>
+
+                              {q.settings?.showSum !== false && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', fontWeight: 700, color: '#1e293b' }}>
+                                  <span>Auto-calculated Grand Total:</span>
+                                  <span style={{ backgroundColor: '#e0e7ff', color: '#3730a3', padding: '3px 10px', borderRadius: '6px', fontFamily: 'monospace' }}>
+                                    {q.settings?.prefix || ''}0.00
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 13. Multiple Short Text Fields Builder */}
+                        {q.type === 'multiple_short_text' && (
+                          <div
+                            style={{
+                              backgroundColor: '#f8fafc',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '8px',
+                              padding: '14px 18px',
+                              maxWidth: '640px',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                              <div
+                                style={{
+                                  width: '32px',
+                                  height: '32px',
+                                  borderRadius: '6px',
+                                  backgroundColor: '#ccfbf1',
+                                  color: '#0f766e',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '16px',
+                                }}
+                              >
+                                <i className="ri-file-list-3-line" />
+                              </div>
+                              <div>
+                                <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
+                                  Multiple Short Text Fields
+                                </div>
+                                <div style={{ fontSize: '11px', color: '#64748b' }}>
+                                  Configurable collection of one-line inputs (e.g. contact cards, addresses)
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+                              {(q.settings?.fields || ['First Name', 'Last Name', 'Email Address', 'Organization']).map((fld, fIdx) => (
+                                <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <i className="ri-drag-move-fill" style={{ color: '#94a3b8', fontSize: '14px' }} />
+                                  <input
+                                    type="text"
+                                    value={fld}
+                                    onChange={(e) => handleUpdateMultipleShortTextField(idx, fIdx, e.target.value)}
+                                    placeholder={`Field ${fIdx + 1} Label`}
+                                    style={{ width: '180px', padding: '6px 10px', fontSize: '13px', fontWeight: 600, border: '1px solid #cbd5e1', borderRadius: '4px', backgroundColor: '#ffffff' }}
+                                  />
+                                  <input
+                                    type="text"
+                                    disabled
+                                    placeholder={`Respondent enters ${fld}...`}
+                                    style={{ flex: 1, padding: '6px 10px', fontSize: '13px', border: '1px solid #e2e8f0', borderRadius: '4px', backgroundColor: '#f1f5f9', cursor: 'default' }}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveMultipleShortTextField(idx, fIdx)}
+                                    style={{ border: 'none', background: 'transparent', color: '#94a3b8', cursor: 'pointer', padding: '4px', fontSize: '16px' }}
+                                    title="Remove field"
+                                  >
+                                    <i className="ri-close-line" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleAddMultipleShortTextField(idx)}
+                              style={{ background: 'none', border: 'none', color: '#0f766e', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            >
+                              <i className="ri-add-line" /> Add Text Field
+                            </button>
+                          </div>
+                        )}
+
+                        {/* 14. Equation / Formula Calculation Builder */}
+                        {q.type === 'equation' && (
+                          <div
+                            style={{
+                              backgroundColor: '#f8fafc',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '8px',
+                              padding: '14px 18px',
+                              maxWidth: '640px',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                              <div
+                                style={{
+                                  width: '32px',
+                                  height: '32px',
+                                  borderRadius: '6px',
+                                  backgroundColor: '#fce7f3',
+                                  color: '#be185d',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '16px',
+                                }}
+                              >
+                                <i className="ri-functions" />
+                              </div>
+                              <div>
+                                <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
+                                  Equation &amp; Dynamic Expression Calculation
+                                </div>
+                                <div style={{ fontSize: '11px', color: '#64748b' }}>
+                                  Evaluates arithmetic formulas referencing prior question codes (e.g. &#123;Q1&#125; + &#123;Q2&#125; * 1.5)
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{ marginBottom: '12px' }}>
+                              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                                Formula Expression:
+                              </label>
+                              <input
+                                type="text"
+                                value={q.settings?.formula || '{Q1 + Q2}'}
+                                onChange={(e) =>
+                                  updateQuestion(idx, {
+                                    settings: { ...(q.settings || {}), formula: e.target.value },
+                                  })
+                                }
+                                placeholder="{Q1} * 0.5 + {Q2}"
+                                style={{
+                                  width: '100%',
+                                  padding: '8px 12px',
+                                  fontSize: '14px',
+                                  fontFamily: 'monospace',
+                                  border: '1px solid #cbd5e1',
+                                  borderRadius: '6px',
+                                  backgroundColor: '#ffffff',
+                                  marginBottom: '6px',
+                                }}
+                              />
+
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Insert question code:</span>
+                                {questions
+                                  .filter((_, qI) => qI < idx)
+                                  .map((prevQ) => (
+                                    <button
+                                      key={prevQ.id || prevQ.code}
+                                      type="button"
+                                      onClick={() => {
+                                        const currentFormula = q.settings?.formula || '';
+                                        updateQuestion(idx, {
+                                          settings: { ...(q.settings || {}), formula: `${currentFormula} {${prevQ.code}}`.trim() },
+                                        });
+                                      }}
+                                      style={{
+                                        padding: '2px 8px',
+                                        fontSize: '11px',
+                                        fontWeight: 600,
+                                        borderRadius: '4px',
+                                        border: '1px solid #cbd5e1',
+                                        backgroundColor: '#f1f5f9',
+                                        color: '#334155',
+                                        cursor: 'pointer',
+                                      }}
+                                    >
+                                      +{prevQ.code}
+                                    </button>
+                                  ))}
+                              </div>
+                            </div>
+
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '10px 14px',
+                                backgroundColor: '#fdf2f8',
+                                border: '1px solid #fbcfe8',
+                                borderRadius: '6px',
+                              }}
+                            >
+                              <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#9d174d' }}>
+                                <i className="ri-calculator-line" style={{ marginRight: '5px' }} />
+                                Live Evaluated Score:
+                              </div>
+                              <div style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '14px', color: '#831843' }}>
+                                [Calculated dynamically based on responses]
                               </div>
                             </div>
                           </div>
@@ -5528,18 +6371,127 @@ export const SurveyBuilder = () => {
               </button>
             </div>
 
+            {/* Font Search & Categories Filter */}
+            <div
+              style={{
+                padding: '14px 24px',
+                borderBottom: '1px solid #e2e8f0',
+                backgroundColor: '#ffffff',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+              }}
+            >
+              {/* Search Bar */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  padding: '8px 12px',
+                  gap: '8px',
+                }}
+              >
+                <i className="ri-search-line" style={{ color: '#94a3b8', fontSize: '16px' }} />
+                <input
+                  type="text"
+                  placeholder="Search among 50+ fonts (e.g. Inter, Playfair, Fira Code)..."
+                  value={fontSearchQuery}
+                  onChange={(e) => setFontSearchQuery(e.target.value)}
+                  style={{
+                    border: 'none',
+                    outline: 'none',
+                    background: 'transparent',
+                    fontSize: '13px',
+                    width: '100%',
+                    color: '#1e293b',
+                  }}
+                />
+                {fontSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setFontSearchQuery('')}
+                    style={{ border: 'none', background: 'transparent', color: '#94a3b8', cursor: 'pointer', padding: 0 }}
+                  >
+                    <i className="ri-close-circle-fill" />
+                  </button>
+                )}
+              </div>
+
+              {/* Category Filter Tabs */}
+              <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '2px' }}>
+                {[
+                  { id: 'All', label: 'All', count: FONT_PRESETS.length },
+                  { id: 'Sans-serif', label: 'Sans-serif', count: FONT_PRESETS.filter((f) => f.category === 'Sans-serif').length },
+                  { id: 'Serif', label: 'Serif', count: FONT_PRESETS.filter((f) => f.category === 'Serif').length },
+                  { id: 'Monospace', label: 'Monospace', count: FONT_PRESETS.filter((f) => f.category === 'Monospace').length },
+                  { id: 'Display', label: 'Display', count: FONT_PRESETS.filter((f) => f.category === 'Display').length },
+                ].map((cat) => {
+                  const isActive = selectedFontCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setSelectedFontCategory(cat.id)}
+                      style={{
+                        padding: '4px 10px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        borderRadius: '20px',
+                        border: '1px solid',
+                        borderColor: isActive ? '#6366f1' : '#e2e8f0',
+                        backgroundColor: isActive ? '#ede9fe' : '#f8fafc',
+                        color: isActive ? '#4f46e5' : '#64748b',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {cat.label}
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          padding: '1px 5px',
+                          borderRadius: '10px',
+                          backgroundColor: isActive ? '#6366f1' : '#e2e8f0',
+                          color: isActive ? '#ffffff' : '#475569',
+                        }}
+                      >
+                        {cat.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Fonts List */}
             <div
               style={{
-                padding: '20px 24px',
-                maxHeight: '60vh',
+                padding: '16px 24px',
+                maxHeight: '52vh',
                 overflowY: 'auto',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '10px',
+                gap: '8px',
               }}
             >
-              {FONT_PRESETS.map((f) => {
+              {FONT_PRESETS.filter((f) => {
+                const q = fontSearchQuery.trim().toLowerCase();
+                const matchesSearch =
+                  !q ||
+                  f.name.toLowerCase().includes(q) ||
+                  f.category.toLowerCase().includes(q) ||
+                  f.description.toLowerCase().includes(q);
+                const matchesCategory =
+                  selectedFontCategory === 'All' || f.category === selectedFontCategory;
+                return matchesSearch && matchesCategory;
+              }).map((f) => {
                 const isSelected =
                   (theme.fontFamily && theme.fontFamily === f.fontFamily) ||
                   (!theme.fontFamily && f.name === 'IBM Plex Sans');
@@ -5646,6 +6598,28 @@ export const SurveyBuilder = () => {
                   </div>
                 );
               })}
+
+              {FONT_PRESETS.filter((f) => {
+                const q = fontSearchQuery.trim().toLowerCase();
+                const matchesSearch =
+                  !q ||
+                  f.name.toLowerCase().includes(q) ||
+                  f.category.toLowerCase().includes(q) ||
+                  f.description.toLowerCase().includes(q);
+                const matchesCategory =
+                  selectedFontCategory === 'All' || f.category === selectedFontCategory;
+                return matchesSearch && matchesCategory;
+              }).length === 0 && (
+                <div style={{ textAlign: 'center', padding: '36px 16px', color: '#64748b' }}>
+                  <i className="ri-font-size" style={{ fontSize: '36px', color: '#cbd5e1', display: 'block', marginBottom: '8px' }} />
+                  <div style={{ fontWeight: 600, fontSize: '14px', color: '#1e293b' }}>
+                    No fonts match &ldquo;{fontSearchQuery}&rdquo;
+                  </div>
+                  <div style={{ fontSize: '12px', marginTop: '4px', color: '#94a3b8' }}>
+                    Try searching for another font name or switch to &apos;All&apos; category
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Modal Footer */}

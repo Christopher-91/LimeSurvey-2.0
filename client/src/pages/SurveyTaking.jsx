@@ -675,6 +675,225 @@ const CompletionLandingPage = ({ survey, selectedLang }) => {
   );
 };
 
+const MapBrowserQuestionInput = ({ question, value, onChange }) => {
+  const [data, setData] = useState(() => value || null);
+  const [locating, setLocating] = useState(false);
+  const [gpsError, setGpsError] = useState(null);
+
+  useEffect(() => {
+    if (!data) {
+      const userAgent = navigator.userAgent || '';
+      let browser = 'Unknown Browser';
+      if (userAgent.includes('Firefox')) browser = 'Mozilla Firefox';
+      else if (userAgent.includes('SamsungBrowser')) browser = 'Samsung Internet';
+      else if (userAgent.includes('Opera') || userAgent.includes('OPR')) browser = 'Opera';
+      else if (userAgent.includes('Edge') || userAgent.includes('Edg')) browser = 'Microsoft Edge';
+      else if (userAgent.includes('Chrome')) browser = 'Google Chrome';
+      else if (userAgent.includes('Safari')) browser = 'Apple Safari';
+
+      let os = 'Unknown OS';
+      if (userAgent.includes('Win')) os = 'Windows';
+      else if (userAgent.includes('Mac')) os = 'macOS';
+      else if (userAgent.includes('Android')) os = 'Android';
+      else if (userAgent.includes('iPhone') || userAgent.includes('iPad')) os = 'iOS';
+      else if (userAgent.includes('Linux')) os = 'Linux';
+
+      const screenRes = typeof window !== 'undefined' && window.screen
+        ? `${window.screen.width}x${window.screen.height}`
+        : 'Unknown';
+      const tz = typeof Intl !== 'undefined' && Intl.DateTimeFormat
+        ? Intl.DateTimeFormat().resolvedOptions().timeZone
+        : 'UTC';
+      const language = navigator.language || 'en-US';
+
+      const initialData = {
+        browser,
+        os,
+        screenResolution: screenRes,
+        timezone: tz,
+        language,
+        timestamp: new Date().toISOString(),
+      };
+      setData(initialData);
+      onChange(initialData);
+    }
+  }, []);
+
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      setGpsError('Geolocation is not supported by your browser.');
+      return;
+    }
+    setLocating(true);
+    setGpsError(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocating(false);
+        const updated = {
+          ...(data || {}),
+          gps: {
+            latitude: Number(pos.coords.latitude.toFixed(5)),
+            longitude: Number(pos.coords.longitude.toFixed(5)),
+            accuracy: Math.round(pos.coords.accuracy),
+          },
+        };
+        setData(updated);
+        onChange(updated);
+      },
+      (err) => {
+        setLocating(false);
+        setGpsError(err.message || 'Unable to retrieve location.');
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
+  };
+
+  return (
+    <div
+      style={{
+        backgroundColor: '#f8fafc',
+        border: '1px solid #cbd5e1',
+        borderRadius: '8px',
+        padding: '16px',
+        maxWidth: '560px',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+        <i className="ri-shield-check-line" style={{ color: '#10b981', fontSize: '20px' }} />
+        <span style={{ fontSize: '13.5px', fontWeight: 700, color: '#1e293b' }}>
+          Environment &amp; Telemetry Detection
+        </span>
+      </div>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+          gap: '8px',
+          fontSize: '12.5px',
+          backgroundColor: '#ffffff',
+          padding: '12px',
+          borderRadius: '6px',
+          border: '1px solid #e2e8f0',
+        }}
+      >
+        <div>
+          <span style={{ color: '#64748b', display: 'block' }}>Browser:</span>
+          <strong>{data?.browser || 'Detecting...'}</strong>
+        </div>
+        <div>
+          <span style={{ color: '#64748b', display: 'block' }}>Operating System:</span>
+          <strong>{data?.os || 'Detecting...'}</strong>
+        </div>
+        <div>
+          <span style={{ color: '#64748b', display: 'block' }}>Screen Viewport:</span>
+          <strong>{data?.screenResolution || 'Detecting...'}</strong>
+        </div>
+        <div>
+          <span style={{ color: '#64748b', display: 'block' }}>Timezone:</span>
+          <strong>{data?.timezone || 'Detecting...'}</strong>
+        </div>
+      </div>
+
+      {question.settings?.captureGps !== false && (
+        <div style={{ marginTop: '12px' }}>
+          {data?.gps ? (
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                backgroundColor: '#ecfdf5',
+                color: '#065f46',
+                fontSize: '12px',
+                fontWeight: 600,
+                border: '1px solid #a7f3d0',
+              }}
+            >
+              <i className="ri-map-pin-2-fill" style={{ color: '#10b981' }} />
+              <span>Location captured: {data.gps.latitude}, {data.gps.longitude} (±{data.gps.accuracy}m)</span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleGetLocation}
+              disabled={locating}
+              className="ls-btn ls-btn-outline ls-btn-sm"
+              style={{ fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+              <i className={locating ? 'ri-loader-4-line ri-spin' : 'ri-map-pin-line'} />
+              {locating ? 'Detecting GPS Location...' : 'Include GPS Coordinates'}
+            </button>
+          )}
+          {gpsError && (
+            <p style={{ margin: '4px 0 0 0', fontSize: '11.5px', color: '#ef4444' }}>
+              {gpsError}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const EquationQuestionInput = ({ question, allAnswers, onChange }) => {
+  const formula = question.settings?.formula || '';
+
+  const calculateResult = () => {
+    if (!formula) return 0;
+    try {
+      const expression = formula.replace(/\{([A-Za-z0-9_]+)\}/g, (_, qCode) => {
+        const val = allAnswers[qCode];
+        if (typeof val === 'number') return String(val);
+        if (typeof val === 'string' && !isNaN(Number(val)) && val.trim() !== '') return String(Number(val));
+        if (typeof val === 'object' && val !== null) {
+          const subSum = Object.values(val).reduce((a, b) => a + (Number(b) || 0), 0);
+          return String(subSum);
+        }
+        return '0';
+      });
+
+      const sanitized = expression.replace(/[^0-9.+\-*/() ]/g, '');
+      if (!sanitized.trim()) return 0;
+      // eslint-disable-next-line no-new-func
+      const result = Function(`"use strict"; return (${sanitized});`)();
+      return typeof result === 'number' && !isNaN(result) ? Math.round(result * 100) / 100 : 0;
+    } catch {
+      return 0;
+    }
+  };
+
+  const calculatedValue = calculateResult();
+
+  useEffect(() => {
+    onChange(calculatedValue);
+  }, [calculatedValue]);
+
+  return (
+    <div
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '12px',
+        padding: '12px 18px',
+        borderRadius: '8px',
+        backgroundColor: '#fdf2f8',
+        border: '1px solid #fbcfe8',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#9d174d', fontWeight: 600, fontSize: '14px' }}>
+        <i className="ri-functions" style={{ fontSize: '18px' }} />
+        <span>Calculated Score:</span>
+      </div>
+      <div style={{ fontSize: '20px', fontWeight: 800, color: '#831843', fontFamily: 'monospace' }}>
+        {calculatedValue}
+      </div>
+    </div>
+  );
+};
+
 export const SurveyTaking = () => {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
@@ -872,6 +1091,13 @@ export const SurveyTaking = () => {
 
   return (
     <div className="ls-container" style={{ maxWidth: '780px', fontFamily: theme.fontFamily || 'inherit' }}>
+      {theme.fontFamily && (
+        <style>{`
+          .ls-container, .ls-container input, .ls-container textarea, .ls-container select, .ls-container button, .ls-container label, .ls-container p, .ls-container span, .ls-container h1, .ls-container h2, .ls-container h3 {
+            font-family: ${theme.fontFamily} !important;
+          }
+        `}</style>
+      )}
       {/* Multilingual Selector Header Bar */}
       {supportedLangs.length > 1 && (
         <div
@@ -963,6 +1189,33 @@ export const SurveyTaking = () => {
           {questions.map((rawQ, idx) => {
             const q = getLocalizedQuestion(rawQ, selectedLang, survey?.settings);
 
+            if (q.settings?.isGroupHeader) {
+              return (
+                <div
+                  key={q.id || idx}
+                  style={{
+                    padding: '20px 24px',
+                    borderRadius: 'var(--ls-radius-md)',
+                    backgroundColor: `${accentColor}12`,
+                    border: '1px solid',
+                    borderColor: `${accentColor}40`,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <i className="ri-folder-2-line" style={{ fontSize: '20px', color: accentColor }} />
+                    <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: 'var(--ls-color-g-900)' }}>
+                      {q.text || 'Question Group'}
+                    </h3>
+                  </div>
+                  {q.helpText && (
+                    <p style={{ margin: 0, fontSize: '13.5px', color: 'var(--ls-color-g-700)' }}>
+                      {q.helpText}
+                    </p>
+                  )}
+                </div>
+              );
+            }
+
             return (
               <div
                 key={q.id || idx}
@@ -989,75 +1242,344 @@ export const SurveyTaking = () => {
               </div>
 
               {/* RENDER QUESTION BY TYPE */}
-              {/* 1. Single Choice (Radio) */}
+              {/* 1. Single Choice */}
               {['single_choice', 'multiple_choice'].includes(q.type) &&
                 !(q.type === 'multiple_choice' || Boolean(q.settings?.allowMultiple)) && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {q.options?.map((opt) => (
-                    <label
-                      key={opt.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        padding: '10px 14px',
-                        borderRadius: 'var(--ls-radius-sm)',
-                        backgroundColor: answers[q.code] === opt.code ? `${accentColor}18` : 'var(--ls-color-g-100)',
-                        cursor: 'pointer',
-                        border: '1px solid',
-                        borderColor: answers[q.code] === opt.code ? accentColor : 'transparent',
-                      }}
+                  {/* Dropdown Display */}
+                  {q.settings?.displayType === 'dropdown' ? (
+                    <select
+                      className={`ls-select ${errors[q.code] ? 'error' : ''}`}
+                      value={answers[q.code] || ''}
+                      onChange={(e) => handleAnswerChange(q.code, e.target.value)}
+                      style={{ maxWidth: '420px', padding: '10px 14px', fontSize: '15px' }}
                     >
-                      <input
-                        type="radio"
-                        name={q.code}
-                        value={opt.code}
-                        checked={answers[q.code] === opt.code}
-                        onChange={() => handleAnswerChange(q.code, opt.code)}
-                        style={{ accentColor: accentColor, width: '18px', height: '18px' }}
-                      />
-                      <span style={{ fontSize: '15px' }}>{opt.text}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
-
-              {/* 2. Multiple Choice (Checkboxes) */}
-              {['single_choice', 'multiple_choice'].includes(q.type) &&
-                (q.type === 'multiple_choice' || Boolean(q.settings?.allowMultiple)) && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {q.options?.map((opt) => {
-                    const isChecked = Array.isArray(answers[q.code]) && answers[q.code].includes(opt.code);
-                    return (
+                      <option value="">-- Please select an option --</option>
+                      {q.options?.map((opt) => (
+                        <option key={opt.code || opt.id} value={opt.code}>
+                          {opt.text}
+                        </option>
+                      ))}
+                    </select>
+                  ) : q.settings?.displayType === 'button_group' ? (
+                    /* Segmented Button Pills Display */
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {q.options?.map((opt) => {
+                        const isSelected = answers[q.code] === opt.code;
+                        return (
+                          <button
+                            key={opt.code || opt.id}
+                            type="button"
+                            onClick={() => handleAnswerChange(q.code, opt.code)}
+                            style={{
+                              padding: '10px 18px',
+                              borderRadius: '24px',
+                              border: '2px solid',
+                              borderColor: isSelected ? accentColor : 'var(--ls-color-g-300)',
+                              backgroundColor: isSelected ? accentColor : '#ffffff',
+                              color: isSelected ? '#ffffff' : 'var(--ls-color-g-900)',
+                              fontWeight: 600,
+                              fontSize: '14px',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                              boxShadow: isSelected ? '0 2px 6px rgba(0,0,0,0.1)' : 'none',
+                            }}
+                          >
+                            {opt.text}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : q.settings?.displayType === 'gender_cards' ? (
+                    /* Gender Cards Display */
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
+                      {q.options?.map((opt) => {
+                        const isSelected = answers[q.code] === opt.code;
+                        const icon =
+                          opt.code === 'F' ? 'ri-women-line' :
+                          opt.code === 'M' ? 'ri-men-line' :
+                          opt.code === 'NB' ? 'ri-genderless-line' : 'ri-user-smile-line';
+                        return (
+                          <div
+                            key={opt.code || opt.id}
+                            onClick={() => handleAnswerChange(q.code, opt.code)}
+                            style={{
+                              border: '2px solid',
+                              borderColor: isSelected ? accentColor : '#e2e8f0',
+                              borderRadius: '8px',
+                              padding: '16px 12px',
+                              textAlign: 'center',
+                              cursor: 'pointer',
+                              backgroundColor: isSelected ? `${accentColor}14` : '#ffffff',
+                              transition: 'all 0.15s ease',
+                            }}
+                          >
+                            <i className={icon} style={{ fontSize: '28px', color: isSelected ? accentColor : '#64748b', display: 'block', marginBottom: '6px' }} />
+                            <div style={{ fontSize: '13.5px', fontWeight: 600, color: isSelected ? accentColor : '#1e293b' }}>
+                              {opt.text}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : q.settings?.displayType === 'image_select' ? (
+                    /* Image Select Cards Grid */
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
+                      {q.options?.map((opt) => {
+                        const isSelected = answers[q.code] === opt.code;
+                        return (
+                          <div
+                            key={opt.code || opt.id}
+                            onClick={() => handleAnswerChange(q.code, opt.code)}
+                            style={{
+                              border: '2px solid',
+                              borderColor: isSelected ? accentColor : '#e2e8f0',
+                              borderRadius: '8px',
+                              padding: '10px',
+                              textAlign: 'center',
+                              cursor: 'pointer',
+                              backgroundColor: isSelected ? `${accentColor}14` : '#ffffff',
+                              transition: 'all 0.15s ease',
+                            }}
+                          >
+                            {opt.imageUrl ? (
+                              <img
+                                src={opt.imageUrl}
+                                alt={opt.text}
+                                style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '6px', marginBottom: '8px' }}
+                              />
+                            ) : (
+                              <div
+                                style={{
+                                  width: '100%',
+                                  height: '80px',
+                                  backgroundColor: '#f1f5f9',
+                                  borderRadius: '6px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: '#94a3b8',
+                                  fontSize: '28px',
+                                  marginBottom: '8px',
+                                }}
+                              >
+                                <i className="ri-image-2-line" />
+                              </div>
+                            )}
+                            <div style={{ fontSize: '14px', fontWeight: 600, color: isSelected ? accentColor : '#1e293b' }}>
+                              {opt.text}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    /* Default List (Radio) */
+                    q.options?.map((opt) => (
                       <label
-                        key={opt.id}
+                        key={opt.id || opt.code}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
                           gap: '10px',
                           padding: '10px 14px',
                           borderRadius: 'var(--ls-radius-sm)',
-                          backgroundColor: isChecked ? `${accentColor}18` : 'var(--ls-color-g-100)',
+                          backgroundColor: answers[q.code] === opt.code ? `${accentColor}18` : 'var(--ls-color-g-100)',
                           cursor: 'pointer',
                           border: '1px solid',
-                          borderColor: isChecked ? accentColor : 'transparent',
+                          borderColor: answers[q.code] === opt.code ? accentColor : 'transparent',
                         }}
                       >
                         <input
-                          type="checkbox"
+                          type="radio"
+                          name={q.code}
                           value={opt.code}
-                          checked={isChecked}
-                          onChange={() => handleMultiChoiceToggle(q.code, opt.code)}
+                          checked={answers[q.code] === opt.code}
+                          onChange={() => handleAnswerChange(q.code, opt.code)}
                           style={{ accentColor: accentColor, width: '18px', height: '18px' }}
                         />
                         <span style={{ fontSize: '15px' }}>{opt.text}</span>
                       </label>
-                    );
-                  })}
+                    ))
+                  )}
+
+                  {/* List with comment / Other Field */}
+                  {q.settings?.hasOtherComment && (
+                    <div style={{ marginTop: '6px' }}>
+                      <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: 'var(--ls-color-g-800)', marginBottom: '4px' }}>
+                        Other / Additional Comments:
+                      </label>
+                      <input
+                        type="text"
+                        className="ls-input"
+                        placeholder="Please specify any additional details..."
+                        value={answers[`${q.code}_comment`] || ''}
+                        onChange={(e) => handleAnswerChange(`${q.code}_comment`, e.target.value)}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* 2.5 Ranking / Preference Order */}
+              {/* 2. Multiple Choice */}
+              {['single_choice', 'multiple_choice'].includes(q.type) &&
+                (q.type === 'multiple_choice' || Boolean(q.settings?.allowMultiple)) && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {q.settings?.displayType === 'button_group' ? (
+                    /* Multiple Choice Button Pills */
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {q.options?.map((opt) => {
+                        const isChecked = Array.isArray(answers[q.code]) && answers[q.code].includes(opt.code);
+                        return (
+                          <button
+                            key={opt.code || opt.id}
+                            type="button"
+                            onClick={() => handleMultiChoiceToggle(q.code, opt.code)}
+                            style={{
+                              padding: '10px 18px',
+                              borderRadius: '24px',
+                              border: '2px solid',
+                              borderColor: isChecked ? accentColor : 'var(--ls-color-g-300)',
+                              backgroundColor: isChecked ? accentColor : '#ffffff',
+                              color: isChecked ? '#ffffff' : 'var(--ls-color-g-900)',
+                              fontWeight: 600,
+                              fontSize: '14px',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                            }}
+                          >
+                            {isChecked && <i className="ri-check-line" />}
+                            {opt.text}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : q.settings?.displayType === 'image_select' ? (
+                    /* Multiple Choice Image Select Grid */
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
+                      {q.options?.map((opt) => {
+                        const isChecked = Array.isArray(answers[q.code]) && answers[q.code].includes(opt.code);
+                        return (
+                          <div
+                            key={opt.code || opt.id}
+                            onClick={() => handleMultiChoiceToggle(q.code, opt.code)}
+                            style={{
+                              border: '2px solid',
+                              borderColor: isChecked ? accentColor : '#e2e8f0',
+                              borderRadius: '8px',
+                              padding: '10px',
+                              textAlign: 'center',
+                              cursor: 'pointer',
+                              position: 'relative',
+                              backgroundColor: isChecked ? `${accentColor}14` : '#ffffff',
+                              transition: 'all 0.15s ease',
+                            }}
+                          >
+                            {isChecked && (
+                              <div
+                                style={{
+                                  position: 'absolute',
+                                  top: '8px',
+                                  right: '8px',
+                                  backgroundColor: accentColor,
+                                  color: '#ffffff',
+                                  borderRadius: '50%',
+                                  width: '22px',
+                                  height: '22px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '13px',
+                                }}
+                              >
+                                <i className="ri-check-line" />
+                              </div>
+                            )}
+                            {opt.imageUrl ? (
+                              <img
+                                src={opt.imageUrl}
+                                alt={opt.text}
+                                style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '6px', marginBottom: '8px' }}
+                              />
+                            ) : (
+                              <div
+                                style={{
+                                  width: '100%',
+                                  height: '80px',
+                                  backgroundColor: '#f1f5f9',
+                                  borderRadius: '6px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: '#94a3b8',
+                                  fontSize: '28px',
+                                  marginBottom: '8px',
+                                }}
+                              >
+                                <i className="ri-image-2-line" />
+                              </div>
+                            )}
+                            <div style={{ fontSize: '14px', fontWeight: 600, color: isChecked ? accentColor : '#1e293b' }}>
+                              {opt.text}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    /* Default Multiple Choice Checkboxes */
+                    q.options?.map((opt) => {
+                      const isChecked = Array.isArray(answers[q.code]) && answers[q.code].includes(opt.code);
+                      return (
+                        <label
+                          key={opt.id || opt.code}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '10px 14px',
+                            borderRadius: 'var(--ls-radius-sm)',
+                            backgroundColor: isChecked ? `${accentColor}18` : 'var(--ls-color-g-100)',
+                            cursor: 'pointer',
+                            border: '1px solid',
+                            borderColor: isChecked ? accentColor : 'transparent',
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            value={opt.code}
+                            checked={isChecked}
+                            onChange={() => handleMultiChoiceToggle(q.code, opt.code)}
+                            style={{ accentColor: accentColor, width: '18px', height: '18px' }}
+                          />
+                          <span style={{ fontSize: '15px' }}>{opt.text}</span>
+                        </label>
+                      );
+                    })
+                  )}
+
+                  {/* Multiple Choice with comments */}
+                  {q.settings?.hasOtherComment && (
+                    <div style={{ marginTop: '6px' }}>
+                      <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: 'var(--ls-color-g-800)', marginBottom: '4px' }}>
+                        Other / Additional Comments:
+                      </label>
+                      <input
+                        type="text"
+                        className="ls-input"
+                        placeholder="Please specify any additional details..."
+                        value={answers[`${q.code}_comment`] || ''}
+                        onChange={(e) => handleAnswerChange(`${q.code}_comment`, e.target.value)}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 3. Ranking / Preference Order */}
               {q.type === 'ranking' && (
                 <RankingQuestionInput
                   question={q}
@@ -1067,7 +1589,7 @@ export const SurveyTaking = () => {
                 />
               )}
 
-              {/* 3. Rating (1 - 5 Stars) */}
+              {/* 4. Rating (1 - 5 Stars) */}
               {q.type === 'rating' && (
                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                   {[1, 2, 3, 4, 5].map((star) => {
@@ -1098,7 +1620,7 @@ export const SurveyTaking = () => {
                 </div>
               )}
 
-              {/* 4. Yes / No Switch */}
+              {/* 5. Yes / No Switch */}
               {q.type === 'yes_no' && (
                 <div style={{ display: 'flex', gap: '16px' }}>
                   <button
@@ -1131,7 +1653,7 @@ export const SurveyTaking = () => {
                 </div>
               )}
 
-              {/* 5. Short Free Text */}
+              {/* 6. Short Free Text */}
               {q.type === 'short_text' && (
                 <input
                   type="text"
@@ -1142,7 +1664,7 @@ export const SurveyTaking = () => {
                 />
               )}
 
-              {/* 6. Long Free Text */}
+              {/* 7. Long Free Text */}
               {q.type === 'long_text' && (
                 <textarea
                   className={`ls-textarea ${errors[q.code] ? 'error' : ''}`}
@@ -1153,30 +1675,153 @@ export const SurveyTaking = () => {
                 />
               )}
 
-              {/* 7. Number */}
-              {q.type === 'number' && (
+              {/* 8. Multiple Short Text */}
+              {q.type === 'multiple_short_text' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {(q.settings?.fields || ['Field 1', 'Field 2']).map((fld, fIdx) => (
+                    <div key={fIdx}>
+                      <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--ls-color-g-800)', marginBottom: '4px' }}>
+                        {fld}
+                      </label>
+                      <input
+                        type="text"
+                        className="ls-input"
+                        placeholder={`Enter ${fld}...`}
+                        value={answers[q.code]?.[fld] || ''}
+                        onChange={(e) => {
+                          const current = typeof answers[q.code] === 'object' && answers[q.code] !== null ? answers[q.code] : {};
+                          handleAnswerChange(q.code, { ...current, [fld]: e.target.value });
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* 9. Numerical Input (Single) */}
+              {['number', 'numerical_input'].includes(q.type) && (
+                <div style={{ display: 'flex', alignItems: 'center', maxWidth: '300px' }}>
+                  {q.settings?.prefix && (
+                    <span style={{ padding: '8px 12px', backgroundColor: 'var(--ls-color-g-200)', border: '1px solid var(--ls-color-g-400)', borderRight: 'none', borderRadius: '4px 0 0 4px', fontSize: '14px', fontWeight: 600 }}>
+                      {q.settings.prefix}
+                    </span>
+                  )}
+                  <input
+                    type="number"
+                    className={`ls-input ${errors[q.code] ? 'error' : ''}`}
+                    min={q.settings?.min}
+                    max={q.settings?.max}
+                    step={q.settings?.step || 'any'}
+                    placeholder="0"
+                    value={answers[q.code] !== undefined ? answers[q.code] : ''}
+                    onChange={(e) => handleAnswerChange(q.code, e.target.value)}
+                    style={{
+                      borderRadius: q.settings?.prefix && q.settings?.suffix ? '0' : q.settings?.prefix ? '0 4px 4px 0' : q.settings?.suffix ? '4px 0 0 4px' : '4px',
+                    }}
+                  />
+                  {q.settings?.suffix && (
+                    <span style={{ padding: '8px 12px', backgroundColor: 'var(--ls-color-g-200)', border: '1px solid var(--ls-color-g-400)', borderLeft: 'none', borderRadius: '0 4px 4px 0', fontSize: '14px', fontWeight: 600 }}>
+                      {q.settings.suffix}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* 10. Multiple Numerical Input with running Grand Total */}
+              {q.type === 'multiple_numerical_input' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {(q.settings?.rows || ['Item 1', 'Item 2']).map((row, rIdx) => (
+                    <div key={rIdx} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ flex: 1, fontSize: '14px', fontWeight: 500, color: 'var(--ls-color-g-900)' }}>
+                        {row}
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', width: '160px' }}>
+                        {q.settings?.prefix && (
+                          <span style={{ padding: '6px 10px', backgroundColor: 'var(--ls-color-g-200)', border: '1px solid var(--ls-color-g-400)', borderRight: 'none', borderRadius: '4px 0 0 4px', fontSize: '13px', fontWeight: 600 }}>
+                            {q.settings.prefix}
+                          </span>
+                        )}
+                        <input
+                          type="number"
+                          className="ls-input"
+                          placeholder="0.00"
+                          value={answers[q.code]?.[row] !== undefined ? answers[q.code][row] : ''}
+                          onChange={(e) => {
+                            const current = typeof answers[q.code] === 'object' && answers[q.code] !== null ? answers[q.code] : {};
+                            handleAnswerChange(q.code, { ...current, [row]: e.target.value });
+                          }}
+                          style={{
+                            borderRadius: q.settings?.prefix ? '0 4px 4px 0' : '4px',
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+
+                  {q.settings?.showSum !== false && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginTop: '8px',
+                        padding: '10px 14px',
+                        backgroundColor: '#f1f5f9',
+                        borderRadius: '6px',
+                        fontWeight: 700,
+                        fontSize: '14px',
+                      }}
+                    >
+                      <span>Grand Total:</span>
+                      <span style={{ fontFamily: 'monospace', fontSize: '16px', color: accentColor }}>
+                        {q.settings?.prefix || ''}
+                        {(
+                          Object.values(
+                            typeof answers[q.code] === 'object' && answers[q.code] !== null ? answers[q.code] : {}
+                          ).reduce((acc, v) => acc + (parseFloat(v) || 0), 0)
+                        ).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 11. Date / Time */}
+              {['date', 'date_time'].includes(q.type) && (
                 <input
-                  type="number"
+                  type={
+                    (q.settings?.inputType || 'datetime') === 'time'
+                      ? 'time'
+                      : (q.settings?.inputType || 'datetime') === 'date'
+                      ? 'date'
+                      : 'datetime-local'
+                  }
                   className={`ls-input ${errors[q.code] ? 'error' : ''}`}
-                  placeholder="e.g. 42"
                   value={answers[q.code] || ''}
                   onChange={(e) => handleAnswerChange(q.code, e.target.value)}
-                  style={{ maxWidth: '240px' }}
+                  style={{ maxWidth: '280px' }}
                 />
               )}
 
-              {/* 8. Date */}
-              {q.type === 'date' && (
-                <input
-                  type="date"
-                  className={`ls-input ${errors[q.code] ? 'error' : ''}`}
-                  value={answers[q.code] || ''}
-                  onChange={(e) => handleAnswerChange(q.code, e.target.value)}
-                  style={{ maxWidth: '240px' }}
+              {/* 12. Map / Browser Detection */}
+              {q.type === 'map_browser' && (
+                <MapBrowserQuestionInput
+                  question={q}
+                  value={answers[q.code]}
+                  onChange={(telemetry) => handleAnswerChange(q.code, telemetry)}
                 />
               )}
 
-              {/* 9. Matrix / Grid */}
+              {/* 13. Equation Calculation */}
+              {q.type === 'equation' && (
+                <EquationQuestionInput
+                  question={q}
+                  allAnswers={answers}
+                  onChange={(result) => handleAnswerChange(q.code, result)}
+                />
+              )}
+
+              {/* 14. Matrix / Grid */}
               {q.type === 'matrix' && (
                 <div style={{ overflowX: 'auto', border: '1px solid var(--ls-color-g-300)', borderRadius: 'var(--ls-radius-sm)', background: '#fff' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center' }}>
@@ -1217,7 +1862,7 @@ export const SurveyTaking = () => {
                 </div>
               )}
 
-              {/* 10. File Upload / Media Attachments */}
+              {/* 15. File Upload / Media Attachments */}
               {q.type === 'file_upload' && (
                 <FileUploadQuestionInput
                   question={q}
