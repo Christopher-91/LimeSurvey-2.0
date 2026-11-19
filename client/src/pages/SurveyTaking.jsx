@@ -10,6 +10,7 @@ import {
   getLocalizedSurvey,
   getUiText,
 } from '../utils/i18n.js';
+import { LeafletMapPicker } from '../components/LeafletMapPicker.jsx';
 
 const RankingQuestionInput = ({ question, value, onChange, lang = 'en' }) => {
   const options = question.options || [];
@@ -675,165 +676,89 @@ const CompletionLandingPage = ({ survey, selectedLang }) => {
   );
 };
 
-const MapBrowserQuestionInput = ({ question, value, onChange }) => {
-  const [data, setData] = useState(() => value || null);
-  const [locating, setLocating] = useState(false);
-  const [gpsError, setGpsError] = useState(null);
+const MapBrowserQuestionInput = ({ question, value, onChange, accentColor = '#2563eb' }) => {
+  const adminLat = question.settings?.latitude !== undefined ? question.settings.latitude : 53.5511;
+  const adminLng = question.settings?.longitude !== undefined ? question.settings.longitude : 9.9937;
+  const adminZoom = question.settings?.zoom || 10;
+  const adminLocationName = question.settings?.locationName || 'Hamburg, Germany';
+  const allowUserSelect = Boolean(question.settings?.allowUserSelect);
+  const showLocationInfo = question.settings?.showLocationInfo !== false;
+
+  const [telemetry, setTelemetry] = useState(null);
 
   useEffect(() => {
-    if (!data) {
-      const userAgent = navigator.userAgent || '';
-      let browser = 'Unknown Browser';
-      if (userAgent.includes('Firefox')) browser = 'Mozilla Firefox';
-      else if (userAgent.includes('SamsungBrowser')) browser = 'Samsung Internet';
-      else if (userAgent.includes('Opera') || userAgent.includes('OPR')) browser = 'Opera';
-      else if (userAgent.includes('Edge') || userAgent.includes('Edg')) browser = 'Microsoft Edge';
-      else if (userAgent.includes('Chrome')) browser = 'Google Chrome';
-      else if (userAgent.includes('Safari')) browser = 'Apple Safari';
+    const userAgent = navigator.userAgent || '';
+    let browser = 'Unknown Browser';
+    if (userAgent.includes('Firefox')) browser = 'Mozilla Firefox';
+    else if (userAgent.includes('SamsungBrowser')) browser = 'Samsung Internet';
+    else if (userAgent.includes('Opera') || userAgent.includes('OPR')) browser = 'Opera';
+    else if (userAgent.includes('Edge') || userAgent.includes('Edg')) browser = 'Microsoft Edge';
+    else if (userAgent.includes('Chrome')) browser = 'Google Chrome';
+    else if (userAgent.includes('Safari')) browser = 'Apple Safari';
 
-      let os = 'Unknown OS';
-      if (userAgent.includes('Win')) os = 'Windows';
-      else if (userAgent.includes('Mac')) os = 'macOS';
-      else if (userAgent.includes('Android')) os = 'Android';
-      else if (userAgent.includes('iPhone') || userAgent.includes('iPad')) os = 'iOS';
-      else if (userAgent.includes('Linux')) os = 'Linux';
+    let os = 'Unknown OS';
+    if (userAgent.includes('Win')) os = 'Windows';
+    else if (userAgent.includes('Mac')) os = 'macOS';
+    else if (userAgent.includes('Android')) os = 'Android';
+    else if (userAgent.includes('iPhone') || userAgent.includes('iPad')) os = 'iOS';
+    else if (userAgent.includes('Linux')) os = 'Linux';
 
-      const screenRes = typeof window !== 'undefined' && window.screen
-        ? `${window.screen.width}x${window.screen.height}`
-        : 'Unknown';
-      const tz = typeof Intl !== 'undefined' && Intl.DateTimeFormat
-        ? Intl.DateTimeFormat().resolvedOptions().timeZone
-        : 'UTC';
-      const language = navigator.language || 'en-US';
+    const screenRes = typeof window !== 'undefined' && window.screen
+      ? `${window.screen.width}x${window.screen.height}`
+      : 'Unknown';
+    const tz = typeof Intl !== 'undefined' && Intl.DateTimeFormat
+      ? Intl.DateTimeFormat().resolvedOptions().timeZone
+      : 'UTC';
+    const language = navigator.language || 'en-US';
 
-      const initialData = {
-        browser,
-        os,
-        screenResolution: screenRes,
-        timezone: tz,
-        language,
-        timestamp: new Date().toISOString(),
-      };
-      setData(initialData);
-      onChange(initialData);
+    const initialTelemetry = {
+      browser,
+      os,
+      screenResolution: screenRes,
+      timezone: tz,
+      language,
+      timestamp: new Date().toISOString(),
+    };
+    setTelemetry(initialTelemetry);
+
+    if (!value) {
+      onChange({
+        adminLocation: {
+          latitude: adminLat,
+          longitude: adminLng,
+          locationName: adminLocationName,
+        },
+        telemetry: initialTelemetry,
+      });
     }
   }, []);
 
-  const handleGetLocation = () => {
-    if (!navigator.geolocation) {
-      setGpsError('Geolocation is not supported by your browser.');
-      return;
-    }
-    setLocating(true);
-    setGpsError(null);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocating(false);
-        const updated = {
-          ...(data || {}),
-          gps: {
-            latitude: Number(pos.coords.latitude.toFixed(5)),
-            longitude: Number(pos.coords.longitude.toFixed(5)),
-            accuracy: Math.round(pos.coords.accuracy),
-          },
-        };
-        setData(updated);
-        onChange(updated);
+  const handleMapLocationChange = (locData) => {
+    onChange({
+      adminLocation: {
+        latitude: adminLat,
+        longitude: adminLng,
+        locationName: adminLocationName,
       },
-      (err) => {
-        setLocating(false);
-        setGpsError(err.message || 'Unable to retrieve location.');
-      },
-      { timeout: 10000, enableHighAccuracy: true }
-    );
+      userInteraction: locData,
+      telemetry: telemetry,
+    });
   };
 
   return (
-    <div
-      style={{
-        backgroundColor: '#f8fafc',
-        border: '1px solid #cbd5e1',
-        borderRadius: '8px',
-        padding: '16px',
-        maxWidth: '560px',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-        <i className="ri-shield-check-line" style={{ color: '#10b981', fontSize: '20px' }} />
-        <span style={{ fontSize: '13.5px', fontWeight: 700, color: '#1e293b' }}>
-          Environment &amp; Telemetry Detection
-        </span>
-      </div>
-
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-          gap: '8px',
-          fontSize: '12.5px',
-          backgroundColor: '#ffffff',
-          padding: '12px',
-          borderRadius: '6px',
-          border: '1px solid #e2e8f0',
-        }}
-      >
-        <div>
-          <span style={{ color: '#64748b', display: 'block' }}>Browser:</span>
-          <strong>{data?.browser || 'Detecting...'}</strong>
-        </div>
-        <div>
-          <span style={{ color: '#64748b', display: 'block' }}>Operating System:</span>
-          <strong>{data?.os || 'Detecting...'}</strong>
-        </div>
-        <div>
-          <span style={{ color: '#64748b', display: 'block' }}>Screen Viewport:</span>
-          <strong>{data?.screenResolution || 'Detecting...'}</strong>
-        </div>
-        <div>
-          <span style={{ color: '#64748b', display: 'block' }}>Timezone:</span>
-          <strong>{data?.timezone || 'Detecting...'}</strong>
-        </div>
-      </div>
-
-      {question.settings?.captureGps !== false && (
-        <div style={{ marginTop: '12px' }}>
-          {data?.gps ? (
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '6px 12px',
-                borderRadius: '6px',
-                backgroundColor: '#ecfdf5',
-                color: '#065f46',
-                fontSize: '12px',
-                fontWeight: 600,
-                border: '1px solid #a7f3d0',
-              }}
-            >
-              <i className="ri-map-pin-2-fill" style={{ color: '#10b981' }} />
-              <span>Location captured: {data.gps.latitude}, {data.gps.longitude} (±{data.gps.accuracy}m)</span>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={handleGetLocation}
-              disabled={locating}
-              className="ls-btn ls-btn-outline ls-btn-sm"
-              style={{ fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-            >
-              <i className={locating ? 'ri-loader-4-line ri-spin' : 'ri-map-pin-line'} />
-              {locating ? 'Detecting GPS Location...' : 'Include GPS Coordinates'}
-            </button>
-          )}
-          {gpsError && (
-            <p style={{ margin: '4px 0 0 0', fontSize: '11.5px', color: '#ef4444' }}>
-              {gpsError}
-            </p>
-          )}
-        </div>
-      )}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+      <LeafletMapPicker
+        initialLat={adminLat}
+        initialLng={adminLng}
+        initialZoom={adminZoom}
+        locationName={adminLocationName}
+        isAdmin={false}
+        allowUserSelect={allowUserSelect}
+        showInfoCard={showLocationInfo}
+        onChange={handleMapLocationChange}
+        accentColor={accentColor}
+        height="380px"
+      />
     </div>
   );
 };
@@ -1809,6 +1734,7 @@ export const SurveyTaking = () => {
                   question={q}
                   value={answers[q.code]}
                   onChange={(telemetry) => handleAnswerChange(q.code, telemetry)}
+                  accentColor={accentColor}
                 />
               )}
 

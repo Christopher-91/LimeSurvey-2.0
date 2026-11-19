@@ -11,6 +11,7 @@ import {
   getLocalizedSurvey,
   getUiText,
 } from '../utils/i18n.js';
+import { LeafletMapPicker } from '../components/LeafletMapPicker.jsx';
 
 export const ACCENT_COLOR_PRESETS = [
   { name: 'Emerald', hex: '#10b981', label: 'Emerald Green (Default)' },
@@ -192,8 +193,16 @@ export const QUESTION_TYPE_CATEGORIES = [
         id: 'map_browser_detection',
         label: 'Map/browser detection',
         type: 'map_browser',
-        helpText: 'Automatic browser, platform, and geolocation environment detection',
-        settings: { autoDetect: true },
+        helpText: 'Map location and browser environment detection',
+        settings: {
+          latitude: 53.5511,
+          longitude: 9.9937,
+          zoom: 10,
+          locationName: 'Hamburg, Germany',
+          allowUserSelect: false,
+          showLocationInfo: true,
+          captureGps: true,
+        },
       },
       {
         id: 'date_time',
@@ -3825,74 +3834,247 @@ export const SurveyBuilder = () => {
                           </div>
                         )}
 
-                        {/* 9. Map / Browser Detection Telemetry Builder */}
+                        {/* 9. Map / Browser Detection Location Builder */}
                         {q.type === 'map_browser' && (
                           <div
                             style={{
-                              backgroundColor: '#f8fafc',
-                              border: '1px solid #e2e8f0',
+                              backgroundColor: '#ffffff',
+                              border: '1px solid #cbd5e1',
                               borderRadius: '8px',
-                              padding: '14px 18px',
-                              maxWidth: '640px',
+                              padding: '16px',
+                              maxWidth: '720px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '14px',
                             }}
                           >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                              <div
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <div
+                                  style={{
+                                    width: '34px',
+                                    height: '34px',
+                                    borderRadius: '6px',
+                                    backgroundColor: '#dbeafe',
+                                    color: '#2563eb',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '18px',
+                                  }}
+                                >
+                                  <i className="ri-map-pin-2-fill" />
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#0f172a' }}>
+                                    Map Location &amp; Browser Detection
+                                  </div>
+                                  <div style={{ fontSize: '11.5px', color: '#64748b' }}>
+                                    Set the target location on the map for respondents to view (matching screenshot)
+                                  </div>
+                                </div>
+                              </div>
+
+                              <span
                                 style={{
-                                  width: '32px',
-                                  height: '32px',
-                                  borderRadius: '6px',
-                                  backgroundColor: '#e0f2fe',
-                                  color: '#0284c7',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontSize: '16px',
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                  color: '#2563eb',
+                                  backgroundColor: '#eff6ff',
+                                  padding: '3px 8px',
+                                  borderRadius: '4px',
+                                  border: '1px solid #bfdbfe',
                                 }}
                               >
-                                <i className="ri-global-line" />
+                                Interactive Leaflet Map
+                              </span>
+                            </div>
+
+                            {/* Preset Quick Cities */}
+                            <div>
+                              <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
+                                Quick City Presets (Click to center pin):
                               </div>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                {[
+                                  { name: 'Hamburg, Germany', lat: 53.5511, lng: 9.9937, zoom: 10 },
+                                  { name: 'Berlin, Germany', lat: 52.52, lng: 13.405, zoom: 11 },
+                                  { name: 'Munich, Germany', lat: 48.1351, lng: 11.582, zoom: 11 },
+                                  { name: 'London, UK', lat: 51.5074, lng: -0.1278, zoom: 10 },
+                                  { name: 'Paris, France', lat: 48.8566, lng: 2.3522, zoom: 11 },
+                                  { name: 'New York, USA', lat: 40.7128, lng: -74.006, zoom: 10 },
+                                  { name: 'Tokyo, Japan', lat: 35.6762, lng: 139.6503, zoom: 10 },
+                                  { name: 'Bengaluru, India', lat: 12.9716, lng: 77.5946, zoom: 11 },
+                                ].map((city) => {
+                                  const isCurrent =
+                                    Math.abs((q.settings?.latitude ?? 53.5511) - city.lat) < 0.01 &&
+                                    Math.abs((q.settings?.longitude ?? 9.9937) - city.lng) < 0.01;
+                                  return (
+                                    <button
+                                      key={city.name}
+                                      type="button"
+                                      onClick={() =>
+                                        updateQuestion(idx, {
+                                          settings: {
+                                            ...(q.settings || {}),
+                                            latitude: city.lat,
+                                            longitude: city.lng,
+                                            zoom: city.zoom,
+                                            locationName: city.name,
+                                          },
+                                        })
+                                      }
+                                      style={{
+                                        padding: '4px 9px',
+                                        fontSize: '11.5px',
+                                        fontWeight: 600,
+                                        borderRadius: '6px',
+                                        border: '1px solid',
+                                        borderColor: isCurrent ? '#2563eb' : '#cbd5e1',
+                                        backgroundColor: isCurrent ? '#eff6ff' : '#f8fafc',
+                                        color: isCurrent ? '#1d4ed8' : '#475569',
+                                        cursor: 'pointer',
+                                      }}
+                                    >
+                                      {city.name.split(',')[0]}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            {/* Location Settings Row: Name, Lat, Lng, Zoom */}
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
+                              <div style={{ gridColumn: 'span 2' }}>
+                                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#475569', marginBottom: '3px' }}>
+                                  Location Title / Label:
+                                </label>
+                                <input
+                                  type="text"
+                                  value={q.settings?.locationName || 'Hamburg, Germany'}
+                                  onChange={(e) =>
+                                    updateQuestion(idx, {
+                                      settings: { ...(q.settings || {}), locationName: e.target.value },
+                                    })
+                                  }
+                                  placeholder="e.g. Hamburg, Germany"
+                                  style={{ width: '100%', padding: '6px 10px', fontSize: '13px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                />
+                              </div>
+
                               <div>
-                                <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
-                                  Map &amp; Browser Environment Telemetry
-                                </div>
-                                <div style={{ fontSize: '11px', color: '#64748b' }}>
-                                  Automatically captures respondent&apos;s browser, OS, display, and location metadata
-                                </div>
+                                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#475569', marginBottom: '3px' }}>
+                                  Latitude:
+                                </label>
+                                <input
+                                  type="number"
+                                  step="0.0001"
+                                  value={q.settings?.latitude !== undefined ? q.settings.latitude : 53.5511}
+                                  onChange={(e) =>
+                                    updateQuestion(idx, {
+                                      settings: { ...(q.settings || {}), latitude: parseFloat(e.target.value) || 0 },
+                                    })
+                                  }
+                                  style={{ width: '100%', padding: '6px 10px', fontSize: '13px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                />
+                              </div>
+
+                              <div>
+                                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#475569', marginBottom: '3px' }}>
+                                  Longitude:
+                                </label>
+                                <input
+                                  type="number"
+                                  step="0.0001"
+                                  value={q.settings?.longitude !== undefined ? q.settings.longitude : 9.9937}
+                                  onChange={(e) =>
+                                    updateQuestion(idx, {
+                                      settings: { ...(q.settings || {}), longitude: parseFloat(e.target.value) || 0 },
+                                    })
+                                  }
+                                  style={{ width: '100%', padding: '6px 10px', fontSize: '13px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                />
+                              </div>
+
+                              <div>
+                                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#475569', marginBottom: '3px' }}>
+                                  Zoom Level:
+                                </label>
+                                <select
+                                  value={q.settings?.zoom || 10}
+                                  onChange={(e) =>
+                                    updateQuestion(idx, {
+                                      settings: { ...(q.settings || {}), zoom: parseInt(e.target.value, 10) },
+                                    })
+                                  }
+                                  style={{ width: '100%', padding: '6px 8px', fontSize: '13px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                >
+                                  {[6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map((z) => (
+                                    <option key={z} value={z}>
+                                      {z} {z === 10 ? '(Default)' : ''}
+                                    </option>
+                                  ))}
+                                </select>
                               </div>
                             </div>
 
-                            <div
-                              style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                                gap: '8px',
-                                backgroundColor: '#ffffff',
-                                padding: '12px',
-                                borderRadius: '6px',
-                                border: '1px solid #cbd5e1',
-                                marginBottom: '12px',
-                              }}
-                            >
-                              <div style={{ fontSize: '11.5px', color: '#475569' }}>
-                                <strong style={{ color: '#0f172a', display: 'block' }}>Browser / OS:</strong>
-                                <span style={{ color: '#0284c7' }}>Auto-detected at survey launch</span>
+                            {/* Interactive Leaflet Map Picker Component */}
+                            <div style={{ marginTop: '4px' }}>
+                              <div style={{ fontSize: '11.5px', color: '#64748b', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <i className="ri-information-line" style={{ color: '#2563eb' }} />
+                                <span>Click anywhere on the map or drag the blue marker to adjust the location pin.</span>
                               </div>
-                              <div style={{ fontSize: '11.5px', color: '#475569' }}>
-                                <strong style={{ color: '#0f172a', display: 'block' }}>Screen / Viewport:</strong>
-                                <span style={{ color: '#0284c7' }}>Device resolution &amp; ratio</span>
-                              </div>
-                              <div style={{ fontSize: '11.5px', color: '#475569' }}>
-                                <strong style={{ color: '#0f172a', display: 'block' }}>Timezone &amp; Locale:</strong>
-                                <span style={{ color: '#0284c7' }}>Local timezone &amp; language</span>
-                              </div>
-                              <div style={{ fontSize: '11.5px', color: '#475569' }}>
-                                <strong style={{ color: '#0f172a', display: 'block' }}>Map / GPS:</strong>
-                                <span style={{ color: '#10b981' }}>Optional coordinates capture</span>
-                              </div>
+                              <LeafletMapPicker
+                                initialLat={q.settings?.latitude ?? 53.5511}
+                                initialLng={q.settings?.longitude ?? 9.9937}
+                                initialZoom={q.settings?.zoom ?? 10}
+                                locationName={q.settings?.locationName || 'Hamburg, Germany'}
+                                isAdmin={true}
+                                onLocationChange={(loc) =>
+                                  updateQuestion(idx, {
+                                    settings: {
+                                      ...(q.settings || {}),
+                                      latitude: loc.lat,
+                                      longitude: loc.lng,
+                                      zoom: loc.zoom,
+                                      locationName: loc.locationName || q.settings?.locationName,
+                                    },
+                                  })
+                                }
+                                height="340px"
+                              />
                             </div>
 
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', fontSize: '12px', color: '#334155' }}>
+                            {/* Additional Options */}
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', fontSize: '12px', color: '#334155', borderTop: '1px solid #f1f5f9', paddingTop: '10px' }}>
+                              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={q.settings?.showLocationInfo !== false}
+                                  onChange={(e) =>
+                                    updateQuestion(idx, {
+                                      settings: { ...(q.settings || {}), showLocationInfo: e.target.checked },
+                                    })
+                                  }
+                                  style={{ accentColor: '#2563eb' }}
+                                />
+                                <span>Show Location Info Card &amp; Coordinates to respondent</span>
+                              </label>
+
+                              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={Boolean(q.settings?.allowUserSelect)}
+                                  onChange={(e) =>
+                                    updateQuestion(idx, {
+                                      settings: { ...(q.settings || {}), allowUserSelect: e.target.checked },
+                                    })
+                                  }
+                                  style={{ accentColor: '#2563eb' }}
+                                />
+                                <span>Allow respondent to click map to select custom pin coordinates</span>
+                              </label>
+
                               <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
                                 <input
                                   type="checkbox"
@@ -3902,22 +4084,9 @@ export const SurveyBuilder = () => {
                                       settings: { ...(q.settings || {}), captureGps: e.target.checked },
                                     })
                                   }
-                                  style={{ accentColor: '#10b981' }}
+                                  style={{ accentColor: '#2563eb' }}
                                 />
-                                <span>Prompt for GPS Location Coordinates</span>
-                              </label>
-                              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                                <input
-                                  type="checkbox"
-                                  checked={q.settings?.showSummaryToRespondent !== false}
-                                  onChange={(e) =>
-                                    updateQuestion(idx, {
-                                      settings: { ...(q.settings || {}), showSummaryToRespondent: e.target.checked },
-                                    })
-                                  }
-                                  style={{ accentColor: '#10b981' }}
-                                />
-                                <span>Show telemetry confirmation card to respondent</span>
+                                <span>Enable &apos;Get My Distance&apos; / GPS button for respondents</span>
                               </label>
                             </div>
                           </div>
