@@ -447,20 +447,39 @@ export const getLocalizedQuestion = (question, lang = 'en', surveySettings = nul
 /**
  * Auto-translates a text string to target language using backend translation service
  */
-export async function autoTranslateText(text, targetLang, sourceLang = 'en') {
+export async function autoTranslateText(text, targetLang, sourceLang = 'auto') {
   if (!text || !text.trim()) return text || '';
-  const effectiveSource = !sourceLang || sourceLang === 'auto' ? (targetLang === 'en' ? 'de' : 'en') : sourceLang;
-  if (targetLang === effectiveSource) return text || '';
+  const src = !sourceLang ? 'auto' : sourceLang;
+  if (src !== 'auto' && src === targetLang) return text || '';
+
   try {
-    const res = await apiClient.post('/translate', { text: text.trim(), targetLang, sourceLang: effectiveSource });
+    const res = await apiClient.post('/translate', { text: text.trim(), targetLang, sourceLang: src });
     if (res.success && res.data?.translation) {
       return res.data.translation;
     }
   } catch (err) {
-    // Client fallback: MyMemory direct call
+    // 1. Browser fallback: Google GTX with auto detection
     try {
       const tgt = targetLang === 'zh' ? 'zh-CN' : targetLang;
-      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.trim())}&langpair=${effectiveSource}|${tgt}`;
+      const gtxUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${src}&tl=${tgt}&dt=t&q=${encodeURIComponent(text.trim())}`;
+      const gtxResp = await fetch(gtxUrl);
+      if (gtxResp.ok) {
+        const data = await gtxResp.json();
+        if (Array.isArray(data?.[0])) {
+          const result = data[0].map((s) => s[0]).join('').trim();
+          if (result) return result;
+        }
+      }
+    } catch {
+      // Fall through to MyMemory
+    }
+
+    // 2. Browser fallback: MyMemory direct call
+    try {
+      const fallbackSrc = targetLang === 'en' ? 'de' : 'en';
+      const mmSrc = src === 'auto' ? fallbackSrc : src;
+      const tgt = targetLang === 'zh' ? 'zh-CN' : targetLang;
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.trim())}&langpair=${mmSrc}|${tgt}`;
       const resp = await fetch(url);
       const json = await resp.json();
       if (json?.responseData?.translatedText) {
@@ -476,22 +495,23 @@ export async function autoTranslateText(text, targetLang, sourceLang = 'en') {
 /**
  * Auto-translates a full question object (text, helpText, options, matrix)
  */
-export async function autoTranslateQuestion(question, targetLang, sourceLang = 'en') {
+export async function autoTranslateQuestion(question, targetLang, sourceLang = 'auto') {
   if (!question || !targetLang) return null;
-  const effectiveSource = !sourceLang || sourceLang === 'auto' ? (targetLang === 'en' ? 'de' : 'en') : sourceLang;
-  if (targetLang === effectiveSource) return null;
+  const src = !sourceLang ? 'auto' : sourceLang;
+  if (src !== 'auto' && src === targetLang) return null;
+
   try {
-    const res = await apiClient.post('/translate', { question, targetLang, sourceLang: effectiveSource });
+    const res = await apiClient.post('/translate', { question, targetLang, sourceLang: src });
     if (res.success && res.data?.question) {
       return res.data.question;
     }
   } catch (err) {
     try {
-      const transText = await autoTranslateText(question.text, targetLang, effectiveSource);
-      const transHelp = question.helpText ? await autoTranslateText(question.helpText, targetLang, effectiveSource) : '';
+      const transText = await autoTranslateText(question.text, targetLang, src);
+      const transHelp = question.helpText ? await autoTranslateText(question.helpText, targetLang, src) : '';
       const optTranslations = {};
       for (const opt of question.options || []) {
-        optTranslations[opt.code] = await autoTranslateText(opt.text, targetLang, effectiveSource);
+        optTranslations[opt.code] = await autoTranslateText(opt.text, targetLang, src);
       }
       return {
         text: transText,
