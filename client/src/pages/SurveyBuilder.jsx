@@ -892,6 +892,7 @@ export const SurveyBuilder = () => {
 
   // Question Type Selection Modal & Typography State
   const [isQuestionTypeModalOpen, setIsQuestionTypeModalOpen] = useState(false);
+  const [questionModalMode, setQuestionModalMode] = useState('change'); // 'change' (modify active question) or 'add' (append new question)
   const [questionTypeSearchQuery, setQuestionTypeSearchQuery] = useState('');
   const [targetAddIndex, setTargetAddIndex] = useState(null);
   const [isFontModalOpen, setIsFontModalOpen] = useState(false);
@@ -1802,9 +1803,65 @@ export const SurveyBuilder = () => {
     setActiveQuestionIndex(targetIndex);
   };
 
-  const handleSelectQuestionType = (item, afterIndex = null) => {
-    const insertAfter = afterIndex !== null ? afterIndex : targetAddIndex;
-    const newIdx = questions.length + 1;
+  const handleSelectQuestionType = (item, targetIndex = null) => {
+    const isChange = questionModalMode === 'change';
+    const qIdx = targetIndex !== null ? targetIndex : (isChange ? activeQuestionIndex : null);
+
+    if (isChange && qIdx !== null && qIdx >= 0 && qIdx < questions.length) {
+      // Modify the EXISTING question in place (do not add a new question)
+      const existingQ = questions[qIdx];
+      let newOptions = existingQ.options;
+      let newSettings = {
+        ...(existingQ.settings || {}),
+        ...(item.settings ? JSON.parse(JSON.stringify(item.settings)) : {}),
+      };
+
+      // Type-specific option adaptation
+      if (item.id === 'gender' || item.id === 'yes_no') {
+        newOptions = item.options ? item.options.map((o) => ({ ...o })) : null;
+      } else if (['single_choice', 'multiple_choice', 'ranking'].includes(item.type)) {
+        if (!newOptions || newOptions.length === 0) {
+          if (item.options && item.options.length > 0) {
+            newOptions = item.options.map((o) => ({ ...o }));
+          } else if (item.type === 'ranking') {
+            newOptions = [
+              { code: 'AO1', text: 'Option 1' },
+              { code: 'AO2', text: 'Option 2' },
+              { code: 'AO3', text: 'Option 3' },
+            ];
+          } else {
+            newOptions = [
+              { code: 'AO1', text: 'Option 1' },
+              { code: 'AO2', text: 'Option 2' },
+            ];
+          }
+        }
+      } else if (['short_text', 'long_text', 'numerical_input', 'multiple_numerical_input', 'equation', 'file_upload', 'date_time', 'map_browser'].includes(item.type)) {
+        newOptions = null;
+      }
+
+      const updatedQ = {
+        ...existingQ,
+        type: item.type,
+        options: newOptions,
+        settings: newSettings,
+        helpText: existingQ.helpText || item.helpText || '',
+      };
+
+      setQuestions((prev) => {
+        const copy = [...prev];
+        copy[qIdx] = updatedQ;
+        return copy;
+      });
+
+      setActiveQuestionIndex(qIdx);
+      setIsQuestionTypeModalOpen(false);
+      setQuestionTypeSearchQuery('');
+      showToast(`Question #${qIdx + 1} type changed to ${item.label}!`, 'success');
+      return;
+    }
+
+    // Add a NEW question
     let initialOptions = item.options ? item.options.map((o) => ({ ...o })) : null;
     let initialSettings = item.settings ? JSON.parse(JSON.stringify(item.settings)) : null;
 
@@ -1821,6 +1878,7 @@ export const SurveyBuilder = () => {
       ];
     }
 
+    const newIdx = questions.length + 1;
     const newQ = {
       id: `temp-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       code: `Q${newIdx}`,
@@ -1832,22 +1890,11 @@ export const SurveyBuilder = () => {
       settings: initialSettings,
     };
 
-    setQuestions((prev) => {
-      const insertAt =
-        insertAfter !== null && insertAfter >= 0 ? insertAfter + 1 : prev.length;
-      const copy = [...prev];
-      copy.splice(insertAt, 0, newQ);
-      return copy;
-    });
-
-    const targetIndex =
-      insertAfter !== null && insertAfter >= 0
-        ? insertAfter + 1
-        : questions.length;
-    setActiveQuestionIndex(targetIndex);
+    setQuestions((prev) => [...prev, newQ]);
+    setActiveQuestionIndex(questions.length);
     setIsQuestionTypeModalOpen(false);
     setQuestionTypeSearchQuery('');
-    showToast(`Added ${item.label} question!`, 'success');
+    showToast(`Added new question: ${item.label}!`, 'success');
   };
 
   const handleAddQuestionGroup = (afterIndex = null) => {
@@ -2782,6 +2829,7 @@ export const SurveyBuilder = () => {
                 <button
                   type="button"
                   onClick={() => {
+                    setQuestionModalMode('change');
                     setTargetAddIndex(activeQuestionIndex);
                     setIsQuestionTypeModalOpen(true);
                   }}
@@ -2799,7 +2847,7 @@ export const SurveyBuilder = () => {
                     fontSize: '18px',
                     transition: 'all 0.15s ease',
                   }}
-                  title="Choose Question Type to Add"
+                  title="Change Question Type"
                 >
                   <i className="ri-add-line" />
                 </button>
@@ -4822,7 +4870,8 @@ export const SurveyBuilder = () => {
               <button
                 type="button"
                 onClick={() => {
-                  setTargetAddIndex(questions.length - 1);
+                  setQuestionModalMode('add');
+                  setTargetAddIndex(questions.length);
                   setIsQuestionTypeModalOpen(true);
                 }}
                 style={{
@@ -6326,7 +6375,11 @@ export const SurveyBuilder = () => {
                 <input
                   type="text"
                   autoFocus
-                  placeholder="Search for a question type"
+                  placeholder={
+                    questionModalMode === 'change'
+                      ? `Change type for Question #${(targetAddIndex !== null ? targetAddIndex : activeQuestionIndex) + 1}...`
+                      : 'Search for a question type'
+                  }
                   value={questionTypeSearchQuery}
                   onChange={(e) => setQuestionTypeSearchQuery(e.target.value)}
                   style={{
@@ -6364,6 +6417,19 @@ export const SurveyBuilder = () => {
                 <i className="ri-close-line" />
               </button>
             </div>
+
+            {/* Change Mode Indicator Banner */}
+            {questionModalMode === 'change' && (
+              <div style={{ padding: '8px 24px', backgroundColor: '#f5f3ff', borderBottom: '1px solid #e9d5ff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '13px', color: '#6d28d9', fontWeight: 600 }}>
+                <span>
+                  <i className="ri-pencil-line" style={{ marginRight: '6px' }} />
+                  Modifying Question #{(targetAddIndex !== null ? targetAddIndex : activeQuestionIndex) + 1}
+                </span>
+                <span style={{ fontSize: '12px', color: '#7c3aed', fontWeight: 500 }}>
+                  Question text and options will be preserved
+                </span>
+              </div>
+            )}
 
             {/* Sub-bar: + Add question group */}
             <div style={{ padding: '16px 24px 8px 24px' }}>
