@@ -22,9 +22,10 @@ const translationCache = new Map();
 /**
  * Normalizes language codes for translation APIs
  */
-const resolveLangCode = (code) => {
-  if (!code) return 'en';
+const resolveLangCode = (code, fallback = 'en') => {
+  if (!code) return fallback;
   const clean = code.toLowerCase().trim();
+  if (clean === 'auto') return fallback;
   return LANG_CODE_MAP[clean] || clean;
 };
 
@@ -36,11 +37,12 @@ export async function translateSingleText(text, targetLang, sourceLang = 'en') {
     return text || '';
   }
 
-  const src = resolveLangCode(sourceLang);
-  const tgt = resolveLangCode(targetLang);
+  const tgt = resolveLangCode(targetLang, 'en');
+  const fallbackSource = tgt === 'en' ? 'de' : 'en';
+  let src = resolveLangCode(sourceLang, fallbackSource);
 
   if (src === tgt) {
-    return text;
+    src = tgt === 'en' ? 'de' : 'en';
   }
 
   const cacheKey = `${src}:${tgt}:${text.trim()}`;

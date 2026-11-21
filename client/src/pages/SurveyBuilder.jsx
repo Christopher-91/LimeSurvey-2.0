@@ -1349,18 +1349,22 @@ export const SurveyBuilder = () => {
     setTranslatingQIdx(qIndex);
     try {
       const curTrans = q.settings?.translations || {};
-      const baseQText = curTrans.en?.text || q.text;
+      // Always use the CURRENT question text and helper text typed in the card
+      const currentQText = (q.text || '').trim();
+      const currentHelpText = (q.helpText || '').trim();
+
       const qToTranslate = {
         ...q,
-        text: baseQText,
+        text: currentQText,
+        helpText: currentHelpText,
         options: q.options || [],
       };
 
-      const translatedQ = await autoTranslateQuestion(qToTranslate, targetLang, 'auto');
+      const translatedQ = await autoTranslateQuestion(qToTranslate, targetLang, 'en');
       if (translatedQ) {
         const optMap = {};
         (q.options || []).forEach((o) => {
-          optMap[o.code] = curTrans.en?.options?.[o.code] || o.text;
+          optMap[o.code] = o.text;
         });
 
         const updatedOpts = (q.options || []).map((o) => ({
@@ -1369,21 +1373,21 @@ export const SurveyBuilder = () => {
         }));
 
         updateQuestion(qIndex, {
-          text: translatedQ.text || q.text,
-          helpText: translatedQ.helpText !== undefined ? translatedQ.helpText : q.helpText,
+          text: translatedQ.text || currentQText,
+          helpText: translatedQ.helpText !== undefined ? translatedQ.helpText : currentHelpText,
           options: updatedOpts,
           settings: {
             ...(q.settings || {}),
             translations: {
               ...curTrans,
-              en: curTrans.en || {
-                text: q.text,
-                helpText: q.helpText,
+              en: {
+                text: currentQText,
+                helpText: currentHelpText,
                 options: optMap,
               },
               [targetLang]: {
-                text: translatedQ.text || q.text,
-                helpText: translatedQ.helpText !== undefined ? translatedQ.helpText : q.helpText,
+                text: translatedQ.text || currentQText,
+                helpText: translatedQ.helpText !== undefined ? translatedQ.helpText : currentHelpText,
                 options: translatedQ.options || {},
                 rows: translatedQ.rows || q.settings?.rows,
                 columns: translatedQ.columns || q.settings?.columns,
@@ -1407,16 +1411,16 @@ export const SurveyBuilder = () => {
     if (targetLang === 'en') return;
     setIsTranslating(true);
     try {
-      const baseTitle = surveyTranslations.en?.title || title;
-      const baseDesc = surveyTranslations.en?.description || description;
-      const baseWelcome = surveyTranslations.en?.welcomeMessage || welcomeMessage;
-      const baseEnd = surveyTranslations.en?.endMessage || endMessage;
+      const baseTitle = title.trim() || surveyTranslations.en?.title || '';
+      const baseDesc = description.trim() || surveyTranslations.en?.description || '';
+      const baseWelcome = welcomeMessage.trim() || surveyTranslations.en?.welcomeMessage || '';
+      const baseEnd = endMessage.trim() || surveyTranslations.en?.endMessage || '';
 
-      if (baseTitle.trim()) {
-        const transTitle = await autoTranslateText(baseTitle, targetLang, 'auto');
-        const transDesc = baseDesc.trim() ? await autoTranslateText(baseDesc, targetLang, 'auto') : '';
-        const transWelcome = baseWelcome.trim() ? await autoTranslateText(baseWelcome, targetLang, 'auto') : '';
-        const transEnd = baseEnd.trim() ? await autoTranslateText(baseEnd, targetLang, 'auto') : '';
+      if (baseTitle) {
+        const transTitle = await autoTranslateText(baseTitle, targetLang, 'en');
+        const transDesc = baseDesc ? await autoTranslateText(baseDesc, targetLang, 'en') : '';
+        const transWelcome = baseWelcome ? await autoTranslateText(baseWelcome, targetLang, 'en') : '';
+        const transEnd = baseEnd ? await autoTranslateText(baseEnd, targetLang, 'en') : '';
 
         setTitle(transTitle);
         setDescription(transDesc);
@@ -1425,7 +1429,7 @@ export const SurveyBuilder = () => {
 
         setSurveyTranslations((prev) => ({
           ...prev,
-          en: prev.en || {
+          en: {
             title: baseTitle,
             description: baseDesc,
             welcomeMessage: baseWelcome,
@@ -1442,47 +1446,45 @@ export const SurveyBuilder = () => {
 
       const updatedQuestions = await Promise.all(
         questions.map(async (q) => {
-          const curTrans = q.settings?.translations || {};
-          const baseQText = curTrans.en?.text || q.text;
-          if (!baseQText || !baseQText.trim()) return q;
+          const currentQText = (q.text || '').trim();
+          if (!currentQText) return q;
 
           const optMap = {};
           (q.options || []).forEach((o) => {
-            optMap[o.code] = curTrans.en?.options?.[o.code] || o.text;
+            optMap[o.code] = o.text;
           });
 
           const qToTranslate = {
             ...q,
-            text: baseQText,
-            options: (q.options || []).map((o) => ({
-              ...o,
-              text: curTrans.en?.options?.[o.code] || o.text,
-            })),
+            text: currentQText,
+            helpText: q.helpText || '',
+            options: q.options || [],
           };
 
-          const translatedQ = await autoTranslateQuestion(qToTranslate, targetLang, 'auto');
+          const translatedQ = await autoTranslateQuestion(qToTranslate, targetLang, 'en');
           if (translatedQ) {
             const updatedOpts = (q.options || []).map((o) => ({
               ...o,
               text: translatedQ.options?.[o.code] || o.text,
             }));
 
+            const curTrans = q.settings?.translations || {};
             return {
               ...q,
-              text: translatedQ.text || q.text,
+              text: translatedQ.text || currentQText,
               helpText: translatedQ.helpText !== undefined ? translatedQ.helpText : q.helpText,
               options: updatedOpts,
               settings: {
                 ...(q.settings || {}),
                 translations: {
                   ...curTrans,
-                  en: curTrans.en || {
-                    text: q.text,
-                    helpText: q.helpText,
+                  en: {
+                    text: currentQText,
+                    helpText: q.helpText || '',
                     options: optMap,
                   },
                   [targetLang]: {
-                    text: translatedQ.text || q.text,
+                    text: translatedQ.text || currentQText,
                     helpText: translatedQ.helpText !== undefined ? translatedQ.helpText : q.helpText,
                     options: translatedQ.options || {},
                     rows: translatedQ.rows || q.settings?.rows,

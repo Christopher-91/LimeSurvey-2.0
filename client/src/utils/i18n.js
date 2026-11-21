@@ -448,9 +448,11 @@ export const getLocalizedQuestion = (question, lang = 'en', surveySettings = nul
  * Auto-translates a text string to target language using backend translation service
  */
 export async function autoTranslateText(text, targetLang, sourceLang = 'en') {
-  if (!text || !text.trim() || targetLang === sourceLang) return text || '';
+  if (!text || !text.trim()) return text || '';
+  const effectiveSource = !sourceLang || sourceLang === 'auto' ? (targetLang === 'en' ? 'de' : 'en') : sourceLang;
+  if (targetLang === effectiveSource) return text || '';
   try {
-    const res = await apiClient.post('/translate', { text: text.trim(), targetLang, sourceLang });
+    const res = await apiClient.post('/translate', { text: text.trim(), targetLang, sourceLang: effectiveSource });
     if (res.success && res.data?.translation) {
       return res.data.translation;
     }
@@ -458,7 +460,7 @@ export async function autoTranslateText(text, targetLang, sourceLang = 'en') {
     // Client fallback: MyMemory direct call
     try {
       const tgt = targetLang === 'zh' ? 'zh-CN' : targetLang;
-      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.trim())}&langpair=${sourceLang}|${tgt}`;
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.trim())}&langpair=${effectiveSource}|${tgt}`;
       const resp = await fetch(url);
       const json = await resp.json();
       if (json?.responseData?.translatedText) {
@@ -475,19 +477,21 @@ export async function autoTranslateText(text, targetLang, sourceLang = 'en') {
  * Auto-translates a full question object (text, helpText, options, matrix)
  */
 export async function autoTranslateQuestion(question, targetLang, sourceLang = 'en') {
-  if (!question || !targetLang || targetLang === sourceLang) return null;
+  if (!question || !targetLang) return null;
+  const effectiveSource = !sourceLang || sourceLang === 'auto' ? (targetLang === 'en' ? 'de' : 'en') : sourceLang;
+  if (targetLang === effectiveSource) return null;
   try {
-    const res = await apiClient.post('/translate', { question, targetLang, sourceLang });
+    const res = await apiClient.post('/translate', { question, targetLang, sourceLang: effectiveSource });
     if (res.success && res.data?.question) {
       return res.data.question;
     }
   } catch (err) {
     try {
-      const transText = await autoTranslateText(question.text, targetLang, sourceLang);
-      const transHelp = question.helpText ? await autoTranslateText(question.helpText, targetLang, sourceLang) : '';
+      const transText = await autoTranslateText(question.text, targetLang, effectiveSource);
+      const transHelp = question.helpText ? await autoTranslateText(question.helpText, targetLang, effectiveSource) : '';
       const optTranslations = {};
       for (const opt of question.options || []) {
-        optTranslations[opt.code] = await autoTranslateText(opt.text, targetLang, sourceLang);
+        optTranslations[opt.code] = await autoTranslateText(opt.text, targetLang, effectiveSource);
       }
       return {
         text: transText,
