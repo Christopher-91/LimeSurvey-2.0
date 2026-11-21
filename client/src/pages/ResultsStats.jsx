@@ -409,7 +409,7 @@ export const ResultsStats = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
               <div>
                 <span style={{ fontSize: '13px', color: 'var(--ls-color-primary)', fontWeight: 600 }}>
-                  Question #{idx + 1} ({q.code})
+                  Question {idx + 1}
                 </span>
                 <h3 style={{ fontSize: '17px', fontWeight: 600, marginTop: '2px' }}>{q.text}</h3>
               </div>
@@ -984,7 +984,7 @@ export const ResultsStats = () => {
                           return (
                             <div key={key}>
                               <div style={{ fontSize: '12px', color: 'var(--ls-color-primary)', fontWeight: 600, marginBottom: '2px' }}>
-                                {question ? `${question.text} (${question.code})` : key}
+                                {question ? question.text : key}
                               </div>
                               <div>{formatAnswerValue(val, question)}</div>
                             </div>

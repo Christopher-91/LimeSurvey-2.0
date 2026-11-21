@@ -262,7 +262,7 @@ export class ExportService {
 
       // Question Title Banner
       doc.fontSize(9.5).fillColor('#0f172a').text(
-        `Q${qIdx + 1}. [${q.code || `Q${qIdx + 1}`}] ${q.text}`,
+        `Question ${qIdx + 1}. ${q.text}`,
         40,
         currentY,
         { width: contentWidth - 110 }
