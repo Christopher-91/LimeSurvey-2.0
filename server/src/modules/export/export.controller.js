@@ -15,4 +15,17 @@ export class ExportController {
       next(error);
     }
   }
+
+  static async exportExecutivePdf(req, res, next) {
+    try {
+      const { surveyId } = req.params;
+      const result = await ExportService.generateExecutivePdf(surveyId);
+
+      res.setHeader('Content-Type', result.contentType);
+      res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+      return res.send(result.buffer);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

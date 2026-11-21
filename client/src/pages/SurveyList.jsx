@@ -226,6 +226,15 @@ export const SurveyList = () => {
                       >
                         <i className="ri-file-excel-line" />
                       </a>
+                      <a
+                        href={`/api/v1/surveys/${s.id}/export?format=pdf`}
+                        className="ls-btn ls-btn-outline ls-btn-sm"
+                        title="Download Executive Summary PDF Report"
+                        download
+                        style={{ color: '#065f46', borderColor: 'rgba(6, 95, 70, 0.3)' }}
+                      >
+                        <i className="ri-file-pdf-2-line" />
+                      </a>
                       <button
                         type="button"
                         onClick={() => setSurveyToDelete(s)}

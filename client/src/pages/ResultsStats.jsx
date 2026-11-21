@@ -173,7 +173,37 @@ export const ResultsStats = () => {
   const [zkView, setZkView] = useState('ghost_comments'); // 'ghost_comments' | 'attendance'
   const [isLoading, setIsLoading] = useState(true);
   const [isViewLoading, setIsViewLoading] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const { showToast } = useToast();
+
+  const handleDownloadExecutivePdf = async () => {
+    try {
+      setIsDownloadingPdf(true);
+      const res = await fetch(`/api/v1/surveys/${id}/export?format=pdf`, {
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        throw new Error('Failed to generate executive report');
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const safeTitle = (stats?.title || 'Survey')
+        .replace(/[^a-zA-Z0-9_-]/g, '_')
+        .slice(0, 30);
+      a.download = `Executive_Summary_${id}_${safeTitle}_${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      showToast('Executive Summary PDF generated and downloaded successfully!', 'success');
+    } catch (err) {
+      showToast(err.message || 'Error generating executive summary PDF', 'error');
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -294,7 +324,28 @@ export const ResultsStats = () => {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={handleDownloadExecutivePdf}
+            className="ls-btn"
+            style={{
+              backgroundColor: '#065f46',
+              color: '#ffffff',
+              border: '1px solid #047857',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontWeight: 600,
+              boxShadow: '0 2px 4px rgba(6, 95, 70, 0.2)',
+              cursor: isDownloadingPdf ? 'not-allowed' : 'pointer',
+              opacity: isDownloadingPdf ? 0.8 : 1,
+            }}
+            disabled={isDownloadingPdf}
+          >
+            <i className={isDownloadingPdf ? 'ri-loader-4-line ri-spin' : 'ri-file-pdf-2-line'} style={{ fontSize: '16px' }} />
+            {isDownloadingPdf ? 'Compiling Report...' : 'Download Executive Report (PDF)'}
+          </button>
           <a
             href={`/api/v1/surveys/${id}/export?format=xlsx`}
             className="ls-btn ls-btn-primary"
