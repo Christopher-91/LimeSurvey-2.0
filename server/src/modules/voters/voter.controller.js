@@ -24,7 +24,7 @@ export class VoterController {
 
   static async generateUniversal(req, res, next) {
     try {
-      const voter = await VoterService.generateUniversal(req.params.surveyId, req.body.token);
+      const voter = await VoterService.generateUniversal(req.params.surveyId, req.body);
       return res.status(201).json({
         success: true,
         data: { voter, message: 'Universal access code created for all participants.' },
@@ -36,11 +36,23 @@ export class VoterController {
 
   static async batchGenerate(req, res, next) {
     try {
-      const count = req.body.count ? parseInt(req.body.count, 10) : 5;
-      const voters = await VoterService.batchGenerate(req.params.surveyId, count);
+      const voters = await VoterService.batchGenerate(req.params.surveyId, req.body);
+      const count = req.body?.count ? parseInt(req.body.count, 10) : 5;
       return res.status(201).json({
         success: true,
         data: { voters, message: `Generated ${count} voter access tokens.` },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async update(req, res, next) {
+    try {
+      const voter = await VoterService.update(req.params.id, req.body);
+      return res.status(200).json({
+        success: true,
+        data: { voter, message: 'Access code schedule updated successfully.' },
       });
     } catch (error) {
       next(error);

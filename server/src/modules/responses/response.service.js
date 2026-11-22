@@ -76,6 +76,24 @@ export class ResponseService {
         throw error;
       }
 
+      // Check start time validity (voting window not open yet)
+      if (voter.validFrom && new Date() < new Date(voter.validFrom)) {
+        const error = new Error(
+          `Voting is not yet open for this access code. Voting opens on ${new Date(voter.validFrom).toLocaleString()}.`
+        );
+        error.statusCode = 403;
+        throw error;
+      }
+
+      // Check deadline validity (voting window expired)
+      if (voter.validUntil && new Date() > new Date(voter.validUntil)) {
+        const error = new Error(
+          `The voting deadline for this access code has passed. Voting closed on ${new Date(voter.validUntil).toLocaleString()}.`
+        );
+        error.statusCode = 403;
+        throw error;
+      }
+
       const isUnlimited = voter.usesLeft === -1 || voter.usesLeft >= 999999;
 
       if (!isUnlimited && (voter.completed || voter.usesLeft <= 0)) {

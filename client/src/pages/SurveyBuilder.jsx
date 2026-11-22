@@ -371,6 +371,72 @@ export const getQuestionTypeBadgeLabel = (type, settings = {}) => {
   return 'Short Text';
 };
 
+export const toDatetimeLocalValue = (dateStr) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  const year = d.getFullYear();
+  const month = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+export const formatVoterDateDisplay = (dateStr) => {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return null;
+  return d.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+export const getVoterScheduleStatus = (voter) => {
+  const now = new Date();
+  if (voter.validFrom && now < new Date(voter.validFrom)) {
+    return {
+      status: 'scheduled',
+      label: 'Scheduled',
+      detail: `Starts ${formatVoterDateDisplay(voter.validFrom)}`,
+      badgeClass: 'ls-badge-warning',
+      icon: 'ri-time-line',
+    };
+  }
+  if (voter.validUntil && now > new Date(voter.validUntil)) {
+    return {
+      status: 'expired',
+      label: 'Expired',
+      detail: `Closed ${formatVoterDateDisplay(voter.validUntil)}`,
+      badgeClass: 'ls-badge-danger',
+      icon: 'ri-close-circle-line',
+    };
+  }
+  if (voter.validFrom || voter.validUntil) {
+    return {
+      status: 'active',
+      label: 'Active',
+      detail: voter.validUntil
+        ? `Until ${formatVoterDateDisplay(voter.validUntil)}`
+        : `Since ${formatVoterDateDisplay(voter.validFrom)}`,
+      badgeClass: 'ls-badge-success',
+      icon: 'ri-checkbox-circle-line',
+    };
+  }
+  return {
+    status: 'open',
+    label: 'Open',
+    detail: 'No deadline set',
+    badgeClass: 'ls-badge-secondary',
+    icon: 'ri-calendar-check-line',
+  };
+};
+
 const PreviewRankingQuestion = ({ question, value, onChange }) => {
   const options = question.options || [];
 
@@ -1634,23 +1700,43 @@ export const SurveyBuilder = () => {
   const [newVoterEmail, setNewVoterEmail] = useState('');
   const [newVoterToken, setNewVoterToken] = useState('');
   const [isUniversalCode, setIsUniversalCode] = useState(false);
+  const [newVoterValidFrom, setNewVoterValidFrom] = useState('');
+  const [newVoterValidUntil, setNewVoterValidUntil] = useState('');
+
+  // Universal Code Modal
+  const [isUniversalModalOpen, setIsUniversalModalOpen] = useState(false);
+  const [universalCustomToken, setUniversalCustomToken] = useState('');
+  const [universalValidFrom, setUniversalValidFrom] = useState('');
+  const [universalValidUntil, setUniversalValidUntil] = useState('');
+  const [isGeneratingUniversal, setIsGeneratingUniversal] = useState(false);
 
   // Batch Member Generation Modal
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
   const [batchMemberCount, setBatchMemberCount] = useState(10);
+  const [batchValidFrom, setBatchValidFrom] = useState('');
+  const [batchValidUntil, setBatchValidUntil] = useState('');
   const [isGeneratingBatch, setIsGeneratingBatch] = useState(false);
+
+  // Edit Schedule Modal for existing voter
+  const [isEditVoterModalOpen, setIsEditVoterModalOpen] = useState(false);
+  const [editingVoter, setEditingVoter] = useState(null);
+  const [editValidFrom, setEditValidFrom] = useState('');
+  const [editValidUntil, setEditValidUntil] = useState('');
+  const [isSavingEditVoter, setIsSavingEditVoter] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         if (isBatchModalOpen && !isGeneratingBatch) setIsBatchModalOpen(false);
+        if (isUniversalModalOpen && !isGeneratingUniversal) setIsUniversalModalOpen(false);
+        if (isEditVoterModalOpen && !isSavingEditVoter) setIsEditVoterModalOpen(false);
         if (isQuestionTypeModalOpen) setIsQuestionTypeModalOpen(false);
         if (isFontModalOpen) setIsFontModalOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isBatchModalOpen, isGeneratingBatch, isQuestionTypeModalOpen, isFontModalOpen]);
+  }, [isBatchModalOpen, isGeneratingBatch, isUniversalModalOpen, isGeneratingUniversal, isEditVoterModalOpen, isSavingEditVoter, isQuestionTypeModalOpen, isFontModalOpen]);
 
   // Fetch Existing Survey Data
   const fetchSurvey = async () => {
@@ -2216,11 +2302,17 @@ export const SurveyBuilder = () => {
   // Voter management handlers
   const handleAddVoter = async (e) => {
     e.preventDefault();
+    if (newVoterValidFrom && newVoterValidUntil && new Date(newVoterValidFrom) >= new Date(newVoterValidUntil)) {
+      showToast('The start time must be before the deadline.', 'error');
+      return;
+    }
     try {
       await apiClient.post(`/surveys/${id}/voters`, {
         email: newVoterEmail.trim() || undefined,
         token: newVoterToken.trim() || undefined,
         isUniversal: isUniversalCode,
+        validFrom: newVoterValidFrom ? new Date(newVoterValidFrom).toISOString() : undefined,
+        validUntil: newVoterValidUntil ? new Date(newVoterValidUntil).toISOString() : undefined,
       });
       showToast(
         isUniversalCode
@@ -2230,6 +2322,8 @@ export const SurveyBuilder = () => {
       );
       setNewVoterEmail('');
       setNewVoterToken('');
+      setNewVoterValidFrom('');
+      setNewVoterValidUntil('');
       setIsUniversalCode(false);
       fetchVoters();
     } catch (err) {
@@ -2237,22 +2331,46 @@ export const SurveyBuilder = () => {
     }
   };
 
-  const handleGenerateUniversalCode = async () => {
+  const handleOpenUniversalModal = () => {
+    setUniversalCustomToken('');
+    setUniversalValidFrom('');
+    setUniversalValidUntil('');
+    setIsUniversalModalOpen(true);
+  };
+
+  const handleCloseUniversalModal = () => {
+    if (!isGeneratingUniversal) {
+      setIsUniversalModalOpen(false);
+    }
+  };
+
+  const handleConfirmGenerateUniversal = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (universalValidFrom && universalValidUntil && new Date(universalValidFrom) >= new Date(universalValidUntil)) {
+      showToast('The start time must be before the deadline.', 'error');
+      return;
+    }
+    setIsGeneratingUniversal(true);
     try {
       await apiClient.post(`/surveys/${id}/voters/universal`, {
-        token: newVoterToken.trim() || undefined,
+        token: universalCustomToken.trim() || undefined,
+        validFrom: universalValidFrom ? new Date(universalValidFrom).toISOString() : undefined,
+        validUntil: universalValidUntil ? new Date(universalValidUntil).toISOString() : undefined,
       });
-      showToast('Universal access code generated for all participants!', 'success');
-      setNewVoterToken('');
-      setIsUniversalCode(false);
+      showToast('Universal access code generated with schedule!', 'success');
+      setIsUniversalModalOpen(false);
       fetchVoters();
     } catch (err) {
       showToast(err.message || 'Failed to generate universal access code', 'error');
+    } finally {
+      setIsGeneratingUniversal(false);
     }
   };
 
   const handleOpenBatchModal = () => {
     setBatchMemberCount(10);
+    setBatchValidFrom('');
+    setBatchValidUntil('');
     setIsBatchModalOpen(true);
   };
 
@@ -2273,12 +2391,20 @@ export const SurveyBuilder = () => {
       showToast('Please specify 500 or fewer members per batch.', 'error');
       return;
     }
+    if (batchValidFrom && batchValidUntil && new Date(batchValidFrom) >= new Date(batchValidUntil)) {
+      showToast('The start time must be before the deadline.', 'error');
+      return;
+    }
 
     setIsGeneratingBatch(true);
     try {
-      await apiClient.post(`/surveys/${id}/voters/batch`, { count });
+      await apiClient.post(`/surveys/${id}/voters/batch`, {
+        count,
+        validFrom: batchValidFrom ? new Date(batchValidFrom).toISOString() : undefined,
+        validUntil: batchValidUntil ? new Date(batchValidUntil).toISOString() : undefined,
+      });
       showToast(
-        `Generated ${count} single-use access code${count === 1 ? '' : 's'} for members!`,
+        `Generated ${count} single-use access code${count === 1 ? '' : 's'} with schedule!`,
         'success'
       );
       setIsBatchModalOpen(false);
@@ -2287,6 +2413,46 @@ export const SurveyBuilder = () => {
       showToast(err.message || 'Failed to generate batch codes', 'error');
     } finally {
       setIsGeneratingBatch(false);
+    }
+  };
+
+  const handleOpenEditVoterModal = (voter) => {
+    setEditingVoter(voter);
+    setEditValidFrom(toDatetimeLocalValue(voter.validFrom));
+    setEditValidUntil(toDatetimeLocalValue(voter.validUntil));
+    setIsEditVoterModalOpen(true);
+  };
+
+  const handleCloseEditVoterModal = () => {
+    if (!isSavingEditVoter) {
+      setIsEditVoterModalOpen(false);
+      setEditingVoter(null);
+    }
+  };
+
+  const handleSaveEditVoter = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!editingVoter) return;
+
+    if (editValidFrom && editValidUntil && new Date(editValidFrom) >= new Date(editValidUntil)) {
+      showToast('The start time must be before the deadline.', 'error');
+      return;
+    }
+
+    setIsSavingEditVoter(true);
+    try {
+      await apiClient.patch(`/voters/${editingVoter.id || editingVoter.voterId}`, {
+        validFrom: editValidFrom ? new Date(editValidFrom).toISOString() : null,
+        validUntil: editValidUntil ? new Date(editValidUntil).toISOString() : null,
+      });
+      showToast('Access code start time and deadline updated!', 'success');
+      setIsEditVoterModalOpen(false);
+      setEditingVoter(null);
+      fetchVoters();
+    } catch (err) {
+      showToast(err.message || 'Failed to update access code schedule', 'error');
+    } finally {
+      setIsSavingEditVoter(false);
     }
   };
 
@@ -5059,16 +5225,16 @@ export const SurveyBuilder = () => {
                   Participant Tokens & Access Codes
                 </h2>
                 <p style={{ fontSize: '13px', color: '#64748b', marginTop: '2px', margin: 0 }}>
-                  Manage single-use participant invites or open universal participation links.
+                  Configure start times and deadlines for access codes. Voters cannot submit before or after the designated window.
                 </p>
               </div>
 
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                   type="button"
-                  onClick={handleGenerateUniversalCode}
+                  onClick={handleOpenUniversalModal}
                   className="ls-btn ls-btn-outline ls-btn-sm"
-                  title="Generate a universal token for open voting"
+                  title="Generate a universal token with schedule for open voting"
                 >
                   <i className="ri-link" /> Universal Code
                 </button>
@@ -5076,7 +5242,7 @@ export const SurveyBuilder = () => {
                   type="button"
                   onClick={handleOpenBatchModal}
                   className="ls-btn ls-btn-outline ls-btn-sm"
-                  title="Generate single-use access codes for members"
+                  title="Generate single-use access codes with schedule for members"
                 >
                   <i className="ri-magic-line" /> Batch
                 </button>
@@ -5084,26 +5250,141 @@ export const SurveyBuilder = () => {
             </div>
 
             {/* Manual Invite Creation Form */}
-            <form onSubmit={handleAddVoter} style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px', padding: '14px', backgroundColor: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-              <input
-                type="email"
-                placeholder="Participant Email (optional)"
-                className="ls-input"
-                value={newVoterEmail}
-                onChange={(e) => setNewVoterEmail(e.target.value)}
-                style={{ flex: 1, minWidth: '200px' }}
-              />
-              <input
-                type="text"
-                placeholder="Custom Access Code (e.g. VOTE-2026)"
-                className="ls-input"
-                value={newVoterToken}
-                onChange={(e) => setNewVoterToken(e.target.value)}
-                style={{ flex: 1, minWidth: '180px' }}
-              />
-              <button type="submit" className="ls-btn ls-btn-primary ls-btn-sm">
-                <i className="ri-user-add-line" /> Add Access Code
-              </button>
+            <form onSubmit={handleAddVoter} style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+              <div style={{ fontWeight: 600, fontSize: '14px', color: '#1e293b', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <i className="ri-user-add-line" style={{ color: '#10b981' }} /> Create New Access Code
+              </div>
+
+              {/* Row 1: Email, Custom Code, Universal toggle */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', marginBottom: '12px' }}>
+                <div>
+                  <label className="ls-label" style={{ fontSize: '12px', fontWeight: 600, marginBottom: '4px' }}>
+                    Participant Email:
+                  </label>
+                  <input
+                    type="email"
+                    placeholder={isUniversalCode ? 'Universal (All participants)' : 'name@example.com (optional)'}
+                    className="ls-input"
+                    value={isUniversalCode ? '' : newVoterEmail}
+                    onChange={(e) => setNewVoterEmail(e.target.value)}
+                    disabled={isUniversalCode}
+                    style={{ fontSize: '13.5px' }}
+                  />
+                </div>
+
+                <div>
+                  <label className="ls-label" style={{ fontSize: '12px', fontWeight: 600, marginBottom: '4px' }}>
+                    Custom Access Code (Optional):
+                  </label>
+                  <input
+                    type="text"
+                    placeholder={isUniversalCode ? 'e.g. ALL-SUMMER-2026' : 'e.g. VOTE-2026 (or auto-generate)'}
+                    className="ls-input"
+                    value={newVoterToken}
+                    onChange={(e) => setNewVoterToken(e.target.value)}
+                    style={{ fontSize: '13.5px' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '6px' }}>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 500, color: '#334155' }}>
+                    <input
+                      type="checkbox"
+                      checked={isUniversalCode}
+                      onChange={(e) => setIsUniversalCode(e.target.checked)}
+                      style={{ width: '16px', height: '16px', accentColor: '#10b981' }}
+                    />
+                    Universal Code (Multi-use link)
+                  </label>
+                </div>
+              </div>
+
+              {/* Row 2: Start Date & Time and Deadline */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', marginBottom: '12px', paddingTop: '10px', borderTop: '1px dashed #e2e8f0' }}>
+                <div>
+                  <label className="ls-label" style={{ fontSize: '12px', fontWeight: 600, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px', color: '#0f766e' }}>
+                    <i className="ri-play-circle-line" /> Start Date & Time:
+                  </label>
+                  <input
+                    type="datetime-local"
+                    className="ls-input"
+                    value={newVoterValidFrom}
+                    onChange={(e) => setNewVoterValidFrom(e.target.value)}
+                    style={{ fontSize: '13px' }}
+                  />
+                  <div className="ls-helper-text" style={{ fontSize: '11px', marginTop: '3px' }}>
+                    Voters cannot submit before this time (leave empty for immediate).
+                  </div>
+                </div>
+
+                <div>
+                  <label className="ls-label" style={{ fontSize: '12px', fontWeight: 600, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px', color: '#b91c1c' }}>
+                    <i className="ri-alarm-warning-line" /> Deadline Date & Time:
+                  </label>
+                  <input
+                    type="datetime-local"
+                    className="ls-input"
+                    value={newVoterValidUntil}
+                    onChange={(e) => setNewVoterValidUntil(e.target.value)}
+                    style={{ fontSize: '13px' }}
+                  />
+                  <div className="ls-helper-text" style={{ fontSize: '11px', marginTop: '3px' }}>
+                    Voting closes strictly after this deadline (leave empty for no expiration).
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: '6px' }}>
+                  <button type="submit" className="ls-btn ls-btn-primary" style={{ height: '38px', fontWeight: 600 }}>
+                    <i className="ri-user-add-line" /> Add Access Code
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Presets */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', paddingTop: '6px' }}>
+                <span style={{ fontSize: '11.5px', color: '#64748b', fontWeight: 600 }}>Quick Presets:</span>
+                <button
+                  type="button"
+                  onClick={() => setNewVoterValidFrom(toDatetimeLocalValue(new Date()))}
+                  className="ls-badge ls-badge-secondary"
+                  style={{ cursor: 'pointer', border: '1px solid #cbd5e1' }}
+                >
+                  <i className="ri-play-line" /> Start Now
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const start = newVoterValidFrom ? new Date(newVoterValidFrom) : new Date();
+                    setNewVoterValidUntil(toDatetimeLocalValue(new Date(start.getTime() + 24 * 60 * 60 * 1000)));
+                  }}
+                  className="ls-badge ls-badge-secondary"
+                  style={{ cursor: 'pointer', border: '1px solid #cbd5e1' }}
+                >
+                  +24 Hours Deadline
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const start = newVoterValidFrom ? new Date(newVoterValidFrom) : new Date();
+                    setNewVoterValidUntil(toDatetimeLocalValue(new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000)));
+                  }}
+                  className="ls-badge ls-badge-secondary"
+                  style={{ cursor: 'pointer', border: '1px solid #cbd5e1' }}
+                >
+                  +7 Days Deadline
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewVoterValidFrom('');
+                    setNewVoterValidUntil('');
+                  }}
+                  className="ls-badge ls-badge-secondary"
+                  style={{ cursor: 'pointer', border: '1px solid #cbd5e1', color: '#64748b' }}
+                >
+                  Clear Times
+                </button>
+              </div>
             </form>
 
             {/* Voters List */}
@@ -5119,46 +5400,105 @@ export const SurveyBuilder = () => {
                   <thead>
                     <tr>
                       <th>Token / Access Code</th>
-                      <th>Participant Email</th>
-                      <th>Completed</th>
+                      <th>Type / Recipient</th>
+                      <th>Voting Window & Deadline</th>
+                      <th>Status</th>
                       <th style={{ textAlign: 'right' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {voters.map((v) => (
-                      <tr key={v.id || v.token}>
-                        <td>
-                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                            <code style={{ fontWeight: 600, color: '#0f172a' }}>{v.token}</code>
-                            <button
-                              type="button"
-                              onClick={() => handleCopyText(v.token, 'Access Code')}
-                              style={{ border: 'none', background: 'none', color: '#10b981', cursor: 'pointer', padding: '2px' }}
-                              title="Copy Access Code"
-                            >
-                              <i className="ri-file-copy-line" />
-                            </button>
-                          </div>
-                        </td>
-                        <td>{v.email || <span style={{ color: '#94a3b8' }}>Universal Access Code</span>}</td>
-                        <td>
-                          <span className={`ls-badge ${v.completed ? 'ls-badge-success' : 'ls-badge-secondary'}`}>
-                            {v.completed ? 'Completed' : 'Pending'}
-                          </span>
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteVoter(v.id || v.voterId)}
-                            className="ls-btn ls-btn-outline ls-btn-sm"
-                            style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}
-                            title="Remove Access Code"
-                          >
-                            <i className="ri-delete-bin-line" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {voters.map((v) => {
+                      const schedule = getVoterScheduleStatus(v);
+                      const isUni = v.usesLeft === -1 || v.email === 'All Participants (Shared Code)';
+                      return (
+                        <tr key={v.id || v.token}>
+                          <td>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                              <code style={{ fontWeight: 600, color: '#0f172a', fontSize: '13px' }}>{v.token}</code>
+                              <button
+                                type="button"
+                                onClick={() => handleCopyText(v.token, 'Access Code')}
+                                style={{ border: 'none', background: 'none', color: '#10b981', cursor: 'pointer', padding: '2px' }}
+                                title="Copy Access Code"
+                              >
+                                <i className="ri-file-copy-line" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const link = `${window.location.origin}/surveys/${id}/take?token=${encodeURIComponent(v.token)}`;
+                                  handleCopyText(link, 'Direct Survey Link');
+                                }}
+                                style={{ border: 'none', background: 'none', color: '#0f766e', cursor: 'pointer', padding: '2px' }}
+                                title="Copy Direct Voting Link"
+                              >
+                                <i className="ri-links-line" />
+                              </button>
+                            </div>
+                          </td>
+                          <td>
+                            {isUni ? (
+                              <span className="ls-badge" style={{ backgroundColor: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', fontSize: '11px' }}>
+                                <i className="ri-global-line" /> Universal Code
+                              </span>
+                            ) : v.email ? (
+                              <span style={{ color: '#334155', fontSize: '13px' }}>{v.email}</span>
+                            ) : (
+                              <span style={{ color: '#94a3b8', fontSize: '13px', fontStyle: 'italic' }}>Single-Use Member Code</span>
+                            )}
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              <span className={`ls-badge ${schedule.badgeClass}`} style={{ alignSelf: 'flex-start', fontSize: '10.5px' }}>
+                                <i className={schedule.icon} /> {schedule.label}
+                              </span>
+                              <div style={{ fontSize: '11.5px', color: '#475569', marginTop: '2px' }}>
+                                {v.validFrom && (
+                                  <div>
+                                    <strong style={{ color: '#0f766e' }}>Start:</strong> {formatVoterDateDisplay(v.validFrom)}
+                                  </div>
+                                )}
+                                {v.validUntil && (
+                                  <div>
+                                    <strong style={{ color: '#b91c1c' }}>Deadline:</strong> {formatVoterDateDisplay(v.validUntil)}
+                                  </div>
+                                )}
+                                {!v.validFrom && !v.validUntil && (
+                                  <span style={{ color: '#94a3b8' }}>No time limits</span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <span className={`ls-badge ${v.completed ? 'ls-badge-success' : 'ls-badge-secondary'}`}>
+                              {v.completed ? 'Completed' : 'Pending'}
+                            </span>
+                          </td>
+                          <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                            <div style={{ display: 'inline-flex', gap: '6px' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditVoterModal(v)}
+                                className="ls-btn ls-btn-outline ls-btn-sm"
+                                style={{ color: '#0f766e', borderColor: 'rgba(15, 118, 110, 0.3)' }}
+                                title="Edit Schedule & Deadline"
+                              >
+                                <i className="ri-calendar-event-line" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteVoter(v.id || v.voterId)}
+                                className="ls-btn ls-btn-outline ls-btn-sm"
+                                style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+                                title="Remove Access Code"
+                              >
+                                <i className="ri-delete-bin-line" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -5528,6 +5868,201 @@ export const SurveyBuilder = () => {
         </div>
       )}
 
+      {/* Universal Access Code Generation Modal */}
+      {isUniversalModalOpen && (
+        <div
+          className="ls-modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isGeneratingUniversal) {
+              handleCloseUniversalModal();
+            }
+          }}
+        >
+          <div
+            className="ls-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="universal-modal-title"
+            style={{ maxWidth: '500px' }}
+          >
+            <div className="ls-modal-header">
+              <div className="ls-modal-title" id="universal-modal-title">
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--ls-color-primary-subtle)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--ls-color-primary)',
+                    fontSize: '18px',
+                    flexShrink: 0,
+                  }}
+                >
+                  <i className="ri-link" />
+                </div>
+                <span>Universal Access Code</span>
+              </div>
+              <button
+                type="button"
+                className="ls-modal-close-btn"
+                onClick={handleCloseUniversalModal}
+                disabled={isGeneratingUniversal}
+                aria-label="Close modal"
+              >
+                <i className="ri-close-line" />
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmGenerateUniversal}>
+              <div className="ls-modal-body">
+                <p style={{ marginBottom: '16px', fontSize: '13.5px', color: 'var(--ls-color-g-700)', lineHeight: 1.5 }}>
+                  Universal codes allow multiple participants to take the survey through a shared link. You can enforce a strict start time and deadline window.
+                </p>
+
+                <div className="ls-form-group" style={{ marginBottom: '14px' }}>
+                  <label
+                    htmlFor="universal-custom-token"
+                    className="ls-label"
+                    style={{ fontWeight: 600, color: 'var(--ls-color-g-900)', marginBottom: '6px' }}
+                  >
+                    Custom Code (Optional):
+                  </label>
+                  <input
+                    id="universal-custom-token"
+                    type="text"
+                    className="ls-input"
+                    placeholder="e.g. ALL-GLOBAL-2026 (or auto-generate)"
+                    value={universalCustomToken}
+                    onChange={(e) => setUniversalCustomToken(e.target.value)}
+                    disabled={isGeneratingUniversal}
+                    style={{ fontSize: '14px' }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                  <div>
+                    <label
+                      htmlFor="universal-valid-from"
+                      className="ls-label"
+                      style={{ fontWeight: 600, color: '#0f766e', marginBottom: '4px', fontSize: '12px' }}
+                    >
+                      <i className="ri-play-circle-line" /> Start Date & Time:
+                    </label>
+                    <input
+                      id="universal-valid-from"
+                      type="datetime-local"
+                      className="ls-input"
+                      value={universalValidFrom}
+                      onChange={(e) => setUniversalValidFrom(e.target.value)}
+                      disabled={isGeneratingUniversal}
+                      style={{ fontSize: '12.5px' }}
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="universal-valid-until"
+                      className="ls-label"
+                      style={{ fontWeight: 600, color: '#b91c1c', marginBottom: '4px', fontSize: '12px' }}
+                    >
+                      <i className="ri-alarm-warning-line" /> Deadline Date & Time:
+                    </label>
+                    <input
+                      id="universal-valid-until"
+                      type="datetime-local"
+                      className="ls-input"
+                      value={universalValidUntil}
+                      onChange={(e) => setUniversalValidUntil(e.target.value)}
+                      disabled={isGeneratingUniversal}
+                      style={{ fontSize: '12.5px' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Quick Presets */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Presets:</span>
+                  <button
+                    type="button"
+                    onClick={() => setUniversalValidFrom(toDatetimeLocalValue(new Date()))}
+                    className="ls-badge ls-badge-secondary"
+                    style={{ cursor: 'pointer', border: '1px solid #cbd5e1' }}
+                  >
+                    Start Now
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const start = universalValidFrom ? new Date(universalValidFrom) : new Date();
+                      setUniversalValidUntil(toDatetimeLocalValue(new Date(start.getTime() + 24 * 60 * 60 * 1000)));
+                    }}
+                    className="ls-badge ls-badge-secondary"
+                    style={{ cursor: 'pointer', border: '1px solid #cbd5e1' }}
+                  >
+                    +24 Hours
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const start = universalValidFrom ? new Date(universalValidFrom) : new Date();
+                      setUniversalValidUntil(toDatetimeLocalValue(new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000)));
+                    }}
+                    className="ls-badge ls-badge-secondary"
+                    style={{ cursor: 'pointer', border: '1px solid #cbd5e1' }}
+                  >
+                    +7 Days
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUniversalValidFrom('');
+                      setUniversalValidUntil('');
+                    }}
+                    className="ls-badge ls-badge-secondary"
+                    style={{ cursor: 'pointer', border: '1px solid #cbd5e1', color: '#64748b' }}
+                  >
+                    Clear
+                  </button>
+                </div>
+
+                <div className="ls-helper-text" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <i className="ri-time-line" style={{ color: 'var(--ls-color-primary)' }} />
+                  <span>Voters will be blocked before the start time and after the deadline.</span>
+                </div>
+              </div>
+
+              <div className="ls-modal-footer">
+                <button
+                  type="button"
+                  className="ls-btn ls-btn-outline"
+                  onClick={handleCloseUniversalModal}
+                  disabled={isGeneratingUniversal}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="ls-btn ls-btn-primary"
+                  disabled={isGeneratingUniversal}
+                >
+                  {isGeneratingUniversal ? (
+                    <>
+                      <i className="ri-loader-4-line ri-spin" /> Generating...
+                    </>
+                  ) : (
+                    <>
+                      <i className="ri-check-line" /> Generate Universal Code
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Batch Member Access Codes Modal */}
       {isBatchModalOpen && (
         <div
@@ -5543,7 +6078,7 @@ export const SurveyBuilder = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="batch-modal-title"
-            style={{ maxWidth: '460px' }}
+            style={{ maxWidth: '500px' }}
           >
             <div className="ls-modal-header">
               <div className="ls-modal-title" id="batch-modal-title">
@@ -5578,15 +6113,15 @@ export const SurveyBuilder = () => {
 
             <form onSubmit={handleConfirmBatchGenerate}>
               <div className="ls-modal-body">
-                <p style={{ marginBottom: '16px', fontSize: '14px', color: 'var(--ls-color-g-700)', lineHeight: 1.5 }}>
-                  Generate unique, single-use access codes for members. Each generated code is assigned to one person and can be used only once to submit a survey response.
+                <p style={{ marginBottom: '16px', fontSize: '13.5px', color: 'var(--ls-color-g-700)', lineHeight: 1.5 }}>
+                  Generate unique, single-use access codes for members. You can specify a shared start time and deadline for the entire batch.
                 </p>
 
-                <div className="ls-form-group" style={{ marginBottom: '4px' }}>
+                <div className="ls-form-group" style={{ marginBottom: '14px' }}>
                   <label
                     htmlFor="batch-member-count"
                     className="ls-label"
-                    style={{ fontWeight: 600, color: 'var(--ls-color-g-900)', marginBottom: '8px' }}
+                    style={{ fontWeight: 600, color: 'var(--ls-color-g-900)', marginBottom: '6px' }}
                   >
                     Number of members:
                   </label>
@@ -5604,10 +6139,95 @@ export const SurveyBuilder = () => {
                     disabled={isGeneratingBatch}
                     style={{ fontSize: '15px' }}
                   />
-                  <div className="ls-helper-text" style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div className="ls-helper-text" style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <i className="ri-shield-user-line" style={{ color: 'var(--ls-color-primary)' }} />
                     <span>Each code is valid for exactly 1 person and 1 completion.</span>
                   </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                  <div>
+                    <label
+                      htmlFor="batch-valid-from"
+                      className="ls-label"
+                      style={{ fontWeight: 600, color: '#0f766e', marginBottom: '4px', fontSize: '12px' }}
+                    >
+                      <i className="ri-play-circle-line" /> Start Date & Time:
+                    </label>
+                    <input
+                      id="batch-valid-from"
+                      type="datetime-local"
+                      className="ls-input"
+                      value={batchValidFrom}
+                      onChange={(e) => setBatchValidFrom(e.target.value)}
+                      disabled={isGeneratingBatch}
+                      style={{ fontSize: '12.5px' }}
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="batch-valid-until"
+                      className="ls-label"
+                      style={{ fontWeight: 600, color: '#b91c1c', marginBottom: '4px', fontSize: '12px' }}
+                    >
+                      <i className="ri-alarm-warning-line" /> Deadline Date & Time:
+                    </label>
+                    <input
+                      id="batch-valid-until"
+                      type="datetime-local"
+                      className="ls-input"
+                      value={batchValidUntil}
+                      onChange={(e) => setBatchValidUntil(e.target.value)}
+                      disabled={isGeneratingBatch}
+                      style={{ fontSize: '12.5px' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Quick Presets */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Presets:</span>
+                  <button
+                    type="button"
+                    onClick={() => setBatchValidFrom(toDatetimeLocalValue(new Date()))}
+                    className="ls-badge ls-badge-secondary"
+                    style={{ cursor: 'pointer', border: '1px solid #cbd5e1' }}
+                  >
+                    Start Now
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const start = batchValidFrom ? new Date(batchValidFrom) : new Date();
+                      setBatchValidUntil(toDatetimeLocalValue(new Date(start.getTime() + 24 * 60 * 60 * 1000)));
+                    }}
+                    className="ls-badge ls-badge-secondary"
+                    style={{ cursor: 'pointer', border: '1px solid #cbd5e1' }}
+                  >
+                    +24 Hours
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const start = batchValidFrom ? new Date(batchValidFrom) : new Date();
+                      setBatchValidUntil(toDatetimeLocalValue(new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000)));
+                    }}
+                    className="ls-badge ls-badge-secondary"
+                    style={{ cursor: 'pointer', border: '1px solid #cbd5e1' }}
+                  >
+                    +7 Days
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBatchValidFrom('');
+                      setBatchValidUntil('');
+                    }}
+                    className="ls-badge ls-badge-secondary"
+                    style={{ cursor: 'pointer', border: '1px solid #cbd5e1', color: '#64748b' }}
+                  >
+                    Clear
+                  </button>
                 </div>
               </div>
 
@@ -5632,6 +6252,186 @@ export const SurveyBuilder = () => {
                   ) : (
                     <>
                       <i className="ri-magic-line" /> Generate Codes
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Access Code Schedule Modal */}
+      {isEditVoterModalOpen && editingVoter && (
+        <div
+          className="ls-modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isSavingEditVoter) {
+              handleCloseEditVoterModal();
+            }
+          }}
+        >
+          <div
+            className="ls-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="edit-voter-modal-title"
+            style={{ maxWidth: '500px' }}
+          >
+            <div className="ls-modal-header">
+              <div className="ls-modal-title" id="edit-voter-modal-title">
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--ls-color-primary-subtle)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--ls-color-primary)',
+                    fontSize: '18px',
+                    flexShrink: 0,
+                  }}
+                >
+                  <i className="ri-calendar-event-line" />
+                </div>
+                <span>Edit Schedule & Deadline</span>
+              </div>
+              <button
+                type="button"
+                className="ls-modal-close-btn"
+                onClick={handleCloseEditVoterModal}
+                disabled={isSavingEditVoter}
+                aria-label="Close modal"
+              >
+                <i className="ri-close-line" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditVoter}>
+              <div className="ls-modal-body">
+                <div style={{ padding: '12px', backgroundColor: '#f1f5f9', borderRadius: '6px', marginBottom: '16px' }}>
+                  <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Access Code:</div>
+                  <code style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>{editingVoter.token}</code>
+                  {editingVoter.email && (
+                    <div style={{ fontSize: '12.5px', color: '#475569', marginTop: '4px' }}>
+                      Recipient: {editingVoter.email}
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                  <div>
+                    <label
+                      htmlFor="edit-valid-from"
+                      className="ls-label"
+                      style={{ fontWeight: 600, color: '#0f766e', marginBottom: '4px', fontSize: '12px' }}
+                    >
+                      <i className="ri-play-circle-line" /> Start Date & Time:
+                    </label>
+                    <input
+                      id="edit-valid-from"
+                      type="datetime-local"
+                      className="ls-input"
+                      value={editValidFrom}
+                      onChange={(e) => setEditValidFrom(e.target.value)}
+                      disabled={isSavingEditVoter}
+                      style={{ fontSize: '12.5px' }}
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="edit-valid-until"
+                      className="ls-label"
+                      style={{ fontWeight: 600, color: '#b91c1c', marginBottom: '4px', fontSize: '12px' }}
+                    >
+                      <i className="ri-alarm-warning-line" /> Deadline Date & Time:
+                    </label>
+                    <input
+                      id="edit-valid-until"
+                      type="datetime-local"
+                      className="ls-input"
+                      value={editValidUntil}
+                      onChange={(e) => setEditValidUntil(e.target.value)}
+                      disabled={isSavingEditVoter}
+                      style={{ fontSize: '12.5px' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Quick Presets */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Presets:</span>
+                  <button
+                    type="button"
+                    onClick={() => setEditValidFrom(toDatetimeLocalValue(new Date()))}
+                    className="ls-badge ls-badge-secondary"
+                    style={{ cursor: 'pointer', border: '1px solid #cbd5e1' }}
+                  >
+                    Start Now
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const start = editValidFrom ? new Date(editValidFrom) : new Date();
+                      setEditValidUntil(toDatetimeLocalValue(new Date(start.getTime() + 24 * 60 * 60 * 1000)));
+                    }}
+                    className="ls-badge ls-badge-secondary"
+                    style={{ cursor: 'pointer', border: '1px solid #cbd5e1' }}
+                  >
+                    +24 Hours
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const start = editValidFrom ? new Date(editValidFrom) : new Date();
+                      setEditValidUntil(toDatetimeLocalValue(new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000)));
+                    }}
+                    className="ls-badge ls-badge-secondary"
+                    style={{ cursor: 'pointer', border: '1px solid #cbd5e1' }}
+                  >
+                    +7 Days
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditValidFrom('');
+                      setEditValidUntil('');
+                    }}
+                    className="ls-badge ls-badge-secondary"
+                    style={{ cursor: 'pointer', border: '1px solid #cbd5e1', color: '#64748b' }}
+                  >
+                    Remove Limits
+                  </button>
+                </div>
+
+                <div className="ls-helper-text">
+                  Voters using this code cannot vote before the start time or after the deadline.
+                </div>
+              </div>
+
+              <div className="ls-modal-footer">
+                <button
+                  type="button"
+                  className="ls-btn ls-btn-outline"
+                  onClick={handleCloseEditVoterModal}
+                  disabled={isSavingEditVoter}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="ls-btn ls-btn-primary"
+                  disabled={isSavingEditVoter}
+                >
+                  {isSavingEditVoter ? (
+                    <>
+                      <i className="ri-loader-4-line ri-spin" /> Saving...
+                    </>
+                  ) : (
+                    <>
+                      <i className="ri-save-line" /> Save Schedule
                     </>
                   )}
                 </button>

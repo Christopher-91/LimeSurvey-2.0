@@ -1,3 +1,4 @@
+import { prisma } from '../../config/db.js';
 import { SurveyService } from './survey.service.js';
 
 export class SurveyController {
@@ -23,7 +24,50 @@ export class SurveyController {
     try {
       const isAdmin = req.user && req.user.role === 'admin';
       const survey = await SurveyService.getById(req.params.id, isAdmin);
-      return res.status(200).json({ success: true, data: { survey } });
+
+      let tokenSchedule = null;
+
+      if (req.query.token) {
+        const tokenStr = String(req.query.token).trim();
+        const voter = await prisma.voter.findFirst({
+          where: {
+            surveyId: parseInt(req.params.id, 10),
+            OR: [
+              { token: tokenStr },
+              { token: tokenStr.toUpperCase() },
+            ],
+            deletedAt: null,
+          },
+        });
+
+        if (voter) {
+          const now = new Date();
+          let status = 'active';
+          let message = 'Access code verified and active.';
+
+          if (voter.validFrom && now < new Date(voter.validFrom)) {
+            status = 'scheduled';
+            message = `Voting is not open yet. Voting opens on ${new Date(voter.validFrom).toLocaleString()}.`;
+          } else if (voter.validUntil && now > new Date(voter.validUntil)) {
+            status = 'expired';
+            message = `The voting deadline for this access code has passed. Voting closed on ${new Date(voter.validUntil).toLocaleString()}.`;
+          } else if (voter.completed && voter.usesLeft !== -1 && voter.usesLeft < 999999) {
+            status = 'completed';
+            message = 'This voter access code has already completed the survey.';
+          }
+
+          tokenSchedule = {
+            token: voter.token,
+            status,
+            message,
+            validFrom: voter.validFrom,
+            validUntil: voter.validUntil,
+            isUniversal: voter.usesLeft === -1,
+          };
+        }
+      }
+
+      return res.status(200).json({ success: true, data: { survey, tokenSchedule } });
     } catch (error) {
       next(error);
     }

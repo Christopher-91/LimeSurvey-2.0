@@ -158,13 +158,13 @@ export class AuthService {
 
       // Check date validity
       if (voter.validFrom && new Date() < new Date(voter.validFrom)) {
-        const error = new Error('Your survey access code is not yet active.');
+        const error = new Error(`Your survey access code is not active yet. Voting begins on ${new Date(voter.validFrom).toLocaleString()}.`);
         error.statusCode = 403;
         throw error;
       }
 
       if (voter.validUntil && new Date() > new Date(voter.validUntil)) {
-        const error = new Error('Your survey access code has expired.');
+        const error = new Error(`Your survey access code has expired. Voting closed on ${new Date(voter.validUntil).toLocaleString()}.`);
         error.statusCode = 403;
         throw error;
       }
@@ -224,6 +224,8 @@ export class AuthService {
           lastName: voter.lastName,
           surveyId: voter.surveyId,
           surveyTitle: voter.survey.title,
+          validFrom: voter.validFrom,
+          validUntil: voter.validUntil,
           role: 'voter',
         },
         redirectTo: `/surveys/${voter.surveyId}/take?token=${voter.token}`,
@@ -287,6 +289,8 @@ export class AuthService {
         firstName: voter.firstName,
         lastName: voter.lastName,
         completed: voter.completed,
+        validFrom: voter.validFrom,
+        validUntil: voter.validUntil,
         surveyId: voter.surveyId,
         survey: voter.survey,
         role: 'voter',

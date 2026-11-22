@@ -833,14 +833,19 @@ export const SurveyTaking = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [selectedLang, setSelectedLang] = useState('en');
+  const [tokenSchedule, setTokenSchedule] = useState(null);
 
   useEffect(() => {
     const fetchSurveyToTake = async () => {
       try {
-        const res = await apiClient.get(`/surveys/${id}/take`);
+        const url = token ? `/surveys/${id}/take?token=${encodeURIComponent(token)}` : `/surveys/${id}/take`;
+        const res = await apiClient.get(url);
         if (res.success && res.data.survey) {
           const s = res.data.survey;
           setSurvey(s);
+          if (res.data.tokenSchedule) {
+            setTokenSchedule(res.data.tokenSchedule);
+          }
           const sSettings = s.settings || {};
           const defLang = sSettings.defaultLanguage || 'en';
           setSelectedLang(defLang);
@@ -858,7 +863,7 @@ export const SurveyTaking = () => {
       }
     };
     fetchSurveyToTake();
-  }, [id]);
+  }, [id, token]);
 
   // Auto-translate questions on the fly if respondent toggles to an untranslated language
   useEffect(() => {
@@ -951,6 +956,10 @@ export const SurveyTaking = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (tokenSchedule && tokenSchedule.status !== 'active') {
+      showToast(tokenSchedule.message, 'error');
+      return;
+    }
     if (!validate()) {
       showToast(getUiText('validation_error', selectedLang), 'error');
       return;
@@ -1101,9 +1110,76 @@ export const SurveyTaking = () => {
           </div>
         )}
 
-        {token && (
+        {token && !tokenSchedule && (
           <div style={{ marginTop: '12px', fontSize: '13px', color: accentColor }}>
             <i className="ri-shield-keyhole-line" /> Access Token Verified: <code>{token}</code>
+          </div>
+        )}
+
+        {tokenSchedule && (
+          <div
+            style={{
+              marginTop: '14px',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              border:
+                tokenSchedule.status === 'scheduled'
+                  ? '1px solid #f59e0b'
+                  : tokenSchedule.status === 'expired' || tokenSchedule.status === 'completed'
+                  ? '1px solid #ef4444'
+                  : '1px solid #10b981',
+              backgroundColor:
+                tokenSchedule.status === 'scheduled'
+                  ? '#fffbeb'
+                  : tokenSchedule.status === 'expired' || tokenSchedule.status === 'completed'
+                  ? '#fef2f2'
+                  : '#f0fdf4',
+              color:
+                tokenSchedule.status === 'scheduled'
+                  ? '#92400e'
+                  : tokenSchedule.status === 'expired' || tokenSchedule.status === 'completed'
+                  ? '#991b1b'
+                  : '#166534',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '12px',
+            }}
+          >
+            <i
+              className={
+                tokenSchedule.status === 'scheduled'
+                  ? 'ri-time-line'
+                  : tokenSchedule.status === 'expired' || tokenSchedule.status === 'completed'
+                  ? 'ri-error-warning-line'
+                  : 'ri-shield-check-line'
+              }
+              style={{ fontSize: '20px', flexShrink: 0, marginTop: '2px' }}
+            />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, fontSize: '14px' }}>
+                {tokenSchedule.status === 'scheduled' && 'Voting Window Not Yet Open'}
+                {tokenSchedule.status === 'expired' && 'Voting Deadline Has Passed'}
+                {tokenSchedule.status === 'completed' && 'Survey Already Completed'}
+                {tokenSchedule.status === 'active' && 'Access Code Active & Verified'}
+              </div>
+              <div style={{ fontSize: '13px', marginTop: '3px', lineHeight: 1.4 }}>
+                {tokenSchedule.message}
+              </div>
+              {(tokenSchedule.validFrom || tokenSchedule.validUntil) && (
+                <div style={{ fontSize: '12px', marginTop: '6px', display: 'flex', gap: '16px', flexWrap: 'wrap', fontWeight: 500 }}>
+                  {tokenSchedule.validFrom && (
+                    <span>
+                      <i className="ri-calendar-event-line" /> <strong>Voting Opens:</strong> {new Date(tokenSchedule.validFrom).toLocaleString()}
+                    </span>
+                  )}
+                  {tokenSchedule.validUntil && (
+                    <span>
+                      <i className="ri-timer-line" /> <strong>Voting Deadline:</strong> {new Date(tokenSchedule.validUntil).toLocaleString()}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -1815,12 +1891,21 @@ export const SurveyTaking = () => {
           <button
             type="submit"
             className="ls-btn ls-btn-primary ls-btn-lg"
-            style={{ minWidth: '240px', backgroundColor: accentColor, borderColor: accentColor }}
-            disabled={isSubmitting}
+            style={{
+              minWidth: '240px',
+              backgroundColor: tokenSchedule && tokenSchedule.status !== 'active' ? '#94a3b8' : accentColor,
+              borderColor: tokenSchedule && tokenSchedule.status !== 'active' ? '#94a3b8' : accentColor,
+              cursor: tokenSchedule && tokenSchedule.status !== 'active' ? 'not-allowed' : 'pointer',
+            }}
+            disabled={isSubmitting || (tokenSchedule && tokenSchedule.status !== 'active')}
           >
             {isSubmitting ? (
               <>
                 <i className="ri-loader-4-line ri-spin" /> {getUiText('submitting', selectedLang)}
+              </>
+            ) : tokenSchedule && tokenSchedule.status !== 'active' ? (
+              <>
+                <i className="ri-lock-line" /> Voting Window Closed
               </>
             ) : (
               <>
@@ -1828,6 +1913,11 @@ export const SurveyTaking = () => {
               </>
             )}
           </button>
+          {tokenSchedule && tokenSchedule.status !== 'active' && (
+            <div style={{ marginTop: '10px', color: '#ef4444', fontSize: '13px', fontWeight: 500 }}>
+              <i className="ri-lock-line" /> {tokenSchedule.message}
+            </div>
+          )}
         </div>
       </form>
     </div>
