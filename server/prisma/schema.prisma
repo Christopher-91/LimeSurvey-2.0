@@ -24,7 +24,8 @@ model User {
   deletedAt       DateTime? @map("deleted_at")
 
   // Relationships
-  surveys         Survey[]  @relation("SurveyOwner")
+  surveys         Survey[]   @relation("SurveyOwner")
+  auditLogs       AuditLog[]
 
   @@map("users")
   @@index([role])
@@ -205,4 +206,28 @@ model Setting {
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
   @@map("settings")
+}
+
+// ==========================================
+// AuditLog (Tracks admin authentication & actions)
+// ==========================================
+model AuditLog {
+  id          Int       @id @default(autoincrement())
+  userId      Int?      @map("user_id")
+  username    String    @db.VarChar(64)
+  email       String?   @db.VarChar(192)
+  fullName    String?   @map("full_name") @db.VarChar(128)
+  action      String    @db.VarChar(32) // "LOGIN" | "LOGOUT"
+  ipAddress   String?   @map("ip_address") @db.VarChar(45)
+  userAgent   String?   @map("user_agent") @db.Text
+  details     Json?
+  timestamp   DateTime  @default(now())
+
+  // Relationships
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+  @@index([userId])
+  @@index([action])
+  @@index([timestamp])
 }

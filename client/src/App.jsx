@@ -5,6 +5,7 @@ import { ProtectedRoute } from './components/ProtectedRoute.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { ToastProvider } from './context/ToastContext.jsx';
 import { AdminDashboard } from './pages/AdminDashboard.jsx';
+import { AuditLogs } from './pages/AuditLogs.jsx';
 import { LandingPage } from './pages/LandingPage.jsx';
 import { LoginPage } from './pages/LoginPage.jsx';
 import { ResultsStats } from './pages/ResultsStats.jsx';
@@ -43,6 +44,14 @@ export const App = () => {
                   element={
                     <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
                       <AdminDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/audit-logs"
+                  element={
+                    <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                      <AuditLogs />
                     </ProtectedRoute>
                   }
                 />

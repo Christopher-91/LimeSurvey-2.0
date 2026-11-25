@@ -7,6 +7,7 @@ import swaggerUi from 'swagger-ui-express';
 import { logger } from './config/logger.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { generalLimiter } from './middleware/rateLimiter.js';
+import auditRoutes from './modules/audit/audit.routes.js';
 import authRoutes from './modules/auth/auth.routes.js';
 import exportRoutes from './modules/export/export.routes.js';
 import questionRoutes from './modules/questions/question.routes.js';
@@ -70,6 +71,7 @@ app.use('/api/v1', responseRoutes);
 app.use('/api/v1', statsRoutes);
 app.use('/api/v1', exportRoutes);
 app.use('/api/v1/translate', translateRoutes);
+app.use('/api/v1/audit-logs', auditRoutes);
 
 // 404 handler for unknown API routes
 app.use('/api/*', (req, res) => {

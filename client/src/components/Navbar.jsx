@@ -61,12 +61,12 @@ export const Navbar = () => {
 
         {isAuthenticated && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '12px' }}>
-            <span
-              className={`ls-badge ${isAdmin ? 'ls-badge-success' : 'ls-badge-info'}`}
-            >
-              <i className={isAdmin ? 'ri-shield-check-line' : 'ri-user-line'} />
-              {isAdmin ? 'Admin' : 'Voter'}
-            </span>
+            {!isAdmin && (
+              <span className="ls-badge ls-badge-info">
+                <i className="ri-user-line" />
+                Voter
+              </span>
+            )}
             <span style={{ fontSize: '14px', color: 'var(--ls-color-g-300)' }}>
               {user.fullName || user.username || user.voterId || user.email}
             </span>

@@ -39,20 +39,18 @@ export const AdminDashboard = () => {
         <div>
           <h1 className="ls-page-title">Administration Dashboard</h1>
           <p className="ls-page-subtitle">
-            Logged in as <strong>{user?.fullName || user?.username}</strong> ({user?.email})
+            Logged in as <strong>{user?.fullName || user?.username}</strong>
           </p>
         </div>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <a
-            href="/api/docs"
-            target="_blank"
-            rel="noreferrer"
+          <Link
+            to="/admin/audit-logs"
             className="ls-btn ls-btn-outline"
-            title="Interactive OpenAPI / Swagger Documentation"
+            title="Administrator Login and Logout Audit Logs"
             style={{ gap: '6px' }}
           >
-            <i className="ri-book-open-line" /> API Docs
-          </a>
+            <i className="ri-history-line" /> Audit Logs
+          </Link>
           <Link to="/admin/surveys" className="ls-btn ls-btn-outline">
             <i className="ri-file-list-3-line" /> All Surveys
           </Link>
