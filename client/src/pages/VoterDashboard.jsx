@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 
 export const VoterDashboard = () => {
   const { user } = useAuth();
+  const isZk = Boolean(user?.zeroKnowledgeEnabled ?? user?.survey?.zeroKnowledgeEnabled);
 
   return (
     <div className="ls-container" style={{ maxWidth: '680px' }}>
@@ -54,12 +55,54 @@ export const VoterDashboard = () => {
 
         {user?.surveyId ? (
           <div>
-            <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '6px' }}>
-              Assigned Survey
-            </h3>
-            <p style={{ color: 'var(--ls-color-g-600)', fontSize: '14px', marginBottom: '20px' }}>
-              {user.surveyTitle || `Survey #${user.surveyId}`}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px', flexWrap: 'wrap', gap: '8px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>
+                Assigned Survey
+              </h3>
+              {isZk && (
+                <span
+                  className="ls-badge"
+                  style={{
+                    backgroundColor: '#ecfdf5',
+                    color: '#047857',
+                    border: '1px solid #10b981',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontWeight: 700,
+                    fontSize: '11px',
+                  }}
+                  title="Zero-Knowledge Protocol active: responses are fully anonymous"
+                >
+                  <i className="ri-shield-keyhole-line" /> ZKP ACTIVE
+                </span>
+              )}
+            </div>
+            <p style={{ color: 'var(--ls-color-g-600)', fontSize: '14px', marginBottom: '14px' }}>
+              {user.surveyTitle || user.survey?.title || `Survey #${user.surveyId}`}
             </p>
+
+            {isZk && (
+              <div
+                style={{
+                  padding: '12px 14px',
+                  backgroundColor: '#f0fdf4',
+                  border: '1px solid #bbf7d0',
+                  borderRadius: '6px',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '10px',
+                  fontSize: '13px',
+                  color: '#166534',
+                }}
+              >
+                <i className="ri-shield-check-fill" style={{ fontSize: '18px', color: '#16a34a', flexShrink: 0, marginTop: '1px' }} />
+                <div>
+                  <strong>Zero-Knowledge Protocol Active:</strong> Your responses to this survey are cryptographically decoupled from your voter account and access code. 100% anonymous participation is guaranteed.
+                </div>
+              </div>
+            )}
 
             {user.completed ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--ls-color-primary)' }}>

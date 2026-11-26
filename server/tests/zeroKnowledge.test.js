@@ -183,4 +183,41 @@ describe('Zero Knowledge Protocol Backend Tests', () => {
     expect(stats.totalResponses).toBe(2);
     expect(stats.totalVoters).toBe(3);
   });
+
+  it('exposes zeroKnowledgeEnabled to public listing and taking endpoints for voters', async () => {
+    // 1. Check public listing
+    const publicSurveys = await SurveyService.listPublic();
+    const zkPub = publicSurveys.find((s) => s.id === zkSurveyId);
+    expect(zkPub).toBeDefined();
+    expect(zkPub.zeroKnowledgeEnabled).toBe(true);
+
+    // 2. Check getById (taking endpoint)
+    const takeSurvey = await SurveyService.getById(zkSurveyId);
+    expect(takeSurvey).toBeDefined();
+    expect(takeSurvey.zeroKnowledgeEnabled).toBe(true);
+  });
+
+  it('includes zeroKnowledgeEnabled in voter login payload and getMe', async () => {
+    const { AuthService } = await import('../src/modules/auth/auth.service.js');
+
+    // Voter 3 hasn't completed yet
+    const loginResult = await AuthService.login({
+      role: 'voter',
+      identifier: voter3.token,
+    });
+
+    expect(loginResult.user).toBeDefined();
+    expect(loginResult.user.zeroKnowledgeEnabled).toBe(true);
+    expect(loginResult.user.surveyTitle).toBe('Secret Ballot Executive Review');
+
+    // Test getMe
+    const meResult = await AuthService.getMe({
+      id: voter3.id,
+      role: 'voter',
+    });
+
+    expect(meResult).toBeDefined();
+    expect(meResult.zeroKnowledgeEnabled).toBe(true);
+    expect(meResult.survey.zeroKnowledgeEnabled).toBe(true);
+  });
 });

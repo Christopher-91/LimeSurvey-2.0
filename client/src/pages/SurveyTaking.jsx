@@ -547,6 +547,7 @@ const CompletionLandingPage = ({ survey, selectedLang }) => {
   const accentColor = theme.accentColor || '#10b981';
   const showLogo = Boolean(theme.showLogo && theme.logoUrl);
   const completion = theme.completion || {};
+  const isZk = Boolean(survey?.zeroKnowledgeEnabled ?? survey?.zero_knowledge_enabled);
 
   const locEndMessage =
     survey?.settings?.translations?.[selectedLang]?.endMessage !== undefined
@@ -617,6 +618,36 @@ const CompletionLandingPage = ({ survey, selectedLang }) => {
         <p style={{ color: '#475569', fontSize: '15px', lineHeight: 1.6, marginBottom: '28px', whiteSpace: 'pre-wrap' }}>
           {message}
         </p>
+
+        {isZk && (
+          <div
+            style={{
+              margin: '0 auto 28px auto',
+              maxWidth: '520px',
+              padding: '14px 18px',
+              borderRadius: '8px',
+              backgroundColor: '#f0fdf4',
+              border: '1px solid #86efac',
+              textAlign: 'left',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '12px',
+            }}
+          >
+            <i className="ri-shield-check-fill" style={{ fontSize: '24px', color: '#16a34a', flexShrink: 0, marginTop: '2px' }} />
+            <div>
+              <div style={{ fontWeight: 600, fontSize: '14px', color: '#15803d', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>{getUiText('zkp_completed_title', selectedLang)}</span>
+                <span style={{ fontSize: '11px', padding: '1px 8px', borderRadius: '10px', backgroundColor: '#bbf7d0', color: '#14532d', fontWeight: 600 }}>
+                  ZKP VERIFIED
+                </span>
+              </div>
+              <div style={{ fontSize: '13px', color: '#166534', lineHeight: 1.5 }}>
+                {getUiText('zkp_completed_desc', selectedLang)}
+              </div>
+            </div>
+          </div>
+        )}
 
         {redirectEnabled ? (
           <div
@@ -1018,6 +1049,7 @@ export const SurveyTaking = () => {
   const theme = survey?.settings?.theme || {};
   const accentColor = theme.accentColor || '#10b981';
   const showLogo = Boolean(theme.showLogo && theme.logoUrl);
+  const isZk = Boolean(survey?.zeroKnowledgeEnabled ?? survey?.zero_knowledge_enabled);
   const supportedLangs =
     Array.isArray(survey?.settings?.supportedLanguages) && survey.settings.supportedLanguages.length > 0
       ? survey.settings.supportedLanguages
@@ -1096,9 +1128,33 @@ export const SurveyTaking = () => {
             />
           </div>
         )}
-        <h1 style={{ fontSize: 'var(--ls-font-size-2xl)', fontWeight: 700, marginBottom: '8px' }}>
-          {localizedSurvey.title}
-        </h1>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '8px' }}>
+          <h1 style={{ fontSize: 'var(--ls-font-size-2xl)', fontWeight: 700, margin: 0, flex: 1 }}>
+            {localizedSurvey.title}
+          </h1>
+          {isZk && (
+            <span
+              className="ls-badge"
+              style={{
+                backgroundColor: '#ecfdf5',
+                color: '#047857',
+                border: '1.5px solid #10b981',
+                padding: '6px 14px',
+                fontSize: '13px',
+                fontWeight: 700,
+                borderRadius: '20px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                letterSpacing: '0.025em',
+                boxShadow: '0 1px 3px rgba(16, 185, 129, 0.15)',
+              }}
+            >
+              <i className="ri-shield-keyhole-line" style={{ fontSize: '15px' }} />
+              {getUiText('zkp_active_badge', selectedLang)}
+            </span>
+          )}
+        </div>
         {localizedSurvey.description && (
           <p style={{ color: 'var(--ls-color-g-600)', fontSize: '15px', marginBottom: '16px' }}>
             {localizedSurvey.description}
@@ -1107,6 +1163,55 @@ export const SurveyTaking = () => {
         {localizedSurvey.welcomeMessage && (
           <div style={{ backgroundColor: 'var(--ls-color-g-100)', padding: '14px 18px', borderRadius: 'var(--ls-radius-sm)', fontSize: '14px', borderLeft: `3px solid ${accentColor}` }}>
             {localizedSurvey.welcomeMessage}
+          </div>
+        )}
+
+        {isZk && (
+          <div
+            style={{
+              marginTop: '16px',
+              padding: '14px 18px',
+              borderRadius: '8px',
+              backgroundColor: '#f0fdf4',
+              border: '1px solid #86efac',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '14px',
+            }}
+          >
+            <div
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '8px',
+                backgroundColor: '#dcfce7',
+                color: '#15803d',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '20px',
+                flexShrink: 0,
+              }}
+            >
+              <i className="ri-shield-check-fill" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: '14.5px', color: '#166534', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <span>{getUiText('zkp_banner_title', selectedLang)}</span>
+                <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '10px', backgroundColor: '#bbf7d0', color: '#14532d', fontWeight: 700 }}>
+                  100% ANONYMOUS
+                </span>
+              </div>
+              <p style={{ margin: '4px 0 0 0', fontSize: '13.5px', color: '#15803d', lineHeight: 1.5 }}>
+                {getUiText('zkp_banner_desc', selectedLang)}
+              </p>
+              {token && (
+                <div style={{ marginTop: '8px', fontSize: '12.5px', color: '#166534', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <i className="ri-lock-2-line" />
+                  <span>{getUiText('zkp_token_note', selectedLang)}</span>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -1913,6 +2018,28 @@ export const SurveyTaking = () => {
               </>
             )}
           </button>
+          {isZk && (
+            <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'center' }}>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  fontSize: '13px',
+                  color: '#047857',
+                  backgroundColor: '#f0fdf4',
+                  padding: '6px 16px',
+                  borderRadius: '20px',
+                  border: '1px solid #bbf7d0',
+                  fontWeight: 500,
+                  boxShadow: '0 1px 2px rgba(16, 185, 129, 0.08)',
+                }}
+              >
+                <i className="ri-shield-keyhole-line" style={{ fontSize: '15px' }} />
+                <span>{getUiText('zkp_submit_guarantee', selectedLang)}</span>
+              </div>
+            </div>
+          )}
           {tokenSchedule && tokenSchedule.status !== 'active' && (
             <div style={{ marginTop: '10px', color: '#ef4444', fontSize: '13px', fontWeight: 500 }}>
               <i className="ri-lock-line" /> {tokenSchedule.message}

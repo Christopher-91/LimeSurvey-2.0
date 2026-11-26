@@ -127,13 +127,53 @@ export const LandingPage = () => {
               }}
             >
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                  <h3 style={{ fontSize: 'var(--ls-font-size-md)', fontWeight: 600 }}>{survey.title}</h3>
-                  <span className="ls-badge ls-badge-success">Active</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', gap: '8px' }}>
+                  <h3 style={{ fontSize: 'var(--ls-font-size-md)', fontWeight: 600, margin: 0 }}>{survey.title}</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                    {(survey.zeroKnowledgeEnabled || survey.zero_knowledge_enabled) && (
+                      <span
+                        className="ls-badge"
+                        style={{
+                          backgroundColor: '#ecfdf5',
+                          color: '#047857',
+                          border: '1px solid #10b981',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontWeight: 700,
+                          fontSize: '11px',
+                        }}
+                        title="Zero-Knowledge Protocol active: 100% anonymous survey"
+                      >
+                        <i className="ri-shield-keyhole-line" /> ZKP ACTIVE
+                      </span>
+                    )}
+                    <span className="ls-badge ls-badge-success">Active</span>
+                  </div>
                 </div>
-                <p style={{ color: 'var(--ls-color-g-600)', fontSize: '14px', marginBottom: '16px', lineHeight: 1.5 }}>
+                <p style={{ color: 'var(--ls-color-g-600)', fontSize: '14px', marginBottom: '12px', lineHeight: 1.5 }}>
                   {survey.description || 'No description provided.'}
                 </p>
+                {(survey.zeroKnowledgeEnabled || survey.zero_knowledge_enabled) && (
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '12px',
+                      color: '#047857',
+                      backgroundColor: '#f0fdf4',
+                      padding: '4px 10px',
+                      borderRadius: '4px',
+                      border: '1px solid #bbf7d0',
+                      marginBottom: '14px',
+                      fontWeight: 500,
+                    }}
+                  >
+                    <i className="ri-shield-check-line" />
+                    <span>Zero-Knowledge Protected • 100% Anonymous</span>
+                  </div>
+                )}
               </div>
 
               <div>
